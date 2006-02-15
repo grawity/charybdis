@@ -1,0 +1,171 @@
+  <chapter id="umodes">
+    <title>Umodes</title>
+    <sect1 id="umodelist">
+      <title>Meanings of umodes</title>
+      <sect2>
+	<title>+a, server administrator</title>
+	<para>
+	  This vanity usermode is used to denote a server administrator in WHOIS output.
+	  All local "admin" privileges are independent of it, though services
+	  packages may grant extra privileges to +a users.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+g, Caller ID</title>
+	<para>
+	  <note>
+	    <para>
+	      This is a user umode, which anybody can set. It is not specific to operators.
+	    </para>
+	  </note>
+	  Users with the +g umode set will only receive private messages from users on a
+	  session-defined whitelist, defined by the /accept command. If the user is not
+	  on a whitelist, then the target user will receive a rate-limited notice saying that the user
+	  wishes to speak to them.
+	</para>
+	<para>
+	  Network operators are not affected by the callerid whitelist system in the event
+	  that they need to speak to users who have it enabled.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+i, invisible</title>
+	<para>
+	  <note>
+	    <para>
+	      This is a user umode, which anybody can set. It is not specific to operators.
+	    </para>
+	  </note>
+	  Invisible users do not show up in WHO and NAMES unless you can see them.
+	</para>
+      </sect2>
+      <!-- not planned (jilles)
+      <sect2>
+	<title>+I, refuse invite</title>
+	<para>
+	  <note>
+	    <para>
+	      This is a user umode, which anybody can set. It is not specific to operators.
+	    </para>
+	  </note>
+	  If you have the +I umode set, nobody will be able to issue an INVITE to let you
+	  in to a channel.
+	</para>
+	<para>
+	  This mode is not yet implemented. It will be implemented in Charybdis 1.1.
+	</para>
+      </sect2>
+      -->
+      <sect2>
+	<title>+l, receive locops</title>
+	<para>
+	  LOCOPS is a version of OPERWALL that is sent to opers on a single
+	  server only. With cluster{} and shared{} blocks they can optionally
+	  be propagated further.
+	</para>
+	<para>
+	  Unlike OPERWALL, any oper can send and receive LOCOPS.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+o, operator</title>
+	<para>
+	  This indicates global operator status.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+Q, block forwarding</title>
+	<para>
+	  <note>
+	    <para>
+	      This is a user umode, which anybody can set. It is not specific to operators.
+	    </para>
+	  </note>
+          This umode prevents you from being affected by any of the channel forwarding mechanisms. In
+          any event where you would normally be forwarded, instead you will get the usual error message
+          as if no forwarding was in effect.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+R, reject messages from unauthenticated users</title>
+	<para>
+	  <note>
+	    <para>
+	      This is a user umode, which anybody can set. It is not specific to operators.
+	    </para>
+	  </note>
+	  If a user has the +R umode set, then any users who are not authenticated
+	  will receive an error message if they attempt to send a private
+	  message or notice to the +R user.
+	</para>
+	<para>
+	  Opers and accepted users (like in +g) are exempt.
+	  Unlike +g, the target user is not notified of failed messages.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+s, server notices</title>
+	<para>
+	  This umode allows an oper to receive server notices.
+	  The requested types of server notices are specified as a
+	  parameter (<quote>snomask</quote>) to this umode.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+S, network service</title>
+	<para>
+	  <note>
+	    <para>
+	      This umode can only be set by servers named in a service{}
+	      block.
+	    </para>
+	  </note>
+	  This umode grants various features useful for services. For example,
+	  clients with this umode cannot be kicked or deopped on channels,
+	  do not show channels the querying user is not on in WHOIS,
+	  and do not appear in /stats p.
+	</para>
+	<para>
+	  The exact effects of this umode are variable; no user or oper on
+	  an actual charybdis server can set it.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+w, receive wallops</title>
+	<para>
+	  <note>
+	    <para>
+	      This is a user umode, which anybody can set. It is not specific to operators.
+	    </para>
+	  </note>
+	  Users with the +w umode set will receive WALLOPS messages sent by opers.
+	  Opers with +w additionally receive WALLOPS sent by servers (e.g.
+	  remote CONNECT, remote SQUIT, many services packages).
+	</para>
+      </sect2>
+      <sect2>
+	<title>+z, receive operwall</title>
+	<para>
+	  OPERWALL differs from WALLOPS in that the ability to receive such messages is
+	  restricted. Opers with +z set will receive OPERWALL messages.
+	</para>
+      </sect2>
+    </sect1>
+  </chapter>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-namecase-general:t
+sgml-general-insert-case:lower
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:2
+sgml-indent-data:t
+sgml-parent-document: ("charybdis-oper-guide.sgml" "book")
+sgml-exposed-tags:nil
+fill-column: 105
+sgml-validate-command: "nsgmls -e -g -s -u charybdis-oper-guide.sgml"
+End:
+-->
