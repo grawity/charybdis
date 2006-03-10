@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c 796 2006-02-12 17:31:44Z jilles $
+ *  $Id: s_conf.c 976 2006-03-07 22:42:36Z jilles $
  */
 
 #include "stdinc.h"
@@ -344,6 +344,9 @@ verify_access(struct Client *client_p, const char *username)
 		{
 			char *p;
 
+			/* show_ip() depends on this --fl */
+			SetIPSpoof(client_p);
+
 			if(IsConfSpoofNotice(aconf))
 			{
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
@@ -367,8 +370,6 @@ verify_access(struct Client *client_p, const char *username)
 			}
 			else
 				strlcpy(client_p->host, aconf->name, sizeof(client_p->host));
-
-			SetIPSpoof(client_p);
 		}
 		return (attach_iline(client_p, aconf));
 	}
@@ -810,6 +811,7 @@ set_default_conf(void)
 	ConfigFileEntry.oper_only_umodes = UMODE_SERVNOTICE;
 	ConfigFileEntry.oper_snomask = SNO_GENERAL;
 
+	ConfigChannel.quiet_on_ban = YES;
 	ConfigChannel.use_except = YES;
 	ConfigChannel.use_invex = YES;
 	ConfigChannel.use_knock = YES;

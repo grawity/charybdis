@@ -1,5 +1,21 @@
-This is charybdis 1.1.0, Copyright (c) 2005-2006 Charybdis team.
+This is charybdis 1.1.1, Copyright (c) 2005-2006 Charybdis team.
 See LICENSE for licensing details (GPL v2).
+
+-- charybdis-1.1.1
+
+- Improve documentation.
+- Some SASL fixes.
+- Allow requesting forward channel and quiet list in same mode command.
+- Do not reveal real host behind auth{} spoof in spoof notices if
+  hide_spoof_ips is enabled; note that spoof notices are not enabled by
+  default.
+- Improve global /who.
+- Add /findforwards and /identify contrib modules.
+- Make sure to have a different squit reason on both sides for splits
+  not caused by network malfunction, so it is clear which side initiated
+  the split.
+- Fix a bug with RSFNC which could allow two clients using the same nick
+  at the same time.
 
 -- charybdis-1.1.0
 
@@ -238,5 +254,5 @@ You may also (if youre lucky) find us on #ratbox@EFNet
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 722 2006-02-08 21:51:28Z nenolod $
+$Id: NEWS 1018 2006-03-09 23:54:48Z jilles $
 

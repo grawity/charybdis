@@ -28,7 +28,7 @@
  *  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: m_scan.c 740 2006-02-09 01:14:21Z jilles $
+ *  $Id: m_scan.c 1024 2006-03-10 00:17:58Z jilles $
  */
 
 #include "stdinc.h"
@@ -61,13 +61,13 @@ struct Message scan_msgtab = {
 };
 
 mapi_clist_av1 scan_clist[] = { &scan_msgtab, NULL };
-DECLARE_MODULE_AV1(scan, NULL, NULL, scan_clist, NULL, NULL, "$Revision: 740 $");
+DECLARE_MODULE_AV1(scan, NULL, NULL, scan_clist, NULL, NULL, "$Revision: 1024 $");
 
 typedef int (*scan_handler)(struct Client *, struct Client *, int, 
 	const char **);
 
 struct scan_cmd {
-	char *name;
+	const char *name;
 	int operlevel;
 	scan_handler handler;
 } scan_cmds[] = {

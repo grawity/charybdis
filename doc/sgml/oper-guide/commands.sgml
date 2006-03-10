@@ -146,6 +146,10 @@
 	<para>
 	  Cause an immediate total shutdown of the IRC server, and restart from scratch as if it had just been executed.
 	</para>
+	<para>
+	  This reexecutes the ircd using the compiled-in path, visible
+	  as SPATH in INFO.
+	</para>
 	<note>
 	  <para>This command cannot be used remotely. The server name is used only as a safety measure.</para>
 	</note>
@@ -256,16 +260,15 @@
 	  <command>KLINE</command>
 	  <arg><replaceable>length</replaceable></arg>
 	  <group>
-	    <arg><replaceable>nick</replaceable></arg>
-	    <arg><replaceable>user</replaceable>@<replaceable>host</replaceable></arg>
-	    <arg><replaceable>user</replaceable>@<replaceable>a</replaceable>.<replaceable>b</replaceable>.<replaceable>c</replaceable>.<replaceable>d</replaceable></arg>
+	    <arg choice=plain><replaceable>user</replaceable>@<replaceable>host</replaceable></arg>
+	    <arg choice=plain><replaceable>user</replaceable>@<replaceable>a</replaceable>.<replaceable>b</replaceable>.<replaceable>c</replaceable>.<replaceable>d</replaceable></arg>
 	  </group>
+	  <arg>ON <replaceable>servername</replaceable></arg>
 	  <arg>:<replaceable>reason</replaceable></arg>
 	</cmdsynopsis>
 	<para>
-	  Add a K:line to the local server config file to ban the given user from using that
-	  server. If a nick is given, the user@host they currently have will be banned, otherwise
-	  the ban will be directly added.
+	  Add a K:line to the local server config file to ban the given user@host from using that
+	  server.
 	</para>
 	<para>
 	  If the optional parameter <replaceable>length</replaceable> is given, the K:line will
@@ -285,7 +288,10 @@
 	  whenever a connection is attempted which is banned.
 	</para>
 	<para>
-	  If specified in the configuration file, the K:Line will be propagated across the network.
+	  If the ON part is specified, the K:line is set on servers matching
+	  the given mask (provided a matching shared{} block exists there).
+	  Otherwise, if specified in a cluster{} block, the K:Line will be
+	  propagated across the network accordingly.
 	</para>
       </sect2>
       <sect2>
@@ -293,67 +299,216 @@
 	<cmdsynopsis>
 	  <command>UNKLINE</command>
 	  <arg choice=plain><replaceable>user</replaceable>@<replaceable>host</replaceable></arg>
+	  <arg>ON <replaceable>servername</replaceable></arg>
 	</cmdsynopsis>
 	<para>
-	  Will attempt to remove a K:line matching user@host from the config files, and will flush
+	  Will attempt to remove a K:line matching user@host from kline.conf, and will flush
 	  a temporary K:line.
+	</para>
+      </sect2>
+      <sect2>
+	<title>XLINE</title>
+	<cmdsynopsis>
+	  <command>XLINE</command>
+	  <arg><replaceable>length</replaceable></arg>
+	  <arg choice=plain><replaceable>mask</replaceable></arg>
+	  <arg>ON <replaceable>servername</replaceable></arg>
+	  <arg>:<replaceable>reason</replaceable></arg>
+	</cmdsynopsis>
+	<para>
+	  Works similarly to KLINE, but matches against the real name field.
+	  The wildcards are * (any sequence), ? (any character),
+	  # (a digit) and @ (a letter); wildcard characters can be
+	  escaped with a backslash.
+	</para>
+	<para>
+	  Use \s for a space; this currently interferes with the
+	  check whether the mask is already xlined and UNXLINE.
+	</para>
+	<para>
+	  All clients matching the X:line will be disconnected from the server immediately.
+	</para>
+	<para>
+	  The reason is never sent to users. Instead, they will be exited
+	  with "Bad user info".
+	</para>
+	<para>
+	  If the ON part is specified, the X:line is set on servers matching
+	  the given mask (provided a matching shared{} block exists there).
+	  Otherwise, if specified in a cluster{} block, the X:Line will be
+	  propagated across the network accordingly.
+	</para>
+      </sect2>
+      <sect2>
+	<title>UNXLINE</title>
+	<cmdsynopsis>
+	  <command>UNKLINE</command>
+	  <arg choice=plain><replaceable>mask</replaceable></arg>
+	  <arg>ON <replaceable>servername</replaceable></arg>
+	</cmdsynopsis>
+	<para>
+	  Will attempt to remove an X:line from xline.conf, and will flush
+	  a temporary X:line.
+	</para>
+      </sect2>
+      <sect2>
+	<title>RESV</title>
+	<cmdsynopsis>
+	  <command>RESV</command>
+	  <arg><replaceable>length</replaceable></arg>
+	  <group>
+	    <arg choice=plain><replaceable>channel</replaceable></arg>
+	    <arg choice=plain><replaceable>mask</replaceable></arg>
+	  </group>
+	  <arg>ON <replaceable>servername</replaceable></arg>
+	  <arg>:<replaceable>reason</replaceable></arg>
+	</cmdsynopsis>
+	<para>
+	  If used on a channel, <quote>jupes</quote> the channel locally. Joins to the
+	  channel will be disallowed and generate a server notice on +y, and
+	  users will not be able to send to the channel. Channel jupes cannot
+	  contain wildcards.
+	</para>
+	<para>
+	  If used on a nickname mask, prevents local users from using a nick
+	  matching the mask (the same wildcard characters as xlines). There
+	  is no way to exempt the initial nick from this.
+	</para>
+	<para>
+	  In neither case will current users of the nick or channel be
+	  kicked or disconnected.
+	</para>
+	<para>
+	  This facility is not designed to make certain nicks
+	  or channels oper-only.
+	</para>
+	<para>
+	  The reason is never sent to users.
+	</para>
+	<para>
+	  If the ON part is specified, the resv is set on servers matching
+	  the given mask (provided a matching shared{} block exists there).
+	  Otherwise, if specified in a cluster{} block, the resv will be
+	  propagated across the network accordingly.
+	</para>
+      </sect2>
+      <sect2>
+	<title>UNRESV</title>
+	<cmdsynopsis>
+	  <command>UNRESV</command>
+	  <group>
+	    <arg choice=plain><replaceable>channel</replaceable></arg>
+	    <arg choice=plain><replaceable>mask</replaceable></arg>
+	  </group>
+	  <arg>ON <replaceable>servername</replaceable></arg>
+	</cmdsynopsis>
+	<para>
+	  Will attempt to remove a resv from resv.conf, and will flush
+	  a temporary resv.
 	</para>
       </sect2>
       <sect2>
 	<title>DLINE</title>
 	<cmdsynopsis>
 	  <command>DLINE</command>
-	  <group>
-	    <arg><replaceable>nick</replaceable></arg>
-	    <arg><replaceable>a</replaceable>.<replaceable>b</replaceable>.<replaceable>c</replaceable>.<replaceable>d</replaceable></arg>
-	  </group>
+	  <arg><replaceable>length</replaceable></arg>
+	  <arg choice=plain><replaceable>a</replaceable>.<replaceable>b</replaceable>.<replaceable>c</replaceable>.<replaceable>d</replaceable></arg>
 	  <arg>:<replaceable>reason</replaceable></arg>
 	</cmdsynopsis>
 	<para>
-	  Add a D:line to the config files, which will deny any connections from the IP
-	  address of the banned client (either the address given, or the address of the
-	  user specified).
+	  Add a D:line to the config files, which will deny any connections
+	  from the given IP address.
 	</para>
 	<para>
-	  If a reason is specified, it will be sent to the client when they are disconnected, and
+	  If the optional parameter <replaceable>length</replaceable> is given, the D:line will
+	  be temporary (i.e. it will not be stored on disk) and last that
+	  long in minutes.
+	</para>
+	<para>
+	  If a reason is specified, it will be sent to the client when they are disconnected, and,
+	  if dline_reason is enabled,
 	  whenever a connection is attempted which is banned.
 	</para>
 	<para>
 	  D:lines are less load on a server, and may be more appropriate if somebody is flooding
 	  connections.
 	</para>
+	<para>
+	  D:lines cannot be set remotely on other servers.
+	</para>
+	<para>
+	  Only exempt{} blocks exempt from D:lines on initial connection.
+	  Being a server or having kline_exempt in auth{} does
+	  <emphasis>not</emphasis> exempt (different from K/G/X:lines).
+	</para>
+      </sect2>
+      <sect2>
+	<title>UNDLINE</title>
+	<cmdsynopsis>
+	  <command>UNDLINE</command>
+	  <arg choice=plain><replaceable>a.b.c.d</replaceable></arg>
+	</cmdsynopsis>
+	<para>
+	  Will attempt to remove a D:line from dline.conf, and will flush
+	  a temporary D:line.
+	</para>
       </sect2>
       <sect2>
 	<title>TESTGECOS</title>
 	<cmdsynopsis>
 	  <command>TESTGECOS</command>
-	  <arg><replaceable>mask</replaceable></arg>
+	  <arg choice=plain><replaceable>gecos</replaceable></arg>
 	</cmdsynopsis>
 	<para>
-	  Looks up the amount of X:Lines which match a given gecosmask.
+	  Looks up X:Lines matching the given gecos.
 	</para>
       </sect2>
       <sect2>
 	<title>TESTLINE</title>
 	<cmdsynopsis>
 	  <command>TESTLINE</command>
+	  <arg><replaceable>nick</replaceable>!</arg>
 	  <group>
-	    <arg><replaceable>user</replaceable>@<replaceable>host</replaceable></arg>
-	    <arg><replaceable>a</replaceable>.<replaceable>b</replaceable>.<replaceable>c</replaceable>.<replaceable>d</replaceable></arg>
+	    <arg choice=plain><replaceable>user</replaceable>@<replaceable>host</replaceable></arg>
+	    <arg choice=plain><replaceable>a</replaceable>.<replaceable>b</replaceable>.<replaceable>c</replaceable>.<replaceable>d</replaceable></arg>
 	  </group>
 	</cmdsynopsis>
 	<para>
-	  Looks up the given hostmask or IP address and reports back on any I:, D:, G:, or K: lines found.
+	  Looks up the given hostmask or IP address and reports back on any auth{} blocks, D:, G:, or K: lines found.
+	  If <replaceable>nick</replaceable> is given, also searches for
+	  nick resvs.
 	</para>
+        <para>
+	  This command will not perform DNS lookups; for best
+	  results you must testline a host and its IP form.
+        </para>
       </sect2>
       <sect2>
 	<title>TESTMASK</title>
 	<cmdsynopsis>
 	  <command>TESTMASK</command>
-	  <arg><replaceable>user</replaceable>@<replaceable>host</replaceable></arg>
+	  <arg choice=plain><replaceable>user</replaceable>@<replaceable>host</replaceable></arg>
 	</cmdsynopsis>
 	<para>
 	  Looks up the given hostmask and reports back on any local or global users found.
+	</para>
+      </sect2>
+      <sect2>
+	<title>LUSERS</title>
+	<cmdsynopsis>
+	  <command>LUSERS</command>
+	  <arg><replaceable>mask</replaceable></arg>
+	  <group>
+	    <arg><replaceable>nick</replaceable></arg>
+	    <arg><replaceable>server</replaceable></arg>
+	  </group>
+	</cmdsynopsis>
+	<para>
+	  Shows various user and channel counts.
+	</para>
+	<para>
+	  The <replaceable>mask</replaceable> parameter is obsolete
+	  but must be used when querying a remote server.
 	</para>
       </sect2>
       <sect2>
@@ -394,6 +549,10 @@
 	  Network searches require the oper_spy privilege and an '!'
 	  before the hostmask.
         </para>
+	<para>
+	  The <replaceable>gecos</replaceable> field accepts the same wildcards
+	  as xlines.
+	</para>
       </sect2>
       <sect2>
         <title>CHANTRACE</title>
@@ -424,6 +583,62 @@
     </sect1>
     <sect1 id="misccommands">
       <title>Miscellaneous commands</title>
+      <sect2>
+	<title>ADMIN</title>
+	<cmdsynopsis>
+	  <command>ADMIN</command>
+	  <group>
+	    <arg><replaceable>nick</replaceable></arg>
+	    <arg><replaceable>server</replaceable></arg>
+	  </group>
+	</cmdsynopsis>
+	<para>
+	  Shows the information in the admin{} block.
+	</para>
+      </sect2>
+      <sect2>
+	<title>INFO</title>
+	<cmdsynopsis>
+	  <command>INFO</command>
+	  <group>
+	    <arg><replaceable>nick</replaceable></arg>
+	    <arg><replaceable>server</replaceable></arg>
+	  </group>
+	</cmdsynopsis>
+	<para>
+	  Shows information about the authors of the IRC server, and
+	  some information about this server instance.
+	  Opers also get a list of configuration options.
+	</para>
+      </sect2>
+      <sect2>
+	<title>TIME</title>
+	<cmdsynopsis>
+	  <command>TIME</command>
+	  <group>
+	    <arg><replaceable>nick</replaceable></arg>
+	    <arg><replaceable>server</replaceable></arg>
+	  </group>
+	</cmdsynopsis>
+	<para>
+	  Shows the local time on the given server, in a human-readable format.
+	</para>
+      </sect2>
+      <sect2>
+	<title>VERSION</title>
+	<cmdsynopsis>
+	  <command>VERSION</command>
+	  <group>
+	    <arg><replaceable>nick</replaceable></arg>
+	    <arg><replaceable>server</replaceable></arg>
+	  </group>
+	</cmdsynopsis>
+	<para>
+	  Shows version information, a few compile/config options,
+	  the SID and the 005 numerics.
+	  The 005 numeric will be remapped to 105 for remote requests.
+	</para>
+      </sect2>
       <sect2>
 	<title>STATS</title>
 	<cmdsynopsis>

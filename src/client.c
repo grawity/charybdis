@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c 712 2006-02-06 04:42:14Z gxti $
+ *  $Id: client.c 994 2006-03-09 01:07:04Z jilles $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -1509,12 +1509,14 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 	sendk = source_p->localClient->sendK;
 	recvk = source_p->localClient->receiveK;
 
-	if (IsPerson(from))
-		ircsnprintf(newcomment, sizeof(newcomment), "by %s: %s",
-				from->name, comment);
+	/* Always show source here, so the server notices show
+	 * which side initiated the split -- jilles
+	 */
+	ircsnprintf(newcomment, sizeof(newcomment), "by %s: %s",
+			from == source_p ? me.name : from->name, comment);
 	if (!IsIOError(source_p))
 		sendto_one(source_p, "SQUIT %s :%s", use_id(source_p),
-				IsPerson(from) ? newcomment : comment);
+				newcomment);
 	if(client_p != NULL && source_p != client_p && !IsIOError(source_p))
 	{
 		sendto_one(source_p, "ERROR :Closing Link: 127.0.0.1 %s (%s)",
@@ -1549,7 +1551,7 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 	}
 
 	if(source_p->serv != NULL)
-		remove_dependents(client_p, source_p, from, IsPerson(from) ? newcomment : comment, comment1);
+		remove_dependents(client_p, source_p, from, newcomment, comment1);
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s was connected"
 			     " for %ld seconds.  %d/%d sendK/recvK.",

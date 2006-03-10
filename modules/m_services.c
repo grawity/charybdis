@@ -26,7 +26,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_services.c 661 2006-02-03 04:20:31Z gxti $
+ * $Id: m_services.c 1016 2006-03-09 16:08:02Z jilles $
  */
 
 #include "stdinc.h"
@@ -58,6 +58,7 @@ static void h_svc_server_introduced(hook_data_client *);
 static void h_svc_burst_client(hook_data_client *);
 static void h_svc_whois(hook_data_client *);
 static void h_svc_stats(hook_data_int *);
+static void h_svc_introduce_client(hook_data_client *);
 
 struct Message su_msgtab = {
 	"SU", 0, 0, 0, MFLG_SLOW,
@@ -81,10 +82,11 @@ mapi_hfn_list_av1 services_hfnlist[] = {
 	{ "doing_whois_global",	(hookfn) h_svc_whois },
 	{ "burst_client",	(hookfn) h_svc_burst_client },
 	{ "server_introduced",	(hookfn) h_svc_server_introduced },
+	{ "introduce_client",	(hookfn) h_svc_introduce_client },
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(services, NULL, NULL, services_clist, NULL, services_hfnlist, "$Revision: 661 $");
+DECLARE_MODULE_AV1(services, NULL, NULL, services_clist, NULL, services_hfnlist, "$Revision: 1016 $");
 
 static int
 me_su(struct Client *client_p, struct Client *source_p,
@@ -114,10 +116,6 @@ me_login(struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	if(!IsPerson(source_p))
-		return 0;
-
-	/* this command is *only* accepted from bursting servers */
-	if(HasSentEob(source_p->servptr))
 		return 0;
 
 	strlcpy(source_p->user->suser, parv[1], sizeof(source_p->user->suser));
@@ -174,7 +172,7 @@ me_rsfnc(struct Client *client_p, struct Client *source_p,
 	if(target_p->tsinfo != curts)
 		return 0;
 
-	if((exist_p = find_person(parv[2])))
+	if((exist_p = find_named_client(parv[2])))
 	{
 		char buf[BUFSIZE];
 
@@ -190,8 +188,10 @@ me_rsfnc(struct Client *client_p, struct Client *source_p,
 				me.name, exist_p->name);
 
 		exist_p->flags |= FLAGS_KILLED;
-		kill_client_serv_butone(NULL, exist_p, "%s (Nickname regained by services)",
-					me.name);
+		/* Do not send kills to servers for unknowns -- jilles */
+		if(IsClient(exist_p))
+			kill_client_serv_butone(NULL, exist_p, "%s (Nickname regained by services)",
+						me.name);
 
 		snprintf(buf, sizeof(buf), "Killed (%s (Nickname regained by services))",
 			me.name);
@@ -300,3 +300,16 @@ h_svc_stats(hook_data_int *data)
 		}
 	}
 }
+
+static void
+h_svc_introduce_client(hook_data_client *data)
+{
+	if(EmptyString(data->target->user->suser))
+		return;
+
+	sendto_server(data->client, NULL, CAP_TS6, NOCAPS, ":%s ENCAP * LOGIN %s",
+			data->target->id, data->target->user->suser);
+	sendto_server(data->client, NULL, NOCAPS, CAP_TS6, ":%s ENCAP * LOGIN %s",
+			data->target->name, data->target->user->suser);
+}
+

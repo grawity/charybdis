@@ -1,7 +1,7 @@
 #
 # Makefile.in for ircd/contrib
 #
-# $Id: Makefile.in 835 2006-02-15 00:30:03Z jilles $
+# $Id: Makefile.in 990 2006-03-08 23:51:32Z jilles $
 #
 CC		= @CC@
 RM		= @RM@
@@ -34,7 +34,9 @@ SRCS =                          \
   sno_globaloper.c		\
   m_42.c			\
   m_clearchan.c			\
+  m_findforwards.c		\
   m_force.c			\
+  m_identify.c			\
   m_mkpasswd.c                  \
   m_ojoin.c			\
   m_olist.c			\

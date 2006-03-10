@@ -64,14 +64,18 @@
       <sect2>
 	<title>+f, full warning</title>
 	<para>
-	  Opers with the +f snomask set will receive notices when an I:line becomes full, and
-	  users can no longer connect.
+	  Opers with the +f snomask set will receive notices when a user
+	  connection is denied because a connection limit is exceeded
+	  (one of the limits in a class{} block, or the total per-server
+	  limit settable with /quote set max).
 	</para>
       </sect2>
       <sect2>
 	<title>+k, server kill notices</title>
 	<para>
-	  Opers with the +k snomask set will receive server notices when server kills occur.
+	  Opers with the +k snomask set will receive server notices when
+	  other servers kill and save (forced nick change to UID) users.
+	  Kills and saves by this server are on +d or +s.
 	</para>
       </sect2>
       <sect2>
@@ -99,7 +103,7 @@
       <sect2>
 	<title>+u, unauthorized connections</title>
 	<para>
-	  This snomask allows a oper to see when users try to connect which do not have an
+	  This snomask allows an oper to see when users try to connect who do not have an
 	  available auth{} block.
 	</para>
       </sect2>

@@ -26,7 +26,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_signon.c 744 2006-02-10 02:44:34Z gxti $
+ * $Id: m_signon.c 1024 2006-03-10 00:17:58Z jilles $
  */
 
 #include "stdinc.h"
@@ -71,7 +71,7 @@ mapi_clist_av1 signon_clist[] = {
 	&svslogin_msgtab, &signon_msgtab, NULL
 };
 
-DECLARE_MODULE_AV1(signon, NULL, NULL, signon_clist, NULL, NULL, "$Revision: 744 $");
+DECLARE_MODULE_AV1(signon, NULL, NULL, signon_clist, NULL, NULL, "$Revision: 1024 $");
 
 #define NICK_VALID	1
 #define USER_VALID	2
@@ -491,12 +491,12 @@ send_signon(struct Client *client_p, struct Client *target_p,
 	if (changed)
 		add_history(target_p, 1);
 
-	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s SIGNON %s %s %s %lu %s",
+	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s SIGNON %s %s %s %ld %s",
 			use_id(target_p), nick, user, host,
-			target_p->tsinfo, *login ? login : "0");
-	sendto_server(client_p, NULL, NOCAPS, CAP_TS6, ":%s SIGNON %s %s %s %lu %s",
+			(long) target_p->tsinfo, *login ? login : "0");
+	sendto_server(client_p, NULL, NOCAPS, CAP_TS6, ":%s SIGNON %s %s %s %ld %s",
 			target_p->name, nick, user, host,
-			target_p->tsinfo, *login ? login : "0");
+			(long) target_p->tsinfo, *login ? login : "0");
 
 	del_from_client_hash(target_p->name, target_p);
 	strcpy(target_p->name, nick);

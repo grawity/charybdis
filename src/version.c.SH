@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: version.c.SH 32 2005-09-10 02:45:47Z nenolod $ 
+# $Id: version.c.SH 1026 2006-03-10 15:12:44Z nenolod $ 
 
 spitshell=cat
 package=IRC
@@ -65,6 +65,7 @@ const char *infotext[] =
   "Copyright 1988, 1989, 1990, 1991 University of Oulu, Computing Center",
   "Copyright (c) 1996-2001 Hybrid Development Team", 
   "Copyright (c) 2002-2005 ircd-ratbox Development Team",
+  "Copyright (c) 2005-2006 charybdis development team",
   "",
   "This program is free software; you can redistribute it and/or",
   "modify it under the terms of the GNU General Public License as",

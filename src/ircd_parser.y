@@ -1,6 +1,6 @@
 /* This code is in the public domain.
  * $Nightmare: nightmare/src/main/parser.y,v 1.2.2.1.2.1 2002/07/02 03:42:10 ejb Exp $
- * $Id: ircd_parser.y 6 2005-09-10 01:02:21Z nenolod $
+ * $Id: ircd_parser.y 874 2006-02-18 21:57:55Z nenolod $
  */
 
 %{
@@ -294,7 +294,12 @@ loadmodule:
 	  LOADMODULE QSTRING
             {
 #ifndef STATIC_MODULES
-	      load_one_module($2, 0);
+              char *m_bn;
+
+              m_bn = irc_basename((char *) $2);
+
+              if (findmodule_byname(m_bn) == -1)
+	          load_one_module($2, 0);
 #endif
 	    }
 	  ';'

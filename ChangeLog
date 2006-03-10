@@ -1,3 +1,199 @@
+nenolod     2006/03/10 15:12:44 UTC	(20060310-1026)
+  Log:
+  - Add copyright information to /info and cleanup some formatting
+  
+
+  Changes:	Modified:
+  +1 -1		branches/release-1.1/CREDITS (File Modified) 
+  +1 -0		branches/release-1.1/src/version.c.SH (File Modified) 
+
+
+jilles      2006/03/10 00:17:58 UTC	(20060310-1024)
+  Log:
+  Backport trunk r1020: fix some compile warnings.
+  
+
+  Changes:	Modified:
+  +1 -1		branches/release-1.1/modules/core/m_join.c (File Modified) 
+  +2 -2		branches/release-1.1/modules/core/m_nick.c (File Modified) 
+  +0 -1		branches/release-1.1/modules/core/m_sjoin.c (File Modified) 
+  +1 -1		branches/release-1.1/modules/m_scan.c (File Modified) 
+  +4 -4		branches/release-1.1/modules/m_signon.c (File Modified) 
+
+
+jilles      2006/03/09 23:54:48 UTC	(20060309-1018)
+  Log:
+  Update NEWS file with changes since 1.1.0-release.
+  
+
+  Changes:	Modified:
+  +17 -1	branches/release-1.1/NEWS (File Modified) 
+
+
+jilles      2006/03/09 16:08:02 UTC	(20060309-1016)
+  Log:
+  Backport trunk r1004 and r1012:
+  RSFNC: OK, actually consider unknowns also for detecting a 
+  collide.
+  Otherwise we can get two clients with the same nick.
+  
+
+  Changes:	Modified:
+  +5 -3		branches/release-1.1/modules/m_services.c (File Modified) 
+
+
+jilles      2006/03/09 15:37:41 UTC	(20060309-1010)
+  Log:
+  Backport trunk r1002:
+  Describe service{} blocks in reference.conf.
+  
+
+  Changes:	Modified:
+  +12 -0	branches/release-1.1/doc/reference.conf (File Modified) 
+
+
+jilles      2006/03/09 01:18:15 UTC	(20060309-1000)
+  Log:
+  Backport trunk r996:
+  Replace this list of modes with pointers to other documentation.
+  
+
+  Changes:	Modified:
+  +6 -50	branches/release-1.1/doc/modes.txt (File Modified) 
+
+
+jilles      2006/03/09 01:07:04 UTC	(20060309-994)
+  Log:
+  Backport trunk r982:
+  When we close a local server's link, always include the
+  name of the client causing the exit in the reason in the
+  SQUIT we send them (replacing them with us). This makes
+  sure server notices for stuff like "Not enough arguments
+  to server command" are different on the two sides.
+  
+
+  Changes:	Modified:
+  +7 -5		branches/release-1.1/src/client.c (File Modified) 
+
+
+jilles      2006/03/08 23:51:32 UTC	(20060308-990)
+  Log:
+  Backport m_findforwards contrib module from trunk.
+  
+
+  Changes:	Modified:
+  +118 -0	branches/release-1.1/contrib/Makefile.in (File Modified) 
+  + -		branches/release-1.1/contrib/m_findforwards.c (File Added) 
+
+
+jilles      2006/03/07 22:46:44 UTC	(20060307-978)
+  Log:
+  Backport trunk r962:
+  Add dalnet-style /identify that sends to nickserv or chanserv.
+  
+
+  Changes:	Modified:
+  +102 -0	branches/release-1.1/contrib/Makefile.in (File Modified) 
+  + -		branches/release-1.1/contrib/m_identify.c (File Added) 
+
+
+jilles      2006/03/07 22:42:36 UTC	(20060307-976)
+  Log:
+  Default quiet_on_ban to YES here.
+  
+
+  Changes:	Modified:
+  +1 -0		branches/release-1.1/src/s_conf.c (File Modified) 
+
+
+jilles      2006/03/07 22:31:00 UTC	(20060307-974)
+  Log:
+  Backport trunk r940:
+  Global /who:
+  - make sure to clear all marks also if the who was aborted
+    because of too many matches
+  - give ERR_TOOMANYMATCHES if too many matches
+  - clarify comments
+  
+  ratbox RATBOX_2_2 r22003 (jilles)
+  
+
+  Changes:	Modified:
+  +28 -26	branches/release-1.1/modules/m_who.c (File Modified) 
+
+
+jilles      2006/03/07 22:26:38 UTC	(20060307-972)
+  Log:
+  Backport trunk r968:
+  Whoops, don't show real host behind auth{} spoof in
+  spoof notices if hide_spoof_ips is enabled.
+  
+  From ratbox (part of initial HIDE_SPOOF_IPS to conf patch) 
+  
+
+  Changes:	Modified:
+  +3 -2		branches/release-1.1/src/s_conf.c (File Modified) 
+
+
+jilles      2006/02/23 23:51:54 UTC	(20060223-922)
+  Log:
+  Backport trunk r916:
+  Allow requesting forward channel and quiet list in same mode command.
+  
+
+  Changes:	Modified:
+  +1 -1		branches/release-1.1/modules/core/m_mode.c (File Modified) 
+
+
+jilles      2006/02/22 16:24:49 UTC	(20060222-914)
+  Log:
+  Backport sgml documentation changes from trunk from r885 till r913.
+  
+
+  Changes:	Modified:
+  +1 -0		branches/release-1.1/doc/sgml/oper-guide/cmodes.sgml (File Modified) 
+  +14 -3	branches/release-1.1/doc/sgml/oper-guide/commands.sgml (File Modified) 
+  +8 -4		branches/release-1.1/doc/sgml/oper-guide/snomasks.sgml (File Modified) 
+
+
+gxti        2006/02/21 23:56:37 UTC	(20060221-910)
+  Log:
+  BACKPORT: Stop throwing out LOGIN from non-bursting servers as this interferes with SASL.
+  
+
+  Changes:	Modified:
+  +0 -4		branches/release-1.1/modules/m_services.c (File Modified) 
+
+
+gxti        2006/02/20 21:33:33 UTC	(20060220-898)
+  Log:
+  Backport: Burst LOGIN on registration if the user was already identified (i.e. from SIGNON)
+  
+
+  Changes:	Modified:
+  +15 -0	branches/release-1.1/modules/m_services.c (File Modified) 
+
+
+jilles      2006/02/19 00:45:54 UTC	(20060219-884)
+  Log:
+  Backport sgml documentation changes from trunk since r807.
+  
+
+  Changes:	Modified:
+  +81 -12	branches/release-1.1/doc/sgml/oper-guide/cmodes.sgml (File Modified) 
+  +226 -22	branches/release-1.1/doc/sgml/oper-guide/commands.sgml (File Modified) 
+
+
+nenolod     2006/02/18 21:59:19 UTC	(20060218-876)
+  Log:
+  - version bump to 1.1.1
+  
+
+  Changes:	Modified:
+  +155 -86	branches/release-1.1/configure (File Modified) 
+  +1 -1		branches/release-1.1/configure.ac (File Modified) 
+
+
 jilles      2006/02/15 01:46:21 UTC	(20060215-853)
   Log:
   Backport trunk r849:
