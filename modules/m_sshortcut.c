@@ -1,4 +1,5 @@
-/* $Id: m_sshortcut.c 466 2006-01-14 18:45:57Z jilles $ */
+/* $Id: m_sshortcut.c 1104 2006-03-29 17:47:58Z jilles $ */
+/* This compiles on ratbox 2.2 as well */
 
 #include "stdinc.h"
 #include "client.h"
@@ -17,6 +18,15 @@
 #define SVS_operserv_NICK "OperServ"
 #define SVS_chanserv_NICK "ChanServ"
 #define SVS_nickserv_NICK "NickServ"
+
+#ifdef ERR_SERVICESDOWN
+/* charybdis */
+#define FORM_STR form_str(ERR_SERVICESDOWN)
+#else
+/* ratbox */
+#define ERR_SERVICESDOWN 440
+#define FORM_STR "%s :Services are currently unavailable"
+#endif
 
 char *reconstruct_parv(int parc, const char *parv[]);
 
@@ -64,7 +74,7 @@ mapi_clist_av1 sshortcut_clist[] = {
   NULL
 };
 
-DECLARE_MODULE_AV1(sshortcut, NULL, NULL, sshortcut_clist, NULL, NULL, "$Revision: 466 $");
+DECLARE_MODULE_AV1(sshortcut, NULL, NULL, sshortcut_clist, NULL, NULL, "$Revision: 1104 $");
 
 char *reconstruct_parv(int parc, const char *parv[])
 {
@@ -95,7 +105,7 @@ static int m_operserv(struct Client *client_p, struct Client *source_p, int parc
   }
   else
   {
-    sendto_one_numeric(source_p, ERR_SERVICESDOWN, form_str(ERR_SERVICESDOWN), SVS_operserv_NICK);
+    sendto_one_numeric(source_p, ERR_SERVICESDOWN, FORM_STR, SVS_operserv_NICK);
   }
   return 0;
 }
@@ -116,7 +126,7 @@ static int m_chanserv(struct Client *client_p, struct Client *source_p, int parc
   }
   else
   {
-    sendto_one_numeric(source_p, ERR_SERVICESDOWN, form_str(ERR_SERVICESDOWN), SVS_chanserv_NICK);
+    sendto_one_numeric(source_p, ERR_SERVICESDOWN, FORM_STR, SVS_chanserv_NICK);
   }
   return 0;
 }
@@ -137,7 +147,7 @@ static int m_nickserv(struct Client *client_p, struct Client *source_p, int parc
   }
   else
   {
-    sendto_one_numeric(source_p, ERR_SERVICESDOWN, form_str(ERR_SERVICESDOWN), SVS_nickserv_NICK);
+    sendto_one_numeric(source_p, ERR_SERVICESDOWN, FORM_STR, SVS_nickserv_NICK);
   }
   return 0;
 }

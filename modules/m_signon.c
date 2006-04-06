@@ -26,7 +26,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_signon.c 1024 2006-03-10 00:17:58Z jilles $
+ * $Id: m_signon.c 1130 2006-04-03 02:21:15Z gxti $
  */
 
 #include "stdinc.h"
@@ -52,6 +52,7 @@
 #include "s_stats.h"
 #include "snomask.h"
 #include "irc_string.h"
+#include "s_user.h"
 
 static int me_svslogin(struct Client *, struct Client *, int, const char **);
 static int ms_signon(struct Client *, struct Client *, int, const char **);
@@ -71,7 +72,7 @@ mapi_clist_av1 signon_clist[] = {
 	&svslogin_msgtab, &signon_msgtab, NULL
 };
 
-DECLARE_MODULE_AV1(signon, NULL, NULL, signon_clist, NULL, NULL, "$Revision: 1024 $");
+DECLARE_MODULE_AV1(signon, NULL, NULL, signon_clist, NULL, NULL, "$Revision: 1130 $");
 
 #define NICK_VALID	1
 #define USER_VALID	2
@@ -214,7 +215,7 @@ me_svslogin(struct Client *client_p, struct Client *source_p,
 		snprintf(buf, sizeof(buf), "Killed (%s (Nickname regained by services))",
 			me.name);
 		exit_client(NULL, exist_p, &me, buf);
-	}else if((exist_p = find_client(nick)) && IsUnknown(exist_p)) {
+	}else if((exist_p = find_client(nick)) && IsUnknown(exist_p) && exist_p != target_p) {
 		exit_client(NULL, exist_p, &me, "Overridden");
 	}
 
@@ -421,76 +422,6 @@ send_signon(struct Client *client_p, struct Client *target_p,
 		const char *nick, const char *user, const char *host,
 		unsigned int newts, const char *login)
 {
-	dlink_node *ptr;
-	dlink_node *next_ptr;
-	struct Channel *chptr;
-	struct membership *mscptr;
-	char mode[10], modeval[NICKLEN * 2 + 2], *mptr;
-	int changed = irccmp(target_p->name, nick);
-	int do_qjm = irccmp(target_p->username, user) || irccmp(target_p->host, host);
-
-	modeval[0] = '\0';
-	
-	if(changed)
-	{
-		target_p->tsinfo = newts;
-		monitor_signoff(target_p);
-	}
-
-	if(do_qjm)
-	{
-		sendto_common_channels_local_butone(target_p, ":%s!%s@%s QUIT :Signing %s (%s)",
-				target_p->name, target_p->username, target_p->host,
-				*login ? "in" : "out", nick);
-
-		DLINK_FOREACH_SAFE(ptr, next_ptr, target_p->user->channel.head)
-		{
-			mscptr = ptr->data;
-			chptr = mscptr->chptr;
-			mptr = mode;
-
-			if(is_chanop(mscptr))
-			{
-				*mptr++ = 'o';
-				strcat(modeval, nick);
-				strcat(modeval, " ");
-			}
-
-			if(is_voiced(mscptr))
-			{
-				*mptr++ = 'v';
-				strcat(modeval, nick);
-			}
-
-			*mptr = '\0';
-
-			sendto_channel_local_butone(target_p, ALL_MEMBERS, chptr, ":%s!%s@%s JOIN :%s",
-					nick, user, host, chptr->chname);
-			if(*mode)
-				sendto_channel_local_butone(target_p, ALL_MEMBERS, chptr,
-						":%s MODE %s +%s %s",
-						target_p->servptr->name,
-						chptr->chname, mode, modeval);
-		}
-
-		if(MyClient(target_p) && changed)
-			sendto_one(target_p, ":%s!%s@%s NICK %s",
-					target_p->name, target_p->username, target_p->host, nick);
-	}
-	else if(changed)
-	{
-		sendto_common_channels_local(target_p, ":%s!%s@%s NICK :%s",
-				target_p->name, target_p->username,
-				target_p->host, nick);
-	}
-
-	strcpy(target_p->username, user);
-	strcpy(target_p->host, host);
-	strcpy(target_p->user->suser, login);
-
-	if (changed)
-		add_history(target_p, 1);
-
 	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s SIGNON %s %s %s %ld %s",
 			use_id(target_p), nick, user, host,
 			(long) target_p->tsinfo, *login ? login : "0");
@@ -498,14 +429,7 @@ send_signon(struct Client *client_p, struct Client *target_p,
 			target_p->name, nick, user, host,
 			(long) target_p->tsinfo, *login ? login : "0");
 
-	del_from_client_hash(target_p->name, target_p);
-	strcpy(target_p->name, nick);
-	add_to_client_hash(target_p->name, target_p);
+	strcpy(target_p->user->suser, login);
 
-	if(changed)
-	{
-		monitor_signon(target_p);
-		del_all_accepts(target_p);
-	}
+	change_nick_user_host(target_p, nick, user, host, newts, "Signing %s (%s)", *login ?  "in" : "out", nick);
 }
-

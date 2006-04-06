@@ -16,7 +16,7 @@
 	</cmdsynopsis>
 	<para>
 	  Initiate a connection attempt to server <replaceable class=parameter>target</replaceable>. If a port is
-	  given, connect to that port on the target, otherwise use the one given in ircd.conf. If 
+	  given, connect to that port on the target, otherwise use the one given in <filename>ircd.conf</filename>. If 
 	  <replaceable class=parameter>source</replaceable> is given, tell that server to initiate the connection
 	  attempt, otherwise it will be made from the server you are attached to.
 	</para>
@@ -54,7 +54,7 @@
 	  <arg><replaceable>server</replaceable></arg>
 	</cmdsynopsis>
 	<para>
-	  With no parameter given, ircd.conf will be re-read and parsed.
+	  With no parameter given, <filename>ircd.conf</filename> will be reread and parsed.
 	  The server argument is a wildcard match of server names.
 	</para>
 	<variablelist>
@@ -62,13 +62,13 @@
 	  <varlistentry>
 	    <term>BANS</term>
 	    <listitem>
-	      <para>Re-reads kline.conf, dline.conf, resv.conf, xline.conf and their .perm variants</para>
+	      <para>Rereads <filename>kline.conf</filename>, <filename>dline.conf</filename>, <filename>xline.conf</filename>, <filename>resv.conf</filename> and their .perm variants</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
 	    <term>DNS</term>
 	    <listitem>
-	      <para>Re-read /etc/resolv.conf.</para>
+	      <para>Reread <filename>/etc/resolv.conf</filename>.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -86,35 +86,31 @@
 	  <varlistentry>
 	    <term>GLINES</term>
 	    <listitem>
-	      <para>Clears G-Lines.</para>
-	      <para>This option is being deprecated in Charybdis 
-                    1.1, as EFnet-style G:Line is being removed.</para>
+	      <para>Clears G:lines.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
 	    <term>PGLINES</term>
 	    <listitem>
-	      <para>Clears pending G-Lines.</para>
-	      <para>This option is being deprecated in Charybdis 
-                    1.1, as EFnet-style G:Line is being removed.</para>
+	      <para>Clears pending G:lines.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
 	    <term>TKLINES</term>
 	    <listitem>
-	      <para>Clears temporary K-Lines.</para>
+	      <para>Clears temporary K:lines.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
 	    <term>TDLINES</term>
 	    <listitem>
-	      <para>Clears temporary D-Lines.</para>
+	      <para>Clears temporary D:lines.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
 	    <term>TXLINES</term>
 	    <listitem>
-	      <para>Clears temporary X-Lines.</para>
+	      <para>Clears temporary X:lines.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -216,7 +212,7 @@
 	  <varlistentry>
 	    <term>SMALLNET</term>
 	    <listitem>
-	      <para>Sets the number of servers which are needed to constitute "attached to the network", as opposed to "split"</para>
+	      <para>Sets the number of servers which are needed to constitute <quote>attached to the network</quote>, as opposed to <quote>split</quote></para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -247,6 +243,9 @@
 	  Disconnects the user with the given nick from the server they are connected to,
 	  with the reason given, if present, and broadcast a server notice announcing this.
 	</para>
+	<para>
+	  Your nick and the reason will appear on channels.
+	</para>
       </sect2>
       <sect2>
 	<title>CLOSE</title>
@@ -267,7 +266,7 @@
 	  <arg>:<replaceable>reason</replaceable></arg>
 	</cmdsynopsis>
 	<para>
-	  Add a K:line to the local server config file to ban the given user@host from using that
+	  Adds a K:line to <filename>kline.conf</filename> to ban the given user@host from using that
 	  server.
 	</para>
 	<para>
@@ -302,7 +301,7 @@
 	  <arg>ON <replaceable>servername</replaceable></arg>
 	</cmdsynopsis>
 	<para>
-	  Will attempt to remove a K:line matching user@host from kline.conf, and will flush
+	  Will attempt to remove a K:line matching user@host from <filename>kline.conf</filename>, and will flush
 	  a temporary K:line.
 	</para>
       </sect2>
@@ -330,24 +329,24 @@
 	</para>
 	<para>
 	  The reason is never sent to users. Instead, they will be exited
-	  with "Bad user info".
+	  with <quote>Bad user info</quote>.
 	</para>
 	<para>
 	  If the ON part is specified, the X:line is set on servers matching
 	  the given mask (provided a matching shared{} block exists there).
-	  Otherwise, if specified in a cluster{} block, the X:Line will be
+	  Otherwise, if specified in a cluster{} block, the X:line will be
 	  propagated across the network accordingly.
 	</para>
       </sect2>
       <sect2>
 	<title>UNXLINE</title>
 	<cmdsynopsis>
-	  <command>UNKLINE</command>
+	  <command>UNXLINE</command>
 	  <arg choice=plain><replaceable>mask</replaceable></arg>
 	  <arg>ON <replaceable>servername</replaceable></arg>
 	</cmdsynopsis>
 	<para>
-	  Will attempt to remove an X:line from xline.conf, and will flush
+	  Will attempt to remove an X:line from <filename>xline.conf</filename>, and will flush
 	  a temporary X:line.
 	</para>
       </sect2>
@@ -403,7 +402,7 @@
 	  <arg>ON <replaceable>servername</replaceable></arg>
 	</cmdsynopsis>
 	<para>
-	  Will attempt to remove a resv from resv.conf, and will flush
+	  Will attempt to remove a resv from <filename>resv.conf</filename>, and will flush
 	  a temporary resv.
 	</para>
       </sect2>
@@ -416,7 +415,7 @@
 	  <arg>:<replaceable>reason</replaceable></arg>
 	</cmdsynopsis>
 	<para>
-	  Add a D:line to the config files, which will deny any connections
+	  Adds a D:line to <filename>dline.conf</filename>, which will deny any connections
 	  from the given IP address.
 	</para>
 	<para>
@@ -449,7 +448,7 @@
 	  <arg choice=plain><replaceable>a.b.c.d</replaceable></arg>
 	</cmdsynopsis>
 	<para>
-	  Will attempt to remove a D:line from dline.conf, and will flush
+	  Will attempt to remove a D:line from <filename>dline.conf</filename>, and will flush
 	  a temporary D:line.
 	</para>
       </sect2>
@@ -553,6 +552,11 @@
 	  The <replaceable>gecos</replaceable> field accepts the same wildcards
 	  as xlines.
 	</para>
+	<para>
+	  The IP address field contains 255.255.255.255 if the IP address
+	  is unknown (remote client on a TS5 server) or 0 if the IP address
+	  is hidden (auth{} spoof).
+	</para>
       </sect2>
       <sect2>
         <title>CHANTRACE</title>
@@ -565,6 +569,42 @@
 	  Opers with the oper_spy privilege
 	  can get the information without being on the channel,
 	  by prefixing the channel name with an '!'.
+        </para>
+	<para>
+	  The IP address field contains 255.255.255.255 if the IP address
+	  is unknown (remote client on a TS5 server) or 0 if the IP address
+	  is hidden (auth{} spoof).
+	</para>
+      </sect2>
+      <sect2>
+        <title>SCAN</title>
+        <cmdsynopsis>
+          <command>SCAN UMODES</command>
+          <arg choice=plain>+<replaceable>modes</replaceable>-<replaceable>modes</replaceable></arg>
+	  <arg>no-list</arg>
+	  <arg>list</arg>
+	  <arg>global</arg>
+	  <arg>list-max <replaceable>number</replaceable></arg>
+	  <arg>mask <replaceable>nick!user@host</replaceable></arg>
+        </cmdsynopsis>
+        <para>
+          Searches the local server or network for users that have the umodes given with + and do not have the umodes given with -.
+          no-list disables the listing of matching users and only shows the count.
+	  list enables the listing (default).
+	  global extends the search to the entire network instead of local users only.
+	  list-max limits the listing of matching users to the given amount.
+	  mask causes only users matching the given nick!user@host mask
+	  to be selected. Only the displayed host is considered, not the
+	  IP address or real host behind dynamic spoofs.
+	</para>
+	<para>
+	  The IP address field contains 255.255.255.255 if the IP address
+	  is unknown (remote client on a TS5 server) or 0 if the IP address
+	  is hidden (auth{} spoof).
+	</para>
+	<para>
+	  Network searches where a listing is given or the mask option is used
+	  are operspy commands.
         </para>
       </sect2>
       <sect2>
@@ -697,6 +737,12 @@
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
+	    <term>E</term>
+	    <listitem>
+	      <para>Show events</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
 	    <term>f</term>
 	    <listitem>
 	      <para>Show file descriptors</para>
@@ -723,7 +769,7 @@
 	  <varlistentry>
 	    <term>i</term>
 	    <listitem>
-	      <para>Show auth blocks</para>
+	      <para>Show auth blocks, or matched auth blocks</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -739,21 +785,21 @@
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>L</term>
-	    <listitem>
-	      <para>Show IP and generic information about the given nick</para>
-	    </listitem>
-	  </varlistentry>
-	  <varlistentry>
 	    <term>l</term>
 	    <listitem>
 	      <para>Show hostname and generic information about the given nick</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
+	    <term>L</term>
+	    <listitem>
+	      <para>Show IP and generic information about the given nick</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
 	    <term>m</term>
 	    <listitem>
-	      <para>Show commands and their usage statistics</para>
+	      <para>Show commands and their usage statistics (total counts, total bytes, counts from server connections)</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -823,7 +869,7 @@
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>x</term>
+	    <term>X</term>
 	    <listitem>
 	      <para>Show permanent X:lines</para>
 	    </listitem>

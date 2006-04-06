@@ -4,6 +4,7 @@
 <!ENTITY umodes SYSTEM "umodes.sgml">
 <!ENTITY snomasks SYSTEM "snomasks.sgml">
 <!ENTITY cmodes SYSTEM "cmodes.sgml">
+<!ENTITY ucommands SYSTEM "ucommands.sgml">
 <!ENTITY commands SYSTEM "commands.sgml">
 <!ENTITY config SYSTEM "config.sgml">
 ]>
@@ -34,6 +35,7 @@
   &umodes;
   &snomasks;
   &cmodes;
+  &ucommands;
   &commands;
   &config;
 </book>

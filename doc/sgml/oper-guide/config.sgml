@@ -7,9 +7,11 @@
 	of values inside it which pertain to configuration settings that apply to the given block.
       </para>
       <para>
-	A line may also be a #include directive, which is of the form <synopsis>#include "<replaceable>file</replaceable>"</synopsis>
+	A line may also be a .include directive, which is of the form <synopsis>.include "<replaceable>file</replaceable>"</synopsis>
 	and causes <replaceable>file</replaceable> to be read in at that point, before the rest of the current file is
 	processed.
+	Relative paths are first tried relative to PREFIX and then relative
+	to ETCPATH (normally PREFIX/etc).
       </para>
       <para>
 	Anything from a # to the end of a line is a comment. Blank lines are ignored. C-style comments are also supported.

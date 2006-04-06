@@ -31,21 +31,21 @@
     <sect1 id="snomasklist">
       <title>Meanings of server notice masks</title>
       <sect2>
-	<title>+b, see bot warnings</title>
+	<title>+b, bot warnings</title>
 	<para>
 	  Opers with the +b snomask set will receive warning messages from the server when potential
 	  flooders and spambots are detected.
 	</para>
       </sect2>
       <sect2>
-	<title>+c, see client connections</title>
+	<title>+c, client connections</title>
 	<para>
 	  Opers who have the +c snomask set will receive server notices when clients attach to the
 	  local server.
 	</para>
       </sect2>
       <sect2>
-	<title>+C, see extended client connection notices</title>
+	<title>+C, extended client connection notices</title>
 	<para>
 	  Opers who have the +C snomask set will receive server notices when clients attach to the
 	  local server. Unlike the +c snomask, the information is displayed in a format intended
@@ -108,24 +108,26 @@
 	</para>
       </sect2>
       <sect2>
-	<title>+x, see servers joining</title>
+	<title>+x, extra routing notices</title>
 	<para>
 	  Opers who have the +x snomask set will get notices about servers
 	  connecting and disconnecting on the whole network. This includes
-	  all servers connected behind the affected link.
+	  all servers connected behind the affected link. This can get
+	  rather noisy but is useful for keeping track of all linked
+	  servers.
 	</para>
       </sect2>
       <sect2>
 	<title>+y, spy</title>
 	<para>
-	  Opers with +y receive notices when users try to join RESV'ed ("juped") channels. 
+	  Opers with +y receive notices when users try to join RESV'ed (<quote>juped</quote>) channels. 
 	  Additionally, if certain contrib modules are loaded, they will
 	  receive notices when special commands are used and/or when they
 	  are whoised.
 	</para>
       </sect2>
       <sect2>
-	<title>+Z, see operspy notices</title>
+	<title>+Z, operspy notices</title>
 	<para>
 	  Opers with +Z receive notices whenever an oper anywhere on the
 	  network uses operspy.

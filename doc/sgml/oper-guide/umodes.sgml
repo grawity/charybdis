@@ -1,13 +1,32 @@
   <chapter id="umodes">
     <title>Umodes</title>
     <sect1 id="umodelist">
-      <title>Meanings of umodes</title>
+      <title>Meanings of user modes</title>
       <sect2>
 	<title>+a, server administrator</title>
 	<para>
 	  This vanity usermode is used to denote a server administrator in WHOIS output.
-	  All local "admin" privileges are independent of it, though services
+	  All local <quote>admin</quote> privileges are independent of it, though services
 	  packages may grant extra privileges to +a users.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+D, deaf</title>
+	<para>
+	  <note>
+	    <para>
+	      This is a user umode, which anybody can set. It is not specific to operators.
+	    </para>
+	  </note>
+	  Users with the +D umode set will not receive messages sent to
+	  channels. Joins, parts, topic changes, mode changes, etc are
+	  received as normal, as are private messages.
+	</para>
+	<para>
+	  Support of this umode is indicated by the DEAF token in
+	  RPL_ISUPPORT (005); the parameter indicates the letter
+	  of the umode. Note that several common IRCD implementations have
+	  an umode like this (typically +d) but do not have the token in 005.
 	</para>
       </sect2>
       <sect2>
@@ -19,13 +38,18 @@
 	    </para>
 	  </note>
 	  Users with the +g umode set will only receive private messages from users on a
-	  session-defined whitelist, defined by the /accept command. If the user is not
-	  on a whitelist, then the target user will receive a rate-limited notice saying that the user
+	  session-defined whitelist, defined by the /accept command. If a user who is not
+	  on the whitelist attempts to send a private message, the target user will receive a rate-limited notice saying that the user
 	  wishes to speak to them.
 	</para>
 	<para>
 	  Network operators are not affected by the callerid whitelist system in the event
 	  that they need to speak to users who have it enabled.
+	</para>
+	<para>
+	  Support of this umode is indicated by the CALLERID token in
+	  RPL_ISUPPORT (005); the optional parameter indicates the letter
+	  of the umode, otherwise +g.
 	</para>
       </sect2>
       <sect2>
@@ -74,7 +98,7 @@
 	</para>
       </sect2>
       <sect2>
-	<title>+Q, block forwarding</title>
+	<title>+Q, disable forwarding</title>
 	<para>
 	  <note>
 	    <para>
@@ -104,7 +128,7 @@
 	</para>
       </sect2>
       <sect2>
-	<title>+s, server notices</title>
+	<title>+s, receive server notices</title>
 	<para>
 	  This umode allows an oper to receive server notices.
 	  The requested types of server notices are specified as a

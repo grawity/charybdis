@@ -1,3 +1,152 @@
+nenolod     2006/04/06 02:24:59 UTC	(20060406-1140)
+  Log:
+  - really squash that warning
+  
+
+  Changes:	Modified:
+  +1 -1		branches/release-1.1/include/s_user.h (File Modified) 
+  +1 -1		branches/release-1.1/modules/m_chghost.c (File Modified) 
+  +2 -2		branches/release-1.1/src/s_user.c (File Modified) 
+
+
+nenolod     2006/04/06 02:22:36 UTC	(20060406-1138)
+  Log:
+  - cast static string as const char
+  
+
+  Changes:	Modified:
+  +1 -1		branches/release-1.1/modules/m_chghost.c (File Modified) 
+
+
+nenolod     2006/04/06 02:20:27 UTC	(20060406-1136)
+  Log:
+  - fix warning
+  
+
+  Changes:	Modified:
+  +1 -0		branches/release-1.1/modules/m_chghost.c (File Modified) 
+
+
+nenolod     2006/04/06 02:19:12 UTC	(20060406-1134)
+  Log:
+  - fix a QJM bug
+  
+
+  Changes:	Modified:
+  +2 -0		branches/release-1.1/src/s_user.c (File Modified) 
+
+
+nenolod     2006/04/05 20:23:51 UTC	(20060405-1132)
+  Log:
+  - update NEWS
+  
+
+  Changes:	Modified:
+  +15 -5	branches/release-1.1/NEWS (File Modified) 
+
+
+gxti        2006/04/03 02:21:15 UTC	(20060403-1130)
+  Log:
+  Backport trunk r926:
+  Relocate QJM code to a seperate function(change_nick_user_host)
+  Change CHGHOST to use change_nick_user_host instead of just setting it
+  
+
+  Changes:	Modified:
+  +3 -0		branches/release-1.1/include/s_user.h (File Modified) 
+  +1 -1		branches/release-1.1/modules/m_chghost.c (File Modified) 
+  +3 -79	branches/release-1.1/modules/m_signon.c (File Modified) 
+  +89 -0	branches/release-1.1/src/s_user.c (File Modified) 
+
+
+jilles      2006/04/02 23:37:39 UTC	(20060402-1128)
+  Log:
+  Backport sgml documentation changes from trunk: r1033 till r1100.
+  
+
+  Changes:	Modified:
+  +2 -0		branches/release-1.1/doc/sgml/oper-guide/charybdis-oper-guide.sgml (File Modified) 
+  +14 -2	branches/release-1.1/doc/sgml/oper-guide/cmodes.sgml (File Modified) 
+  +35 -30	branches/release-1.1/doc/sgml/oper-guide/commands.sgml (File Modified) 
+  +3 -1		branches/release-1.1/doc/sgml/oper-guide/config.sgml (File Modified) 
+  +188 -7	branches/release-1.1/doc/sgml/oper-guide/snomasks.sgml (File Modified) 
+  + -		branches/release-1.1/doc/sgml/oper-guide/ucommands.sgml (File Added) 
+  +30 -6	branches/release-1.1/doc/sgml/oper-guide/umodes.sgml (File Modified) 
+
+
+nenolod     2006/04/02 08:42:13 UTC	(20060402-1124)
+  Log:
+  - version bump: 1.1.2
+  
+
+  Changes:	Modified:
+  +9 -9		branches/release-1.1/configure (File Modified) 
+  +1 -1		branches/release-1.1/configure.ac (File Modified) 
+
+
+gxti        2006/04/02 08:30:48 UTC	(20060402-1120)
+  Log:
+  Backport: Fix wierd error that would exit SASL users with "Overridden"
+
+  Changes:	Modified:
+  +1 -1		branches/release-1.1/modules/m_signon.c (File Modified) 
+
+
+jilles      2006/03/29 17:47:58 UTC	(20060329-1104)
+  Log:
+  Make this compile on ratbox 2.2 as well, due to demand.
+  
+
+  Changes:	Modified:
+  +13 -3	branches/release-1.1/modules/m_sshortcut.c (File Modified) 
+
+
+jilles      2006/03/17 15:16:46 UTC	(20060317-1078)
+  Log:
+  Backport trunk r1074:
+  Port over RATBOX_2_1 r20960 (anfl):
+  client connect notices to +C should be hiding the extra
+  fields for spoofed users
+  
+
+  Changes:	Modified:
+  +2 -1		branches/release-1.1/src/s_user.c (File Modified) 
+
+
+jilles      2006/03/12 17:00:15 UTC	(20060312-1048)
+  Log:
+  Backport trunk r1044:
+  User /quote help index was not sorted properly.
+  
+
+  Changes:	Modified:
+  +2 -2		branches/release-1.1/help/Makefile.in (File Modified) 
+  +8 -8		branches/release-1.1/help/users/index (File Modified) 
+
+
+jilles      2006/03/12 16:02:13 UTC	(20060312-1042)
+  Log:
+  Backport trunk r1038:
+  Add SCAN help file.
+  
+
+  Changes:	Modified:
+  +25 -8	branches/release-1.1/help/opers/index (File Modified) 
+  + -		branches/release-1.1/help/opers/scan (File Added) 
+
+
+jilles      2006/03/12 15:33:32 UTC	(20060312-1036)
+  Log:
+  Backport trunk r1032:
+  SGML docs:
+  - Document SCAN UMODES
+  - Add details about the IP address field in MASKTRACE/CHANTRACE/SCAN UMODES
+  
+
+  Changes:	Modified:
+  +41 -0	branches/release-1.1/doc/sgml/oper-guide/commands.sgml (File Modified) 
+
+
 nenolod     2006/03/10 15:12:44 UTC	(20060310-1026)
   Log:
   - Add copyright information to /info and cleanup some formatting

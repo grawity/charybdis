@@ -1,5 +1,15 @@
-This is charybdis 1.1.1, Copyright (c) 2005-2006 Charybdis team.
+This is charybdis 1.1.2, Copyright (c) 2005-2006 Charybdis team.
 See LICENSE for licensing details (GPL v2).
+
+-- charybdis-1.1.2
+
+- Fix a bug where SVSLOGIN'd users could be overridden if they have not
+  signed onto the network yet when using SASL.
+- Backport QJM code from charybdis 1.2/2.0 (and use it in m_chghost.c)
+- Add a helpfile for the SCAN opercommand.
+- Hide IP addresses in connection notices for users who have been spoofed
+  via an i:line.
+- Updates to SGML documentation.
 
 -- charybdis-1.1.1
 
@@ -240,19 +250,19 @@ See LICENSE for licensing details (GPL v2).
 BUGS: Major bugs in this release are listed in BUGS
 
 BUG REPORTS: If you run this code and encounter problems, you must report
-the bug by EMAIL to ircd-ratbox@lists.ratbox.org
+the bug by EMAIL to athemenet-coders@lists.atheme.net.
 
 Please include a gdb backtrace and keep the core file, binaries and 
 modules in case the developers need them.
 
 DISCUSSION: There is a mailing list for discussion of ratbox issues,
- To subscribe, visit:
-      http://lists.ratbox.org/cgi-bin/mailman/listinfo/ircd-ratbox
+To subscribe, visit:
+  http://lists.atheme.net/mailman/listinfo/athemenet-coders_lists.atheme.net
 
-You may also (if youre lucky) find us on #ratbox@EFNet
+You may also (if youre lucky) find us on #charybdis @ AthemeNET
 
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 1018 2006-03-09 23:54:48Z jilles $
+$Id: NEWS 1132 2006-04-05 20:23:51Z nenolod $
 

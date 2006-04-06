@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.h 278 2005-10-02 21:28:23Z nenolod $
+ *  $Id: s_user.h 1140 2006-04-06 02:24:59Z nenolod $
  */
 
 #ifndef INCLUDED_s_user_h
@@ -45,6 +45,9 @@ extern int register_local_user(struct Client *, struct Client *, const char *);
 
 extern int introduce_client(struct Client *client_p, struct Client *source_p, 
 			    struct User *user, const char *nick);
+
+extern void change_nick_user_host(struct Client *target_p, const char *nick, const char *user,
+				  const char *host, int newts, const char *format, ...);
 
 extern int user_modes[256];
 extern void show_isupport(struct Client *);

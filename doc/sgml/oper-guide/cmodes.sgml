@@ -1,7 +1,7 @@
   <chapter id="cmodes">
     <title>Cmodes</title>
     <sect1>
-      <title>Meanings of cmodes</title>
+      <title>Meanings of channel modes</title>
       <sect2>
 	<title>+b, channel ban</title>
 	<para>
@@ -57,6 +57,10 @@
           Forwards may only be set to +F channels, or to channels the setter
           has ops in.
         </para>
+	<para>
+	  Without parameter (/mode #channel f or /mode #channel +f) the
+	  forward channel is returned. This form also works off channel.
+	</para>
       </sect2>
       <sect2>
 	<title>+F, allow anybody to forward to this</title>
@@ -98,8 +102,12 @@
       <sect2>
         <title>+j, join throttling</title>
         <para>
-          This mode takes one parameter of the form "n:t", where n and t are positive integers. Only n users may join in each period of t seconds.
+          This mode takes one parameter of the form <replaceable>n</replaceable>:<replaceable>t</replaceable>, where <replaceable>n</replaceable> and <replaceable>t</replaceable> are positive integers. Only <replaceable>n</replaceable> users may join in each period of <replaceable>t</replaceable> seconds.
         </para>
+	<para>
+	  Due to propagation delays between servers, more users may be
+	  able to join (by racing for the last slot on each server).
+	</para>
       </sect2>
       <sect2>
 	<title>+k, key (channel password)</title>
@@ -113,6 +121,10 @@
 	<para>
 	  Takes one numeric parameter, the number of users which are allowed to be in the channel before
 	  further joins are blocked.
+	</para>
+	<para>
+	  Due to propagation delays between servers, more users may be
+	  able to join (by racing for the last slot on each server).
 	</para>
       </sect2>
       <sect2>

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 796 2006-02-12 17:31:44Z jilles $
+ *  $Id: s_user.c 1140 2006-04-06 02:24:59Z nenolod $
  */
 
 #include "stdinc.h"
@@ -483,7 +483,8 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 			source_p->name, source_p->username, source_p->orighost,
 			show_ip(NULL, source_p) ? ipaddr : "255.255.255.255",
 			get_client_class(source_p),
-			source_p->localClient->fullcaps,
+			/* mirc can sometimes send ips here */
+			show_ip(NULL, source_p) ? source_p->localClient->fullcaps : "<hidden> <hidden>",
 			source_p->info);
 
 	/* If they have died in send_* don't do anything. */
@@ -1301,4 +1302,95 @@ construct_umodebuf(void)
 			*ptr++ = (char) i;
 
 	*ptr++ = '\0';
+}
+
+void
+change_nick_user_host(struct Client *target_p, const char *nick, const char *user,
+		      const char *host, int newts, const char *format, ...)
+{
+	dlink_node *ptr;
+	struct Channel *chptr;
+	struct membership *mscptr;
+	int changed = irccmp(target_p->name, nick);
+	int changed_case = strcmp(target_p->name, nick);
+	int do_qjm = irccmp(target_p->username, user) || irccmp(target_p->host, host);
+	char mode[10], modeval[NICKLEN * 2 + 2], reason[256], *mptr;
+	va_list ap;
+
+	modeval[0] = '\0';
+	
+	if(changed)
+	{
+		target_p->tsinfo = newts;
+		monitor_signoff(target_p);
+	}
+
+	if(do_qjm)
+	{
+		va_start(ap, format);
+		vsnprintf(reason, 255, format, ap);
+		va_end(ap);
+
+		sendto_common_channels_local_butone(target_p, ":%s!%s@%s QUIT :%s",
+				target_p->name, target_p->username, target_p->host,
+				reason);
+
+		DLINK_FOREACH(ptr, target_p->user->channel.head)
+		{
+			mscptr = ptr->data;
+			chptr = mscptr->chptr;
+			mptr = mode;
+
+			if(is_chanop(mscptr))
+			{
+				*mptr++ = 'o';
+				strcat(modeval, nick);
+				strcat(modeval, " ");
+			}
+
+			if(is_voiced(mscptr))
+			{
+				*mptr++ = 'v';
+				strcat(modeval, nick);
+			}
+
+			*mptr = '\0';
+
+			sendto_channel_local_butone(target_p, ALL_MEMBERS, chptr, ":%s!%s@%s JOIN :%s",
+					nick, user, host, chptr->chname);
+			if(*mode)
+				sendto_channel_local_butone(target_p, ALL_MEMBERS, chptr,
+						":%s MODE %s +%s %s",
+						target_p->servptr->name,
+						chptr->chname, mode, modeval);
+
+			*modeval = '\0';
+		}
+
+		if(MyClient(target_p) && changed_case)
+			sendto_one(target_p, ":%s!%s@%s NICK %s",
+					target_p->name, target_p->username, target_p->host, nick);
+	}
+	else if(changed_case)
+	{
+		sendto_common_channels_local(target_p, ":%s!%s@%s NICK :%s",
+				target_p->name, target_p->username,
+				target_p->host, nick);
+	}
+
+	strcpy(target_p->username, user);
+	strcpy(target_p->host, host);
+
+	if (changed)
+		add_history(target_p, 1);
+
+	del_from_client_hash(target_p->name, target_p);
+	strcpy(target_p->name, nick);
+	add_to_client_hash(target_p->name, target_p);
+
+	if(changed)
+	{
+		monitor_signon(target_p);
+		del_all_accepts(target_p);
+	}
 }
