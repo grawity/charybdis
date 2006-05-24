@@ -26,7 +26,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_sasl.c 742 2006-02-09 02:44:48Z gxti $
+ * $Id: m_sasl.c 1429 2006-05-23 17:14:15Z jilles $
  */
 
 #include "stdinc.h"
@@ -38,6 +38,7 @@
 #include "modules.h"
 #include "numeric.h"
 #include "s_serv.h"
+#include "s_stats.h"
 #include "string.h"
 
 static int mr_authenticate(struct Client *, struct Client *, int, const char **);
@@ -64,7 +65,7 @@ mapi_hfn_list_av1 sasl_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(sasl, NULL, NULL, sasl_clist, NULL, sasl_hfnlist, "$Revision: 742 $");
+DECLARE_MODULE_AV1(sasl, NULL, NULL, sasl_clist, NULL, sasl_hfnlist, "$Revision: 1429 $");
 
 static int
 mr_authenticate(struct Client *client_p, struct Client *source_p,
@@ -75,6 +76,12 @@ mr_authenticate(struct Client *client_p, struct Client *source_p,
 	/* They really should use CAP for their own sake. */
 	if(!IsCapable(source_p, CLICAP_SASL))
 		return 0;
+
+	if (strlen(client_p->id) == 3)
+	{
+		exit_client(client_p, client_p, client_p, "Mixing client and server protocol");
+		return 0;
+	}
 
 	if(source_p->preClient->sasl_complete)
 	{
@@ -127,25 +134,34 @@ me_sasl(struct Client *client_p, struct Client *source_p,
 	if(target_p->preClient == NULL)
 		return 0;
 
+	if((agent_p = find_id(parv[1])) == NULL)
+		return 0;
+
+	if(source_p != agent_p->servptr) /* WTF?! */
+		return 0;
+
 	/* Reject if someone has already answered. */
 	if(*target_p->preClient->sasl_agent && strncmp(parv[1], target_p->preClient->sasl_agent, IDLEN))
 		return 0;
 	else if(!*target_p->preClient->sasl_agent)
-	{
-		if((agent_p = find_id(parv[1])) == NULL)
-			return 0;
 		strlcpy(target_p->preClient->sasl_agent, parv[1], IDLEN);
-	}
+
+	/* We only accept messages from SASL agents; these must have umode +S
+	 * (so the server must be listed in a service{} block).
+	 */
+	if(!IsService(agent_p))
+		return 0;
 
 	if(*parv[3] == 'C')
 		sendto_one(target_p, "AUTHENTICATE %s", parv[4]);
 	else if(*parv[3] == 'D')
 	{
 		if(*parv[4] == 'F')
-			sendto_one(target_p, form_str(ERR_SASLFAIL), me.name, EmptyString(source_p->name) ? "*" : source_p->name);
+			sendto_one(target_p, form_str(ERR_SASLFAIL), me.name, EmptyString(target_p->name) ? "*" : target_p->name);
 		else if(*parv[4] == 'S') {
-			sendto_one(target_p, form_str(RPL_SASLSUCCESS), me.name, EmptyString(source_p->name) ? "*" : source_p->name);
+			sendto_one(target_p, form_str(RPL_SASLSUCCESS), me.name, EmptyString(target_p->name) ? "*" : target_p->name);
 			target_p->preClient->sasl_complete = 1;
+			ServerStats->is_ssuc++;
 		}
 		*target_p->preClient->sasl_agent = '\0'; /* Blank the stored agent so someone else can answer */
 	}
@@ -163,6 +179,7 @@ abort_sasl(struct Client *data)
 		return;
 
 	data->preClient->sasl_out = data->preClient->sasl_complete = 0;
+	ServerStats->is_sbad++;
 
 	if(!IsClosing(data))
 		sendto_one(data, form_str(ERR_SASLABORTED), me.name, EmptyString(data->name) ? "*" : data->name);

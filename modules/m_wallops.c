@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_wallops.c 254 2005-09-21 23:35:12Z nenolod $
+ *  $Id: m_wallops.c 1397 2006-05-20 19:48:12Z jilles $
  */
 
 #include "stdinc.h"
@@ -52,7 +52,7 @@ struct Message operwall_msgtab = {
 };
 
 mapi_clist_av1 wallops_clist[] = { &wallops_msgtab, &operwall_msgtab, NULL };
-DECLARE_MODULE_AV1(wallops, NULL, NULL, wallops_clist, NULL, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV1(wallops, NULL, NULL, wallops_clist, NULL, NULL, "$Revision: 1397 $");
 
 /*
  * mo_operwall (write to *all* opers currently online)
@@ -102,7 +102,17 @@ ms_operwall(struct Client *client_p, struct Client *source_p, int parc, const ch
 static int
 ms_wallops(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	sendto_wallops_flags(UMODE_WALLOP, source_p, "%s", parv[1]);
+	const char *prefix = "";
+
+	if (IsPerson(source_p))
+	{
+		if (!strncmp(parv[1], "OPERWALL - ", 11) ||
+				!strncmp(parv[1], "LOCOPS - ", 9) ||
+				!strncmp(parv[1], "SLOCOPS - ", 10))
+			prefix = "WALLOPS - ";
+	}
+
+	sendto_wallops_flags(UMODE_WALLOP, source_p, "%s%s", prefix, parv[1]);
 
 	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s WALLOPS :%s", 
 		      use_id(source_p), parv[1]);

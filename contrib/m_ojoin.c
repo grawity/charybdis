@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_ojoin.c 6 2005-09-10 01:02:21Z nenolod $
+ *   $Id: m_ojoin.c 1361 2006-05-18 17:56:57Z jilles $
  */
 
 #include "stdinc.h"
@@ -48,7 +48,7 @@ struct Message ojoin_msgtab = {
 
 mapi_clist_av1 ojoin_clist[] = { &ojoin_msgtab, NULL };
 
-DECLARE_MODULE_AV1(ojoin, NULL, NULL, ojoin_clist, NULL, NULL, "$Revision: 6 $");
+DECLARE_MODULE_AV1(ojoin, NULL, NULL, ojoin_clist, NULL, NULL, "$Revision: 1361 $");
 
 /*
 ** mo_ojoin
@@ -67,9 +67,6 @@ mo_ojoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "ojoin");
 		return 0;
 	}
-
-	/* XXX - we might not have CBURSTed this channel if we are a lazylink
-	 * yet. */
 
 	if(*parv[1] == '@' || *parv[1] == '%' || *parv[1] == '+')
 	{
@@ -93,6 +90,17 @@ mo_ojoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	if(move_me == 1)
 		parv[1]--;
+
+	sendto_wallops_flags(UMODE_WALLOP, &me,
+			     "OJOIN called for %s by %s!%s@%s",
+			     parv[1], source_p->name, source_p->username, source_p->host);
+	ilog(L_MAIN, "OJOIN called for %s by %s!%s@%s",
+	     parv[1], source_p->name, source_p->username, source_p->host);
+	/* only sends stuff for #channels remotely */
+	sendto_server(NULL, chptr, NOCAPS, NOCAPS,
+			":%s WALLOPS :OJOIN called for %s by %s!%s@%s",
+			me.name, parv[1],
+			source_p->name, source_p->username, source_p->host);
 
 	if(*parv[1] == '@')
 	{

@@ -9,9 +9,12 @@
 	  The wildcards * and ? are allowed, matching zero-or-more, and
 	  exactly-one characters respectively. The masks will be trimmed to fit the maximum allowable
 	  length for the relevant element.
-	  Bans are also checked against the IP address, even if it resolved.
+	  Bans are also checked against the IP address, even if it resolved or
+	  is spoofed.
 	  CIDR is supported, like *!*@10.0.0.0/8. This is most useful with
 	  IPv6.
+	  Bans are not checked against the real hostname behind any kind
+	  of spoof.
 	</para>
 	<para>
 	  If no parameter is given, the list of bans is returned. All users

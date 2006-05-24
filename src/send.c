@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: send.c 746 2006-02-11 16:59:13Z jilles $
+ *  $Id: send.c 1399 2006-05-20 19:52:54Z jilles $
  */
 
 #include "stdinc.h"
@@ -1148,13 +1148,9 @@ sendto_wallops_flags(int flags, struct Client *source_p, const char *pattern, ..
 
 	va_end(args);
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
+	DLINK_FOREACH_SAFE(ptr, next_ptr, IsPerson(source_p) && flags == UMODE_WALLOP ? lclient_list.head : local_oper_list.head)
 	{
 		client_p = ptr->data;
-
-		if((flags == UMODE_OPERWALL || !IsPerson(source_p)) && 
-			!IsOper(client_p))
-			continue;
 
 		if(client_p->umodes & flags)
 			_send_linebuf(client_p, &linebuf);

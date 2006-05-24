@@ -30,7 +30,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_list_safelist.c 734 2006-02-08 23:45:23Z jilles $
+ * $Id: m_list_safelist.c 1403 2006-05-20 19:54:40Z jilles $
  */
 
 #include "stdinc.h"
@@ -77,7 +77,7 @@ mapi_hfn_list_av1 list_hfnlist[] = {
 	{NULL, NULL}
 };
 
-DECLARE_MODULE_AV1(list, _modinit, _moddeinit, list_clist, NULL, list_hfnlist, "$Revision: 734 $");
+DECLARE_MODULE_AV1(list, _modinit, _moddeinit, list_clist, NULL, list_hfnlist, "$Revision: 1403 $");
 
 static int _modinit(void)
 {
@@ -113,15 +113,26 @@ static int m_list(struct Client *client_p, struct Client *source_p, int parc, co
 {
 	static time_t last_used = 0L;
 
-	/* pace this due to the sheer traffic involved */
-	if (((last_used + ConfigFileEntry.pace_wait) > CurrentTime))
+	if (source_p->localClient->safelist_data != NULL)
 	{
-		sendto_one(source_p, form_str(RPL_LOAD2HI), me.name, source_p->name, "LIST");
+		sendto_one_notice(source_p, ":/LIST aborted");
 		sendto_one(source_p, form_str(RPL_LISTEND), me.name, source_p->name);
+		safelist_client_release(source_p);
 		return 0;
 	}
-	else
-		last_used = CurrentTime;
+
+	if (parc < 2 || !IsChannelName(parv[1]))
+	{
+		/* pace this due to the sheer traffic involved */
+		if (((last_used + ConfigFileEntry.pace_wait) > CurrentTime))
+		{
+			sendto_one(source_p, form_str(RPL_LOAD2HI), me.name, source_p->name, "LIST");
+			sendto_one(source_p, form_str(RPL_LISTEND), me.name, source_p->name);
+			return 0;
+		}
+		else
+			last_used = CurrentTime;
+	}
 
 	return mo_list(client_p, source_p, parc, parv);
 }
@@ -135,6 +146,14 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
 	struct ListClient params;
 	char *p, *args;
 	int i;
+
+	if (source_p->localClient->safelist_data != NULL)
+	{
+		sendto_one_notice(source_p, ":/LIST aborted");
+		sendto_one(source_p, form_str(RPL_LISTEND), me.name, source_p->name);
+		safelist_client_release(source_p);
+		return 0;
+	}
 
 	/* XXX rather arbitrary -- jilles */
 	params.users_min = 3;

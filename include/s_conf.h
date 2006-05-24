@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h 796 2006-02-12 17:31:44Z jilles $
+ *  $Id: s_conf.h 1168 2006-04-17 05:18:17Z gxti $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -114,14 +114,15 @@ struct ConfItem
 #define CONF_FLAGS_EXEMPTSPAMBOT	0x00008000
 #define CONF_FLAGS_EXEMPTSHIDE		0x00010000
 #define CONF_FLAGS_EXEMPTJUPE		0x00020000	/* exempt from resv generating warnings */
+#define CONF_FLAGS_NEED_SASL		0x00040000
 /* server flags */
-#define CONF_FLAGS_ALLOW_AUTO_CONN      0x00040000
-#define CONF_FLAGS_LAZY_LINK            0x00080000
-#define CONF_FLAGS_ENCRYPTED            0x00100000
-#define CONF_FLAGS_COMPRESSED           0x00200000
-#define CONF_FLAGS_TEMPORARY            0x00400000
-#define CONF_FLAGS_TB			0x00800000
-#define CONF_FLAGS_VHOSTED		0x01000000
+#define CONF_FLAGS_ALLOW_AUTO_CONN      0x00080000
+#define CONF_FLAGS_LAZY_LINK            0x00100000
+#define CONF_FLAGS_ENCRYPTED            0x00200000
+#define CONF_FLAGS_COMPRESSED           0x00400000
+#define CONF_FLAGS_TEMPORARY            0x00800000
+#define CONF_FLAGS_TB			0x01000000
+#define CONF_FLAGS_VHOSTED		0x02000000
 
 
 /* Macros for struct ConfItem */
@@ -146,6 +147,7 @@ struct ConfItem
 #define IsConfCompressed(x)     ((x)->flags & CONF_FLAGS_COMPRESSED)
 #define IsConfVhosted(x)	((x)->flags & CONF_FLAGS_VHOSTED)
 #define IsConfTburst(x)		((x)->flags & CONF_FLAGS_TB)
+#define IsNeedSasl(x)		((x)->flags & CONF_FLAGS_NEED_SASL)
 
 /* flag definitions for opers now in client.h */
 

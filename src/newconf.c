@@ -1,5 +1,5 @@
 /* This code is in the public domain.
- * $Id: newconf.c 796 2006-02-12 17:31:44Z jilles $
+ * $Id: newconf.c 1168 2006-04-17 05:18:17Z gxti $
  */
 
 #include "stdinc.h"
@@ -339,6 +339,7 @@ static struct mode_table auth_table[] = {
 	{"no_tilde",		CONF_FLAGS_NO_TILDE	},
 	{"need_ident",		CONF_FLAGS_NEED_IDENTD	},
 	{"have_ident",		CONF_FLAGS_NEED_IDENTD	},
+	{"need_sasl",		CONF_FLAGS_NEED_SASL	},
 	{NULL, 0}
 };
 

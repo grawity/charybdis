@@ -44,7 +44,12 @@
 	  <replaceable>channel</replaceable>, and <replaceable>nick</replaceable>
 	  is a member of <replaceable>channel</replaceable>, CNOTICE generates a NOTICE towards
 	  <replaceable>nick</replaceable>.
+	</para>
+	<para>
 	  CNOTICE bypasses any anti-spam measures in place.
+	  If you get <quote>Targets changing too fast, message dropped</quote>,
+	  you should probably use this command, for example sending a
+	  notice to every user joining a certain channel.
 	</para>
 	<para>
 	  Support of this command is indicated by the CNOTICE token in
@@ -63,7 +68,11 @@
 	  <replaceable>channel</replaceable>, and <replaceable>nick</replaceable>
 	  is a member of <replaceable>channel</replaceable>, CPRIVMSG generates a PRIVMSG towards
 	  <replaceable>nick</replaceable>.
+	</para>
+	<para>
 	  CPRIVMSG bypasses any anti-spam measures in place.
+	  If you get <quote>Targets changing too fast, message dropped</quote>,
+	  you should probably use this command.
 	</para>
 	<para>
 	  Support of this command is indicated by the CPRIVMSG token in

@@ -26,7 +26,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_signon.c 1130 2006-04-03 02:21:15Z gxti $
+ * $Id: m_signon.c 1148 2006-04-08 00:15:01Z gxti $
  */
 
 #include "stdinc.h"
@@ -72,7 +72,7 @@ mapi_clist_av1 signon_clist[] = {
 	&svslogin_msgtab, &signon_msgtab, NULL
 };
 
-DECLARE_MODULE_AV1(signon, NULL, NULL, signon_clist, NULL, NULL, "$Revision: 1130 $");
+DECLARE_MODULE_AV1(signon, NULL, NULL, signon_clist, NULL, NULL, "$Revision: 1148 $");
 
 #define NICK_VALID	1
 #define USER_VALID	2
@@ -165,8 +165,10 @@ me_svslogin(struct Client *client_p, struct Client *source_p,
 		strlcpy(nick, parv[2], NICKLEN + 1);
 		valid |= NICK_VALID;
 	}
-	else
+	else if(*target_p->name)
 		strlcpy(nick, target_p->name, NICKLEN + 1);
+	else
+		strcpy(nick, "*");
 
 	if(clean_username(parv[3]))
 	{

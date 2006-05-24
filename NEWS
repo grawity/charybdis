@@ -1,6 +1,22 @@
 This is charybdis 1.1.2, Copyright (c) 2005-2006 Charybdis team.
 See LICENSE for licensing details (GPL v2).
 
+-- charybdis-1.1.3
+
+- Show SASL success and failure counts in /stats t.
+- Messaging services no longer uses target change slots.
+- Make sure opers cannot fake LOCOPS/OPERWALL to +w.
+- Invalidate can_send cache on CHGHOST/SIGNON (change_nick_user_host()).
+- Add server wallops and logging to OJOIN contrib module.
+- Fix kline matching on orighost.
+- Expand blah.blah and blah:blah to *!*@... instead of ...!*@* for bans
+- Fix some bugs that could cause crashes or splits.
+- Only accept SASL from servers in a service{} block.
+- New auth{} flag need_sasl to reject users who haven't done SASL
+  authentication.
+- Minor fix to configure for IPv6.
+- Updates to SGML documentation.
+
 -- charybdis-1.1.2
 
 - Fix a bug where SVSLOGIN'd users could be overridden if they have not
@@ -264,5 +280,5 @@ You may also (if youre lucky) find us on #charybdis @ AthemeNET
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 1132 2006-04-05 20:23:51Z nenolod $
+$Id: NEWS 1431 2006-05-24 22:39:27Z jilles $
 

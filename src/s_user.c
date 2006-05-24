@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 1140 2006-04-06 02:24:59Z nenolod $
+ *  $Id: s_user.c 1371 2006-05-19 18:40:02Z jilles $
  */
 
 #include "stdinc.h"
@@ -372,6 +372,16 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 
 			source_p->username[i] = '\0';
 		}
+	}
+
+	if(IsNeedSasl(aconf) && !*user->suser)
+	{
+		ServerStats->is_ref++;
+		sendto_one(source_p,
+				":%s NOTICE %s :*** Notice -- You need to identify via SASL to use this server",
+				me.name, client_p->name);
+		exit_client(client_p, source_p, &me, "SASL access only");
+		return (CLIENT_EXITED);
 	}
 
 	/* password check */
@@ -1324,6 +1334,7 @@ change_nick_user_host(struct Client *target_p, const char *nick, const char *use
 		target_p->tsinfo = newts;
 		monitor_signoff(target_p);
 	}
+	invalidate_bancache_user(target_p);
 
 	if(do_qjm)
 	{
@@ -1378,14 +1389,14 @@ change_nick_user_host(struct Client *target_p, const char *nick, const char *use
 				target_p->host, nick);
 	}
 
-	strcpy(target_p->username, user);
-	strcpy(target_p->host, host);
+	strlcpy(target_p->username, user, USERLEN);
+	strlcpy(target_p->host, host, HOSTLEN);
 
 	if (changed)
 		add_history(target_p, 1);
 
 	del_from_client_hash(target_p->name, target_p);
-	strcpy(target_p->name, nick);
+	strlcpy(target_p->name, nick, NICKLEN);
 	add_to_client_hash(target_p->name, target_p);
 
 	if(changed)

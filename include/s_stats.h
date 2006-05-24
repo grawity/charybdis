@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_stats.h 276 2005-10-02 20:23:15Z jilles $
+ *  $Id: s_stats.h 1429 2006-05-23 17:14:15Z jilles $
  */
 
 #ifndef INCLUDED_s_stats_h
@@ -69,6 +69,8 @@ struct ServerStatistics
 	unsigned int is_asuc;	/* successful auth requests */
 	unsigned int is_abad;	/* bad auth requests */
 	unsigned int is_rej;	/* rejected from cache */
+	unsigned int is_ssuc;	/* successful sasl authentications */
+	unsigned int is_sbad;	/* failed sasl authentications */
 };
 
 extern struct ServerStatistics *ServerStats;

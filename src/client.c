@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c 994 2006-03-09 01:07:04Z jilles $
+ *  $Id: client.c 1196 2006-04-21 16:29:32Z jilles $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -1400,6 +1400,9 @@ exit_unknown_client(struct Client *client_p, struct Client *source_p, struct Cli
 		sendto_one(source_p, "ERROR :Closing Link: 127.0.0.1 (%s)", comment);
 
 	close_connection(source_p);
+
+	if(has_id(source_p))
+		del_from_id_hash(source_p->id, source_p);
 
 	del_from_hostname_hash(source_p->host, source_p);
 	del_from_client_hash(source_p->name, source_p);
