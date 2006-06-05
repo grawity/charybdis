@@ -1,5 +1,35 @@
-This is charybdis 1.1.0, Copyright (c) 2005-2006 Charybdis team.
+This is charybdis 2.0.0, Copyright (c) 2005-2006 Charybdis team.
 See LICENSE for licensing details (GPL v2).
+
+-- charybdis-2.0.0
+
+- Replace ADNS with a new smaller resolver from ircu and hybrid.
+- Make services shortcuts (/chanserv etc) configurable in ircd.conf.
+- Add extban: extensible +bqeI matching via modules. Syntax is
+  $<type>[:<data>]. By default no modules are loaded.
+- Add DNS blacklist checking.
+- Change operator{} block user@host from host to orighost. This means that
+  services/+h spoofs do not work in operator{} blocks; auth{} spoofs still
+  work. Check your operator{} blocks!
+- Split contrib/ into extensions/ and unsupported/.
+- Change CHGHOST do show the change to all other clients on common channels
+  with quit/join/mode.
+- Add /rehash nickdelay to clear out the nickdelay tables.
+- Glines are now disabled in the example confs.
+- Show more error messages on stderr.
+- Add OMODE command to extensions/ for easier oper mode hacking.
+- Add HURT system to extensions/; this shuns clients matching certain host/ip
+  unless and until they identify to services. Mainly intended for SorceryNet.
+- Show SASL success and failure counts in /stats t.
+- Allow more frequent autoconnects to servers.
+- Messaging services by nickname no longer uses target change slots.
+- Only accept SASL from servers in a service{} block.
+- New auth{} flag need_sasl to reject users who haven't done SASL
+  authentication.
+- Expand blah.blah and blah:blah to *!*@... instead of ...!*@* for bans
+- Don't allow opers to fake locops/operwall to +w.
+- Documentation updates.
+- Many bugfixes.
 
 -- charybdis-1.1.0
 
@@ -224,19 +254,13 @@ See LICENSE for licensing details (GPL v2).
 BUGS: Major bugs in this release are listed in BUGS
 
 BUG REPORTS: If you run this code and encounter problems, you must report
-the bug by EMAIL to ircd-ratbox@lists.ratbox.org
+via IRC to irc.atheme.net, #athemenet-dev.
 
 Please include a gdb backtrace and keep the core file, binaries and 
 modules in case the developers need them.
 
-DISCUSSION: There is a mailing list for discussion of ratbox issues,
- To subscribe, visit:
-      http://lists.ratbox.org/cgi-bin/mailman/listinfo/ircd-ratbox
-
-You may also (if youre lucky) find us on #ratbox@EFNet
-
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 722 2006-02-08 21:51:28Z nenolod $
+$Id: NEWS 1636 2006-06-04 19:19:02Z jilles $
 

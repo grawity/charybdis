@@ -1,5 +1,5 @@
 /* This code is in the public domain.
- * $Id: newconf.c 796 2006-02-12 17:31:44Z jilles $
+ * $Id: newconf.c 1481 2006-05-27 17:24:05Z nenolod $
  */
 
 #include "stdinc.h"
@@ -30,6 +30,7 @@
 #include "cache.h"
 #include "ircd.h"
 #include "snomask.h"
+#include "blacklist.h"
 
 #define CF_TYPE(x) ((x) & CF_MTYPE)
 
@@ -50,6 +51,11 @@ static dlink_list yy_oper_list;
 static dlink_list yy_shared_list;
 static dlink_list yy_cluster_list;
 static struct oper_conf *yy_oper = NULL;
+
+static struct alias_entry *yy_alias = NULL;
+
+static char *yy_blacklist_host = NULL;
+static char *yy_blacklist_reason = NULL;
 
 static const char *
 conf_strtype(int type)
@@ -329,6 +335,7 @@ static struct mode_table auth_table[] = {
 	{"encrypted",		CONF_FLAGS_ENCRYPTED	},
 	{"spoof_notice",	CONF_FLAGS_SPOOF_NOTICE	},
 	{"exceed_limit",	CONF_FLAGS_NOLIMIT	},
+	{"dnsbl_exempt",	CONF_FLAGS_EXEMPTDNSBL	},
 	{"kline_exempt",	CONF_FLAGS_EXEMPTKLINE	},
 	{"gline_exempt",	CONF_FLAGS_EXEMPTGLINE	},
 	{"flood_exempt",	CONF_FLAGS_EXEMPTFLOOD	},
@@ -339,6 +346,7 @@ static struct mode_table auth_table[] = {
 	{"no_tilde",		CONF_FLAGS_NO_TILDE	},
 	{"need_ident",		CONF_FLAGS_NEED_IDENTD	},
 	{"have_ident",		CONF_FLAGS_NEED_IDENTD	},
+	{"need_sasl",		CONF_FLAGS_NEED_SASL	},
 	{NULL, 0}
 };
 
@@ -1548,29 +1556,129 @@ conf_set_service_name(void *data)
 	char *tmp;
 	int dots = 0;
 
-	 for(s = data; *s != '\0'; s++)
-	 {
-		 if(!IsServChar(*s))
-		 {
-			 conf_report_error("Ignoring service::name "
+	for(s = data; *s != '\0'; s++)
+	{
+		if(!IsServChar(*s))
+		{
+			conf_report_error("Ignoring service::name "
 					 "-- bogus servername.");
-			 return;
-		 }
-		 else if(*s == '.')
+			return;
+		}
+		else if(*s == '.')
 			 dots++;
-	 }
+	}
 
-	 if(!dots)
-	 {
-		 conf_report_error("Ignoring service::name -- must contain '.'");
-		 return;
-	 }
+	if(!dots)
+	{
+		conf_report_error("Ignoring service::name -- must contain '.'");
+		return;
+	}
 
-	 DupString(tmp, data);
-	 dlinkAddAlloc(tmp, &service_list);
+	DupString(tmp, data);
+	dlinkAddAlloc(tmp, &service_list);
 
-	 if((target_p = find_server(NULL, tmp)))
-		 target_p->flags |= FLAGS_SERVICE;
+	if((target_p = find_server(NULL, tmp)))
+		target_p->flags |= FLAGS_SERVICE;
+}
+
+static int
+alias_hash(const char *p)
+{
+	int hash_val = 0;
+
+	while (*p)
+	{
+		hash_val += ((int) (*p) & 0xDF);
+		p++;
+	}
+
+	return (hash_val % MAX_MSG_HASH);
+}
+
+static int
+conf_begin_alias(struct TopConf *tc)
+{
+	yy_alias = MyMalloc(sizeof(struct alias_entry));
+
+	if (conf_cur_block_name != NULL)
+		DupString(yy_alias->name, conf_cur_block_name);
+
+	yy_alias->flags = 0;
+	yy_alias->hits = 0;
+
+	return 0;
+}
+
+static int
+conf_end_alias(struct TopConf *tc)
+{
+	int hashval;
+
+	if (yy_alias == NULL)
+		return -1;
+
+	if (yy_alias->name == NULL)
+	{
+		conf_report_error("Ignoring alias -- must have a name.");
+
+		MyFree(yy_alias);
+
+		return -1;
+	}
+
+	if (yy_alias->target == NULL)
+	{
+		conf_report_error("Ignoring alias -- must have a target.");
+
+		MyFree(yy_alias);
+
+		return -1;
+	}
+
+	hashval = alias_hash(yy_alias->name);
+
+	dlinkAddAlloc(yy_alias, &alias_hash_table[hashval]);
+
+	return 0;
+}
+
+static void
+conf_set_alias_name(void *data)
+{
+	if (data == NULL || yy_alias == NULL)	/* this shouldn't ever happen */
+		return;
+
+	DupString(yy_alias->name, data);
+}
+
+static void
+conf_set_alias_target(void *data)
+{
+	if (data == NULL || yy_alias == NULL)	/* this shouldn't ever happen */
+		return;
+
+	DupString(yy_alias->target, data);
+}
+
+static void
+conf_set_blacklist_host(void *data)
+{
+	DupString(yy_blacklist_host, data);
+}
+
+static void
+conf_set_blacklist_reason(void *data)
+{
+	DupString(yy_blacklist_reason, data);
+
+	if (yy_blacklist_host && yy_blacklist_reason)
+	{
+		new_blacklist(yy_blacklist_host, yy_blacklist_reason);
+		MyFree(yy_blacklist_host);
+		MyFree(yy_blacklist_reason);
+		yy_blacklist_host = NULL;
+		yy_blacklist_reason = NULL;
+	}
 }
 
 /* public functions */
@@ -1592,7 +1700,7 @@ conf_report_error(const char *fmt, ...)
 		return;
 	}
 
-	ilog(L_MAIN, "\"%s\", line %d: %s", current_file, lineno + 1, msg);
+	ierror("\"%s\", line %d: %s", current_file, lineno + 1, msg);
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "\"%s\", line %d: %s", current_file, lineno + 1, msg);
 }
 
@@ -1981,7 +2089,6 @@ static struct ConfEntry conf_channel_table[] =
 	{ "max_chans_per_user", CF_INT,   NULL, 0, &ConfigChannel.max_chans_per_user 	},
 	{ "no_create_on_split", CF_YESNO, NULL, 0, &ConfigChannel.no_create_on_split 	},
 	{ "no_join_on_split",	CF_YESNO, NULL, 0, &ConfigChannel.no_join_on_split	},
-	{ "quiet_on_ban",	CF_YESNO, NULL, 0, &ConfigChannel.quiet_on_ban		},
 	{ "use_except",		CF_YESNO, NULL, 0, &ConfigChannel.use_except		},
 	{ "use_invex",		CF_YESNO, NULL, 0, &ConfigChannel.use_invex		},
 	{ "use_knock",		CF_YESNO, NULL, 0, &ConfigChannel.use_knock		},
@@ -2037,4 +2144,12 @@ newconf_init()
 
 	add_top_conf("service", conf_begin_service, NULL, NULL);
 	add_conf_item("service", "name", CF_QSTRING, conf_set_service_name);
+
+	add_top_conf("alias", conf_begin_alias, conf_end_alias, NULL);
+	add_conf_item("alias", "name", CF_QSTRING, conf_set_alias_name);
+	add_conf_item("alias", "target", CF_QSTRING, conf_set_alias_target);
+
+	add_top_conf("blacklist", NULL, NULL, NULL);
+	add_conf_item("blacklist", "host", CF_QSTRING, conf_set_blacklist_host);
+	add_conf_item("blacklist", "reject_reason", CF_QSTRING, conf_set_blacklist_reason);
 }

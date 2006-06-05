@@ -27,7 +27,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_tb.c 730 2006-02-08 22:20:43Z jilles $
+ * $Id: m_tb.c 1349 2006-05-17 17:37:46Z jilles $
  */
 
 #include "stdinc.h"
@@ -38,6 +38,7 @@
 #include "common.h"
 #include "config.h"
 #include "ircd.h"
+#include "irc_string.h"
 #include "s_conf.h"
 #include "msg.h"
 #include "modules.h"
@@ -52,7 +53,7 @@ struct Message tb_msgtab = {
 };
 
 mapi_clist_av1 tb_clist[] =  { &tb_msgtab, NULL };
-DECLARE_MODULE_AV1(tb, NULL, NULL, tb_clist, NULL, NULL, "$Revision: 730 $");
+DECLARE_MODULE_AV1(tb, NULL, NULL, tb_clist, NULL, NULL, "$Revision: 1349 $");
 
 /* m_tb()
  *
@@ -93,6 +94,9 @@ ms_tb(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 		newtopic = parv[3];
 		newtopicwho = fakesource_p->name;
 	}
+
+	if (EmptyString(newtopic))
+		return 0;
 
 	if(chptr->topic == NULL || chptr->topic_time > newtopicts)
 	{

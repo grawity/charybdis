@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: messages.tab 756 2006-02-12 02:19:41Z jilles $
+ *   $Id: messages.tab 1535 2006-06-01 15:27:18Z jilles $
  */
 
 static  const char *  replies[] = {
@@ -403,7 +403,7 @@ static  const char *  replies[] = {
 /* 378 */       NULL,
 /* 379 */       NULL,
 /* 380 */       NULL,
-/* 381 RPL_YOUREOPER, */        ":%s 381 %s :Congratulations! You can K-Line to the max!",
+/* 381 RPL_YOUREOPER, */        ":%s 381 %s :Good afternoon, gentleman. I am a HAL 9000 computer.",
 /* 382 RPL_REHASHING, */        ":%s 382 %s %s :Rehashing",
 /* 383 */       NULL,
 /* 384 RPL_MYPORTIS, */		NULL,

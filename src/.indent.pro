@@ -1,4 +1,4 @@
-/* $Id: .indent.pro 238 2005-09-21 05:26:03Z nenolod $ */
+/* $Id: .indent.pro 813 2006-02-14 20:52:15Z nenolod $ */
 
 /* copy this file to the source dir then run indent file.c */
 
@@ -25,7 +25,7 @@
 /* Disable an annoying format... */
 --no-space-after-casts
 
---line-length200
+--line-length100
 
 /* typedefs */
 -T boolean_t

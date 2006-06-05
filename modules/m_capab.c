@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_capab.c 268 2005-09-25 15:51:54Z jilles $
+ *  $Id: m_capab.c 1295 2006-05-08 13:05:25Z nenolod $
  */
 
 #include "stdinc.h"
@@ -46,7 +46,7 @@ struct Message gcap_msgtab = {
 };
 
 mapi_clist_av1 capab_clist[] = { &capab_msgtab, &gcap_msgtab, NULL };
-DECLARE_MODULE_AV1(capab, NULL, NULL, capab_clist, NULL, NULL, "$Revision: 268 $");
+DECLARE_MODULE_AV1(capab, NULL, NULL, capab_clist, NULL, NULL, "$Revision: 1295 $");
 
 /*
  * mr_capab - CAPAB message handler
@@ -66,6 +66,9 @@ mr_capab(struct Client *client_p, struct Client *source_p, int parc, const char 
 	if(client_p->localClient == NULL)
 		return 0;
 
+	if(client_p->user)
+		return 0;
+
 	/* CAP_TS6 is set in PASS, so is valid.. */
 	if((client_p->localClient->caps & ~CAP_TS6) != 0)
 	{
@@ -75,6 +78,7 @@ mr_capab(struct Client *client_p, struct Client *source_p, int parc, const char 
 	else
 		client_p->localClient->caps |= CAP_CAP;
 
+	MyFree(client_p->localClient->fullcaps);
 	DupString(client_p->localClient->fullcaps, parv[1]);
 
 	for (i = 1; i < parc; i++)

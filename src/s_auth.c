@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_auth.c 494 2006-01-15 16:08:28Z jilles $ */
+ *  $Id: s_auth.c 1413 2006-05-22 17:13:15Z nenolod $ */
 
 /*
  * Changes:
@@ -53,6 +53,7 @@
 #include "send.h"
 #include "memory.h"
 #include "hook.h"
+#include "blacklist.h"
 
 /*
  * a bit different approach
@@ -67,7 +68,9 @@ static const char *HeaderMessages[] =
 	"NOTICE AUTH :*** Checking Ident",
 	"NOTICE AUTH :*** Got Ident response",
 	"NOTICE AUTH :*** No Ident response",
-	"NOTICE AUTH :*** Your hostname is too long, ignoring hostname"
+	"NOTICE AUTH :*** Your hostname is too long, ignoring hostname",
+	"NOTICE AUTH :*** Your forward and reverse DNS do not match, ignoring hostname",
+	"NOTICE AUTH :*** Cannot verify hostname validity, ignoring hostname",
 };
 
 typedef enum
@@ -78,7 +81,9 @@ typedef enum
 	REPORT_DO_ID,
 	REPORT_FIN_ID,
 	REPORT_FAIL_ID,
-	REPORT_HOST_TOOLONG
+	REPORT_HOST_TOOLONG,
+	REPORT_HOST_MISMATCH,
+	REPORT_HOST_UNKNOWN
 }
 ReportType;
 
@@ -90,6 +95,7 @@ static EVH timeout_auth_queries_event;
 
 static PF read_auth_reply;
 static CNCB auth_connect_callback;
+
 /*
  * init_auth()
  *
@@ -165,47 +171,61 @@ release_auth_client(struct AuthRequest *auth)
  * of success of failure
  */
 static void
-auth_dns_callback(void *vptr, adns_answer * reply)
+auth_dns_callback(void *vptr, struct DNSReply *reply)
 {
         struct AuthRequest *auth = (struct AuthRequest *) vptr;
         ClearDNSPending(auth);
 
-        if(reply && (reply->status == adns_s_ok))
+        if(reply)
         {
-                if(strlen(*reply->rrs.str) <= HOSTLEN)
+		int good = 1;
+
+		if(auth->client->localClient->ip.ss_family == AF_INET)
+		{
+			struct sockaddr_in *ip, *ip_fwd;
+
+			ip = (struct sockaddr_in *) &auth->client->localClient->ip;
+			ip_fwd = (struct sockaddr_in *) &reply->addr;
+
+			if(ip->sin_addr.s_addr != ip_fwd->sin_addr.s_addr)
+			{
+				sendheader(auth->client, REPORT_HOST_MISMATCH);
+				good = 0;
+			}
+		}
+#ifdef IPV6
+		else if(auth->client->localClient->ip.ss_family == AF_INET6)
+		{
+			struct sockaddr_in6 *ip, *ip_fwd;
+
+			ip = (struct sockaddr_in6 *) &auth->client->localClient->ip;
+			ip_fwd = (struct sockaddr_in6 *) &reply->addr;
+
+			if(memcmp(&ip->sin6_addr, &ip_fwd->sin6_addr, sizeof(struct in6_addr)) != 0)
+			{
+				sendheader(auth->client, REPORT_HOST_MISMATCH);
+				good = 0;
+			}
+		}
+#endif
+		else	/* can't verify it, don't know how. reject it. */
+		{
+			sendheader(auth->client, REPORT_HOST_UNKNOWN);
+			good = 0;
+		}
+
+                if(good && strlen(reply->h_name) <= HOSTLEN)
                 {
-                        strlcpy(auth->client->host, *reply->rrs.str, sizeof(auth->client->host));
+                        strlcpy(auth->client->host, reply->h_name, sizeof(auth->client->host));
                         sendheader(auth->client, REPORT_FIN_DNS);
                 }
-                else {
+                else if (strlen(reply->h_name) > HOSTLEN)
                         sendheader(auth->client, REPORT_HOST_TOOLONG);
-                }
-                MyFree(reply);
-        } else
-#ifdef IPV6   
-        if(ConfigFileEntry.fallback_to_ip6_int && auth->client->localClient->ip.ss_family == AF_INET6
-                && auth->ip6_int == 0)
-        {
-                MyFree(reply);
-                reply = NULL;
-                if(adns_getaddr((struct sockaddr *)&auth->client->localClient->ip,
-                                auth->client->localClient->ip.ss_family, 
-                                &auth->dns_query, 0)) 
-                {
-                        sendheader(auth->client, REPORT_FAIL_DNS);
-                } else {
-                        SetDNSPending(auth);
-                        auth->ip6_int = 1;  
-                        return;
-                }
-        } else   
-#endif
-	{
+        }
+	else
                 sendheader(auth->client, REPORT_FAIL_DNS);
-                MyFree(reply);
-	}      
-        release_auth_client(auth);
 
+        release_auth_client(auth);
 }
 
 /*
@@ -379,21 +399,9 @@ start_auth(struct Client *client)
 	sendheader(client, REPORT_DO_DNS);
 
 	/* No DNS cache now, remember? -- adrian */
-	if(adns_getaddr((struct sockaddr *)&client->localClient->ip, client->localClient->ip.ss_family,
-		     &auth->dns_query, 1))
-        {
-#ifdef IPV6
-                if(ConfigFileEntry.fallback_to_ip6_int && auth->client->localClient->ip.ss_family == AF_INET6 &&
-                  !adns_getaddr((struct sockaddr *)&auth->client->localClient->ip, client->localClient->ip.ss_family,
-                                &auth->dns_query, 0))
-		{
-                	SetDNSPending(auth);
-            	} else            
-#endif
-		sendheader(client, REPORT_FAIL_DNS);
-	}
-	else 
-		SetDNSPending(auth);
+	gethost_byaddr(&client->localClient->ip, &auth->dns_query);
+
+	SetDNSPending(auth);
 
 	if(ConfigFileEntry.disable_auth == 0)
 		start_auth_query(auth);
@@ -431,8 +439,6 @@ timeout_auth_queries_event(void *notused)
 			if(IsDNSPending(auth))
 			{
 				ClearDNSPending(auth);
-				delete_adns_queries(&auth->dns_query);
-				auth->dns_query.query = NULL;
 				sendheader(auth->client, REPORT_FAIL_DNS);
 			}
 
@@ -586,9 +592,6 @@ delete_auth_queries(struct Client *target_p)
 	
 	auth = target_p->localClient->auth_request;
 	target_p->localClient->auth_request = NULL;
-
-	if(IsDNSPending(auth))
-		delete_adns_queries(&auth->dns_query);
 
 	if(auth->fd >= 0)
 		comm_close(auth->fd);

@@ -21,11 +21,13 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: parse.h 6 2005-09-10 01:02:21Z nenolod $
+ *  $Id: parse.h 944 2006-03-06 03:41:31Z nenolod $
  */
 
 #ifndef INCLUDED_parse_h_h
 #define INCLUDED_parse_h_h
+
+#include "tools.h"
 
 struct Message;
 struct Client;
@@ -46,5 +48,7 @@ extern void clear_hash_parse(void);
 extern void mod_add_cmd(struct Message *msg);
 extern void mod_del_cmd(struct Message *msg);
 extern void report_messages(struct Client *);
+
+extern dlink_list alias_hash_table[MAX_MSG_HASH];
 
 #endif /* INCLUDED_parse_h_h */

@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: hostmask.c 557 2006-01-23 15:57:12Z nenolod $
+ *  $Id: hostmask.c 1323 2006-05-14 01:19:25Z jilles $
  */
 
 #include "stdinc.h"
@@ -269,7 +269,7 @@ find_conf_by_address(const char *name, const char *sockhost,
 	{
 		const char *p;
 
-		for (p = name; p != NULL;)
+		for (p = orighost; p != NULL;)
 		{
 			for (arec = atable[hash_text(p)]; arec; arec = arec->next)
 				

@@ -2,7 +2,7 @@
  * Copyright (C) 2004-2005 Lee Hardy <lee -at- leeh.co.uk>
  * Copyright (C) 2004-2005 ircd-ratbox development team
  *
- * $Id: hook.h 712 2006-02-06 04:42:14Z gxti $
+ * $Id: hook.h 906 2006-02-21 02:25:43Z nenolod $
  */
 #ifndef INCLUDED_HOOK_H
 #define INCLUDED_HOOK_H
@@ -62,6 +62,13 @@ typedef struct
 	struct Channel *chptr;
 	int approved;
 } hook_data_channel;
+
+typedef struct
+{
+	struct Client *client;
+	struct Channel *chptr;
+	char *key;
+} hook_data_channel_activity;
 
 typedef struct
 {

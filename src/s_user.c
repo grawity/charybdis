@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 796 2006-02-12 17:31:44Z jilles $
+ *  $Id: s_user.c 1469 2006-05-26 22:18:23Z jilles $
  */
 
 #include "stdinc.h"
@@ -55,6 +55,7 @@
 #include "hook.h"
 #include "monitor.h"
 #include "snomask.h"
+#include "blacklist.h"
 
 static void report_and_set_user_flags(struct Client *, struct ConfItem *);
 void user_welcome(struct Client *source_p);
@@ -282,6 +283,10 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	if(source_p->flags2 & FLAGS2_CLICAP)
 		return -1;
 
+	/* still has DNSbls to validate against */
+	if(source_p->preClient->dnsbl_hits > 0)
+		return -1;
+
 	client_p->localClient->last = CurrentTime;
 	/* Straight up the maximum rate of flooding... */
 	source_p->localClient->allow_read = MAX_FLOOD_BURST;
@@ -374,6 +379,16 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		}
 	}
 
+	if(IsNeedSasl(aconf) && !*user->suser)
+	{
+		ServerStats->is_ref++;
+		sendto_one(source_p,
+				":%s NOTICE %s :*** Notice -- You need to identify via SASL to use this server",
+				me.name, client_p->name);
+		exit_client(client_p, source_p, &me, "SASL access only");
+		return (CLIENT_EXITED);
+	}
+
 	/* password check */
 	if(!EmptyString(aconf->passwd))
 	{
@@ -454,6 +469,27 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		return CLIENT_EXITED;
 	}
 
+	/* dnsbl check */
+	if (source_p->preClient->dnsbl_listed != NULL)
+	{
+		if (IsExemptKline(source_p) || IsConfExemptDNSBL(aconf))
+			sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s, but you are exempt",
+					source_p->sockhost, source_p->preClient->dnsbl_listed->host);
+		else
+		{
+			ServerStats->is_ref++;
+			sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
+					me.name, source_p->name,
+					source_p->preClient->dnsbl_listed->reject_reason);
+			sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s",
+					source_p->sockhost, source_p->preClient->dnsbl_listed->host);
+			source_p->preClient->dnsbl_listed->hits++;
+			add_reject(source_p);
+			exit_client(client_p, source_p, &me, "*** Banned (DNS blacklist)");
+			return CLIENT_EXITED;
+		}
+	}
+
 	/* Store original hostname -- jilles */
 	strlcpy(source_p->orighost, source_p->host, HOSTLEN + 1);
 
@@ -483,7 +519,8 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 			source_p->name, source_p->username, source_p->orighost,
 			show_ip(NULL, source_p) ? ipaddr : "255.255.255.255",
 			get_client_class(source_p),
-			source_p->localClient->fullcaps,
+			/* mirc can sometimes send ips here */
+			show_ip(NULL, source_p) ? source_p->localClient->fullcaps : "<hidden> <hidden>",
 			source_p->info);
 
 	/* If they have died in send_* don't do anything. */
@@ -783,6 +820,13 @@ report_and_set_user_flags(struct Client *source_p, struct ConfItem *aconf)
 				   ":%s NOTICE %s :*** You are exempt from G lines.",
 				   me.name, source_p->name);
 	}
+
+	if(IsConfExemptDNSBL(aconf))
+		/* kline exempt implies this, don't send both */
+		if(!IsConfExemptKline(aconf))
+			sendto_one(source_p,
+				   ":%s NOTICE %s :*** You are exempt from DNS blacklists.",
+				   me.name, source_p->name);
 
 	/* If this user is exempt from user limits set it F lined" */
 	if(IsConfExemptLimits(aconf))
@@ -1301,4 +1345,96 @@ construct_umodebuf(void)
 			*ptr++ = (char) i;
 
 	*ptr++ = '\0';
+}
+
+void
+change_nick_user_host(struct Client *target_p,	const char *nick, const char *user,
+		      const char *host, int newts, char *format, ...)
+{
+	dlink_node *ptr;
+	struct Channel *chptr;
+	struct membership *mscptr;
+	int changed = irccmp(target_p->name, nick);
+	int changed_case = strcmp(target_p->name, nick);
+	int do_qjm = irccmp(target_p->username, user) || irccmp(target_p->host, host);
+	char mode[10], modeval[NICKLEN * 2 + 2], reason[256], *mptr;
+	va_list ap;
+
+	modeval[0] = '\0';
+	
+	if(changed)
+	{
+		target_p->tsinfo = newts;
+		monitor_signoff(target_p);
+	}
+	invalidate_bancache_user(target_p);
+
+	if(do_qjm)
+	{
+		va_start(ap, format);
+		vsnprintf(reason, 255, format, ap);
+		va_end(ap);
+
+		sendto_common_channels_local_butone(target_p, ":%s!%s@%s QUIT :%s",
+				target_p->name, target_p->username, target_p->host,
+				reason);
+
+		DLINK_FOREACH(ptr, target_p->user->channel.head)
+		{
+			mscptr = ptr->data;
+			chptr = mscptr->chptr;
+			mptr = mode;
+
+			if(is_chanop(mscptr))
+			{
+				*mptr++ = 'o';
+				strcat(modeval, nick);
+				strcat(modeval, " ");
+			}
+
+			if(is_voiced(mscptr))
+			{
+				*mptr++ = 'v';
+				strcat(modeval, nick);
+			}
+
+			*mptr = '\0';
+
+			sendto_channel_local_butone(target_p, ALL_MEMBERS, chptr, ":%s!%s@%s JOIN :%s",
+					nick, user, host, chptr->chname);
+			if(*mode)
+				sendto_channel_local_butone(target_p, ALL_MEMBERS, chptr,
+						":%s MODE %s +%s %s",
+						target_p->servptr->name,
+						chptr->chname, mode, modeval);
+
+			*modeval = '\0';
+		}
+
+		if(MyClient(target_p) && changed_case)
+			sendto_one(target_p, ":%s!%s@%s NICK %s",
+					target_p->name, target_p->username, target_p->host, nick);
+	}
+	else if(changed_case)
+	{
+		sendto_common_channels_local(target_p, ":%s!%s@%s NICK :%s",
+				target_p->name, target_p->username,
+				target_p->host, nick);
+	}
+
+	strlcpy(target_p->username, user, USERLEN);
+	strlcpy(target_p->host, host, HOSTLEN);
+
+	if (changed)
+		add_history(target_p, 1);
+
+	del_from_client_hash(target_p->name, target_p);
+	strlcpy(target_p->name, nick, NICKLEN);
+	add_to_client_hash(target_p->name, target_p);
+
+	if(changed)
+	{
+		monitor_signon(target_p);
+		del_all_accepts(target_p);
+	}
 }

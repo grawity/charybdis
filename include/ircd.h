@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.h 462 2006-01-13 13:45:56Z jilles $
+ *  $Id: ircd.h 861 2006-02-15 23:15:08Z nenolod $
  */
 
 #ifndef INCLUDED_ircd_h
@@ -109,6 +109,7 @@ extern void get_current_bandwidth(struct Client *source_p, struct Client *target
 
 extern unsigned long get_maxrss(void);
 extern void set_time(void);
+extern void charybdis_io_loop(void);
 
 extern int testing_conf;
 

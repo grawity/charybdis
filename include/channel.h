@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.h 754 2006-02-12 01:26:44Z jilles $
+ *  $Id: channel.h 1363 2006-05-18 17:59:35Z jilles $
  */
 
 #ifndef INCLUDED_channel_h
@@ -122,6 +122,17 @@ struct ChCapCombo
 	int cap_no;
 };
 
+struct ChannelMode
+{
+	void (*set_func) (struct Client * source_p, struct Channel * chptr,
+		      int alevel, int parc, int *parn,
+		      const char **parv, int *errors, int dir, char c, long mode_type);
+	long mode_type;
+};
+
+typedef int (*ExtbanFunc)(const char *data, struct Client *client_p,
+		struct Channel *chptr, long mode_type);
+
 /* can_send results */
 #define CAN_SEND_NO	0
 #define CAN_SEND_NONOP  1
@@ -184,6 +195,11 @@ struct ChCapCombo
 
 #define IsChannelName(name) ((name) && (*(name) == '#' || *(name) == '&'))
 
+/* extban function results */
+#define EXTBAN_INVALID -1  /* invalid mask, false even if negated */
+#define EXTBAN_NOMATCH  0  /* valid mask, no match */
+#define EXTBAN_MATCH    1  /* matches */
+
 extern dlink_list global_channel_list;
 void init_channels(void);
 
@@ -235,6 +251,22 @@ extern void set_chcap_usage_counts(struct Client *serv_p);
 extern void unset_chcap_usage_counts(struct Client *serv_p);
 extern void send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 				  struct Channel *chptr, struct ChModeChange foo[], int);
+
+extern void set_channel_mode(struct Client *client_p, struct Client *source_p,
+            	struct Channel *chptr, struct membership *msptr, int parc, const char *parv[]);
+
+extern struct ChannelMode chmode_table[256];
+
+extern int add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
+       dlink_list * list, long mode_type);
+
+extern int del_id(struct Channel *chptr, const char *banid, dlink_list * list, long mode_type);
+
+extern ExtbanFunc extban_table[256];
+
+extern int match_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type);
+extern int valid_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type);
+const char * get_extban_string(void);
 
 
 #endif /* INCLUDED_channel_h */

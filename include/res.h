@@ -1,53 +1,48 @@
 /*
- *  ircd-ratbox: A slightly useful ircd.
- *  res.h: A header with the DNS functions.
+ * res.h for referencing functions in res.c, reslib.c
  *
- *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
- *  Copyright (C) 1996-2002 Hybrid Development Team
- *  Copyright (C) 2002-2004 ircd-ratbox development team
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
- *  USA
- *
- *  $Id: res.h 6 2005-09-10 01:02:21Z nenolod $
+ * $Id: res.h 924 2006-02-28 13:24:51Z jilles $
  */
 
-#ifndef _RES_H_INCLUDED
-#define _RES_H_INCLUDED 1
+#ifndef _CHARYBDIS_RES_H
+#define _CHARYBDIS_RES_H
 
-#include "config.h"
 #include "ircd_defs.h"
-#include "adns.h"
+#include "common.h"
+#include "commio.h"
+#include "reslib.h"
+#include "irc_string.h"
+#include "sprintf_irc.h"
+#include "ircd.h"
+
+/* Maximum number of nameservers in /etc/resolv.conf we care about 
+ * In hybrid, this was 2 -- but in Charybdis, we want to track
+ * a few more than that ;) --nenolod
+ */
+#define IRCD_MAXNS 10
+
+struct DNSReply
+{
+  char *h_name;
+  struct irc_sockaddr_storage addr;
+};
 
 struct DNSQuery
 {
-	void *ptr;
-	adns_query query;
-	adns_answer answer;
-	void (*callback) (void *vptr, adns_answer * reply);
+  void *ptr; /* pointer used by callback to identify request */
+  void (*callback)(void* vptr, struct DNSReply *reply); /* callback to call */
 };
 
-void init_resolver(void);
-void restart_resolver(void);
-void timeout_adns(void *);
-void dns_writeable(int fd, void *ptr);
-void dns_readable(int fd, void *ptr);
-void dns_do_callbacks(void);
-void dns_select(void);
-int adns_gethost(const char *name, int aftype, struct DNSQuery *req);
-int adns_getaddr(struct sockaddr *addr, int aftype, struct DNSQuery *req, int arpa_type);
-void delete_adns_queries(struct DNSQuery *q);
-void report_adns_servers(struct Client *);
+extern struct irc_sockaddr_storage irc_nsaddr_list[];
+extern int irc_nscount;
+
+extern void init_resolver(void);
+extern void restart_resolver(void);
+extern void delete_resolver_queries(const struct DNSQuery *);
+extern void gethost_byname_type(const char *, struct DNSQuery *, int);
+extern void gethost_byname(const char *, struct DNSQuery *);
+extern void gethost_byaddr(const struct irc_sockaddr_storage *, struct DNSQuery *);
+extern void add_local_domain(char *, size_t);
+extern void report_dns_servers(struct Client *);
+
 #endif

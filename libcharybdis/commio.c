@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: commio.c 388 2005-12-07 16:34:40Z nenolod $
+ *  $Id: commio.c 829 2006-02-15 00:12:24Z jilles $
  */
 
 #include "libcharybdis.h"
@@ -53,7 +53,7 @@ int number_fd = 0;
 
 static void comm_connect_callback(int fd, int status);
 static PF comm_connect_timeout;
-static void comm_connect_dns_callback(void *vptr, adns_answer * reply);
+static void comm_connect_dns_callback(void *vptr, struct DNSReply *reply);
 static PF comm_connect_tryconnect;
 
 /* 32bit solaris is kinda slow and stdio only supports fds < 256
@@ -365,7 +365,12 @@ comm_connect_tcp(int fd, const char *host, u_short port,
 		F->dns_query = MyMalloc(sizeof(struct DNSQuery));
 		F->dns_query->ptr = F;
 		F->dns_query->callback = comm_connect_dns_callback;
-		adns_gethost(host, aftype, F->dns_query);
+#ifdef IPV6
+		if (aftype == AF_INET6)
+			gethost_byname_type(host, F->dns_query, T_AAAA);
+		else
+#endif
+			gethost_byname_type(host, F->dns_query, T_A);
 	}
 	else
 	{
@@ -420,7 +425,7 @@ comm_connect_timeout(int fd, void *notused)
  * otherwise we initiate the connect()
  */
 static void
-comm_connect_dns_callback(void *vptr, adns_answer * reply)
+comm_connect_dns_callback(void *vptr, struct DNSReply *reply)
 {
 	fde_t *F = vptr;
 
@@ -430,40 +435,24 @@ comm_connect_dns_callback(void *vptr, adns_answer * reply)
 		return;
 	}
 
-	if(reply->status != adns_s_ok)
-	{
-		/* Yes, callback + return */
-		comm_connect_callback(F->fd, COMM_ERR_DNS);
-		MyFree(reply);
-		MyFree(F->dns_query);
-		F->dns_query = NULL;
-		return;
-	}
-
 	/* No error, set a 10 second timeout */
 	comm_settimeout(F->fd, 30 * 1000, comm_connect_timeout, NULL);
 
 	/* Copy over the DNS reply info so we can use it in the connect() */
-	/*
-	 * Note we don't fudge the refcount here, because we aren't keeping
-	 * the DNS record around, and the DNS cache is gone anyway.. 
-	 *     -- adrian
-	 */
 #ifdef IPV6
-	if(reply->rrs.addr->addr.sa.sa_family == AF_INET6)
+	if(reply->addr.ss_family == AF_INET6)
 	{
 		struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)&F->connect.hostaddr;
-		memcpy(&in6->sin6_addr, &reply->rrs.addr->addr.inet6.sin6_addr, sizeof(struct in6_addr));
+		memcpy(&in6->sin6_addr, &((struct sockaddr_in6 *)&reply->addr)->sin6_addr, sizeof(struct in6_addr));
 	}
 	else
 #endif
 	{
 		struct sockaddr_in *in = (struct sockaddr_in *)&F->connect.hostaddr;
-		in->sin_addr.s_addr = reply->rrs.addr->addr.inet.sin_addr.s_addr;
+		in->sin_addr.s_addr = ((struct sockaddr_in *)&reply->addr)->sin_addr.s_addr;
 	}
 
 	/* Now, call the tryconnect() routine to try a connect() */
-	MyFree(reply);
 	comm_connect_tryconnect(F->fd, NULL);
 }
 
@@ -739,7 +728,6 @@ comm_close(int fd)
 	
 	if (F->dns_query != NULL)
 	{
-		delete_adns_queries(F->dns_query);	
 		MyFree(F->dns_query);
 		F->dns_query = NULL;
 	}

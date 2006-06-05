@@ -16,7 +16,7 @@
 #*   along with this program; if not, write to the Free Software
 #*   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #*
-#*   $Id: Makefile.in 428 2006-01-05 23:27:27Z nenolod $
+#*   $Id: Makefile.in 1347 2006-05-17 14:49:13Z nenolod $
 #*/
 
 RM=@RM@
@@ -46,7 +46,7 @@ CFLAGS		= @CFLAGS@
 # the system one.
 #CFLAGS= -DNDEBUG -g -O2 -D"FD_SETSIZE=1024"
 SHELL=/bin/sh
-SUBDIRS=modules contrib libcharybdis adns src tools servlink doc help
+SUBDIRS=modules extensions libcharybdis src tools servlink doc help
 CLEANDIRS = ${SUBDIRS}
 RSA_FILES=rsa_respond/README rsa_respond/respond.c rsa_respond/Makefile
 

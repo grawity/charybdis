@@ -1,5 +1,5 @@
 # Generated automatically from Makefile.in by configure.
-# $Id: Makefile.in 186 2005-09-12 13:37:11Z jilles $
+# $Id: Makefile.in 1044 2006-03-12 16:05:39Z jilles $
 # makefile for include/
 
 INSTALL=	@INSTALL@
@@ -38,8 +38,8 @@ index:
 	echo 'Help topics available to users:' > users/index
 	echo '' >> users/index
 	cat users/index.tmp \
-		| sort -u \
 		| sed -e 's|^users/||' \
+		| sort -u \
 		| tr a-z A-Z \
 		| column -c 65 -x \
 		| expand \
@@ -54,8 +54,8 @@ index:
 	echo 'Help topics available to opers:' > opers/index
 	echo '' >> opers/index
 	cat opers/index.tmp \
-		| sort -u \
 		| sed -e 's|^opers/||' \
+		| sort -u \
 		| tr a-z A-Z \
 		| column -c 65 -s ' ' -x \
 		| expand \

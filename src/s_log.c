@@ -28,7 +28,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: s_log.c 498 2006-01-15 16:40:33Z jilles $
+ * $Id: s_log.c 1563 2006-06-02 00:43:35Z nenolod $
  */
 
 #include "stdinc.h"
@@ -130,6 +130,60 @@ ilog(ilogfile dest, const char *format, ...)
 	}
 
 	fflush(logfile);
+}
+
+static void
+_iprint(const char *domain, char *buf)
+{
+	if (domain == NULL || buf == NULL)
+		return;
+
+	fprintf(stderr, "%8s: %s\n", domain, buf);
+}
+
+void
+inotice(const char *format, ...)
+{
+	char buf[BUFSIZE];
+	va_list args;
+
+	va_start(args, format);
+	ircvsnprintf(buf, sizeof(buf), format, args);
+	va_end(args);
+
+	_iprint("notice", buf);
+
+	ilog(L_MAIN, "%s", buf);
+}
+
+void
+iwarn(const char *format, ...)
+{
+	char buf[BUFSIZE];
+	va_list args;
+
+	va_start(args, format);
+	ircvsnprintf(buf, sizeof(buf), format, args);
+	va_end(args);
+
+	_iprint("warning", buf);
+
+	ilog(L_MAIN, "%s", buf);
+}
+
+void
+ierror(const char *format, ...)
+{
+	char buf[BUFSIZE];
+	va_list args;
+
+	va_start(args, format);
+	ircvsnprintf(buf, sizeof(buf), format, args);
+	va_end(args);
+
+	_iprint("error", buf);
+
+	ilog(L_MAIN, "%s", buf);
 }
 
 void

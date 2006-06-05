@@ -21,12 +21,13 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: packet.h 6 2005-09-10 01:02:21Z nenolod $
+ *  $Id: packet.h 813 2006-02-14 20:52:15Z nenolod $
  */
 
 #ifndef INCLUDED_packet_h
 #define INCLUDED_packet_h
 
+#include "commio.h"
 
 /*
  * this hides in here rather than a config.h because it really shouldn't

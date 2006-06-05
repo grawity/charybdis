@@ -6,6 +6,9 @@
 /* Size of the channel heap. */
 #undef CHANNEL_HEAP_SIZE
 
+/* Define this if you are profiling. */
+#undef CHARYBDIS_PROFILE
+
 /* Size of the client heap. */
 #undef CLIENT_HEAP_SIZE
 
@@ -71,6 +74,9 @@
 
 /* Define to 1 if zlib (-lz) is available. */
 #undef HAVE_LIBZ
+
+/* Define to 1 if you have the <machine/endian.h> header file. */
+#undef HAVE_MACHINE_ENDIAN_H
 
 /* Define to 1 if you have the <mach-o/dyld.h> header file. */
 #undef HAVE_MACH_O_DYLD_H
@@ -180,6 +186,9 @@
 /* Prefix where to write logfiles. */
 #undef LOG_DIR
 
+/* the system's memory page size */
+#undef MALLOC_PAGESIZE
+
 /* Maximum number of network connections */
 #undef MAX_CLIENTS
 
@@ -203,6 +212,9 @@
 
 /* Size of the WHOWAS array. */
 #undef NICKNAMEHISTORYLENGTH
+
+/* Define to 1 if you wish to disable the block allocator. */
+#undef NOBALLOC
 
 /* Define to 1 if your system has no in6addr_any. */
 #undef NO_IN6ADDR_ANY
@@ -228,11 +240,26 @@
 /* Size of the pre-client heap. */
 #undef PCLIENT_HEAP_SIZE
 
+/* Define to 1 if you are using the assembly-based hashing routines. */
+#undef RICER_HASHING
+
 /* This is the type of IO loop we are using */
 #undef SELECT_TYPE
 
 /* Suffix for shared libraries on this platform. */
 #undef SHARED_SUFFIX
+
+/* The size of a `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
+/* The size of a `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* The size of a `long long', as computed by sizeof. */
+#undef SIZEOF_LONG_LONG
+
+/* The size of a `short', as computed by sizeof. */
+#undef SIZEOF_SHORT
 
 /* Define to 1 if sockaddr has a 'sa_len' member. */
 #undef SOCKADDR_IN_HAS_LEN
@@ -289,6 +316,9 @@
 /* This is needed to use strtok_r on Solaris. */
 #undef __EXTENSIONS__
 
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
 /* If system does not define in_port_t, define it to what it should be. */
 #undef in_port_t
 
@@ -298,8 +328,14 @@
 #undef inline
 #endif
 
+/* Define to `int' if <sys/types.h> does not define. */
+#undef pid_t
+
 /* If system does not define sa_family_t, define it here. */
 #undef sa_family_t
+
+/* Define to `unsigned' if <sys/types.h> does not define. */
+#undef size_t
 
 /* If we don't have a real socklen_t, unsigned int is good enough. */
 #undef socklen_t

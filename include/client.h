@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.h 796 2006-02-12 17:31:44Z jilles $
+ *  $Id: client.h 1463 2006-05-26 21:25:28Z jilles $
  */
 
 #ifndef INCLUDED_client_h
@@ -39,6 +39,13 @@
 #include "channel.h"
 #include "res.h"
 #include "snomask.h"
+#include "irc_string.h"
+#include "sprintf_irc.h"
+#include "ircd.h"
+#include "commio.h"
+
+/* other structs */
+struct Blacklist;
 
 /* we store ipv6 ips for remote clients, so this needs to be v6 always */
 #define HOSTIPLEN	53	/* sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255.ipv6") */
@@ -289,6 +296,8 @@ struct LocalUser
 	time_t target_last;		/* last time we cleared a slot */
 
 	list_client_t *safelist_data;
+
+	struct DNSQuery *dns_query;	/* DNS state --nenolod */
 };
 
 struct PreClient
@@ -300,6 +309,9 @@ struct PreClient
 	char sasl_agent[IDLEN];
 	unsigned char sasl_out;
 	unsigned char sasl_complete;
+
+	unsigned int dnsbl_hits;
+	struct Blacklist *dnsbl_listed; /* first dnsbl where it's listed */
 };
 
 struct ListClient

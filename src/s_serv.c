@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c 712 2006-02-06 04:42:14Z gxti $
+ *  $Id: s_serv.c 1537 2006-06-01 17:41:10Z nenolod $
  */
 
 #include "stdinc.h"
@@ -59,8 +59,6 @@
 #include "msg.h"
 
 extern char *crypt();
-
-#define MIN_CONN_FREQ 300
 
 #ifndef INADDR_NONE
 #define INADDR_NONE ((unsigned int) 0xffffffff)
@@ -357,7 +355,7 @@ try_connections(void *unused)
 	struct Class *cltmp;
 	dlink_node *ptr;
 	int connecting = FALSE;
-	int confrq;
+	int confrq = 0;
 	time_t next = 0;
 
 	DLINK_FOREACH(ptr, server_conf_list.head)
@@ -383,10 +381,9 @@ try_connections(void *unused)
 			continue;
 		}
 
-		if((confrq = get_con_freq(cltmp)) < MIN_CONN_FREQ)
-			confrq = MIN_CONN_FREQ;
-
+		confrq = get_con_freq(cltmp);
 		tmp_p->hold = CurrentTime + confrq;
+
 		/*
 		 * Found a CONNECT config with port specified, scan clients
 		 * and see if this server is already connected?
@@ -1253,7 +1250,7 @@ start_io(struct Client *server)
 	int linecount = 0;
 	int linelen;
 
-	iobuf = MyMalloc(256);
+	iobuf = MyMalloc(256);	/* XXX: This seems arbitrary. Perhaps make it IRCD_BUFSIZE? --nenolod */
 
 	if(IsCapable(server, CAP_ZIP))
 	{

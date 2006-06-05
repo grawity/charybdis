@@ -1,7 +1,7 @@
 #
 # Makefile.in for ircd/modules
 #
-# $Id: Makefile.in 722 2006-02-08 21:51:28Z nenolod $
+# $Id: Makefile.in 946 2006-03-06 03:43:02Z nenolod $
 #
 CC		= @CC@
 AR		= @AR@
@@ -94,7 +94,6 @@ TSRCS =                          \
   m_set.c \
   m_signon.c \
   m_snote.c \
-  m_sshortcut.c \
   m_stats.c \
   m_svinfo.c \
   m_tb.c \

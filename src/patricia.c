@@ -1,7 +1,7 @@
 /*
  * Yanked out of Net::Patricia by Aaron Sethman <androsyn@ratbox.org>
  *
- * $Id: patricia.c 464 2006-01-13 16:53:35Z jilles $
+ * $Id: patricia.c 1110 2006-03-29 22:55:25Z nenolod $
  * Dave Plonka <plonka@doit.wisc.edu>
  *
  * This product includes software developed by the University of Michigan,
@@ -25,9 +25,9 @@
 #include "patricia.h"
 #include "balloc.h"
 
-static BlockHeap *prefix_heap;
-static BlockHeap *node_heap;
-static BlockHeap *patricia_heap;
+extern BlockHeap *prefix_heap;
+extern BlockHeap *node_heap;
+extern BlockHeap *patricia_heap;
 
 /* Enable both of these to debug patricia.c
  * #define NOTYET 1

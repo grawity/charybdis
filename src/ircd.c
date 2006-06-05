@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c 694 2006-02-04 04:11:17Z nenolod $
+ *  $Id: ircd.c 1610 2006-06-04 02:16:18Z jilles $
  */
 
 #include "stdinc.h"
@@ -69,64 +69,18 @@
 #include "cache.h"
 #include "monitor.h"
 #include "libcharybdis.h"
+#include "patchlevel.h"
+#include "serno.h"
 
 /*
  * Try and find the correct name to use with getrlimit() for setting the max.
  * number of files allowed to be open by this process.
  */
+int _charybdis_data_version = CHARYBDIS_DV;
 
-/* /quote set variables */
-struct SetOptions GlobalSetOptions;
-
-/* configuration set from ircd.conf */
-struct config_file_entry ConfigFileEntry;
-/* server info set from ircd.conf */
-struct server_info ServerInfo;
-/* admin info set from ircd.conf */
-struct admin_info AdminInfo;
-
-struct Counter Count;
-
-struct timeval SystemTime;
-int ServerRunning;		/* GLOBAL - server execution state */
-struct Client me;		/* That's me */
-struct LocalUser meLocalUser;	/* That's also part of me */
-
-dlink_list global_client_list;
-
-/* unknown/client pointer lists */
-dlink_list unknown_list;	/* unknown clients ON this server only */
-dlink_list lclient_list;	/* local clients only ON this server */
-dlink_list serv_list;		/* local servers to this server ONLY */
-dlink_list global_serv_list;	/* global servers on the network */
-dlink_list local_oper_list;	/* our opers, duplicated in lclient_list */
-dlink_list oper_list;		/* network opers */
-
-static unsigned long initialVMTop = 0;	/* top of virtual memory at init */
-const char *logFileName = LPATH;
-const char *pidFileName = PPATH;
-
-char **myargv;
-int dorehash = 0;
-int dorehashbans = 0;
-int doremotd = 0;
-int kline_queued = 0;
-int server_state_foreground = 0;
-
-int testing_conf = 0;
-
-time_t startup_time;
-
-/* Set to zero because it should be initialized later using
- * initialize_server_capabs
- */
-int default_server_capabs = CAP_MASK;
-
-int splitmode;
-int splitchecking;
-int split_users;
-int split_servers;
-int eob_count;
+extern int ServerRunning, initialVMTop;
+extern struct LocalUser meLocalUser;
+extern char **myargv;
 
 /*
  * get_vm_top - get the operating systems notion of the resident set size
@@ -163,11 +117,20 @@ get_maxrss(void)
 static void
 print_startup(int pid)
 {
-	printf("ircd: version %s\n", ircd_version);
-	printf("ircd: pid %d\n", pid);
-	printf("ircd: running in %s mode from %s\n",
+	inotice("now running in %s mode from %s as pid %d ...",
 	       !server_state_foreground ? "background" : "foreground",
-	        ConfigFileEntry.dpath);
+        	ConfigFileEntry.dpath, pid);
+
+	/* let the parent process know the initialization was successful
+	 * -- jilles */
+	if (!server_state_foreground)
+		write(0, ".", 1);
+	fclose(stdin);
+	fclose(stdout);
+	fclose(stderr);
+	open("/dev/null", O_RDWR);
+	dup2(0, 1);
+	dup2(0, 2);
 }
 
 static void
@@ -188,7 +151,7 @@ ircd_die_cb(const char *str)
 {
 	/* Try to get the message out to currently logged in operators. */
 	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "Server panic! %s", str);
-	ilog(L_MAIN, "Server terminating because: %s", str);
+	inotice("server panic: %s", str);
 
 	unlink(pidFileName);
 	exit(EXIT_FAILURE);
@@ -233,7 +196,16 @@ static int
 make_daemon(void)
 {
 	int pid;
+	int pip[2];
+	char c;
 
+	if (pipe(pip) < 0)
+	{
+		perror("pipe");
+		exit(EXIT_FAILURE);
+	}
+	dup2(pip[1], 0);
+	close(pip[1]);
 	if((pid = fork()) < 0)
 	{
 		perror("fork");
@@ -241,14 +213,22 @@ make_daemon(void)
 	}
 	else if(pid > 0)
 	{
-		print_startup(pid);
-		exit(EXIT_SUCCESS);
+		close(0);
+		/* Wait for initialization to finish, successfully or
+		 * unsuccessfully. Until this point the child may still
+		 * write to stdout/stderr.
+		 * -- jilles */
+		if (read(pip[0], &c, 1) > 0)
+			exit(EXIT_SUCCESS);
+		else
+			exit(EXIT_FAILURE);
 	}
 
+	close(pip[0]);
 	setsid();
-	/*  fclose(stdin);
-	   fclose(stdout);
-	   fclose(stderr); */
+/*	fclose(stdin);
+	fclose(stdout);
+	fclose(stderr); */
 
 	return 0;
 }
@@ -307,12 +287,39 @@ set_time(void)
 }
 
 static void
-io_loop(void)
+check_rehash(void *unused)
+{
+	/*
+	 * Check to see whether we have to rehash the configuration ..
+	 */
+	if(dorehash)
+	{
+		rehash(1);
+		dorehash = 0;
+	}
+
+	if(dorehashbans)
+	{
+		rehash_bans(1);
+		dorehashbans = 0;
+	}
+
+	if(doremotd)
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				     "Got signal SIGUSR1, reloading ircd motd file");
+		free_cachefile(user_motd);
+		user_motd = cache_file(MPATH, "ircd.motd", 0);
+		doremotd = 0;
+	}
+}
+
+void
+charybdis_io_loop(void)
 {
 	time_t delay;
 
 	while (ServerRunning)
-
 	{
 		/* Run pending events, then get the number of seconds to the next
 		 * event
@@ -324,28 +331,6 @@ io_loop(void)
 
 
 		comm_select(250);
-
-		/*
-		 * Check to see whether we have to rehash the configuration ..
-		 */
-		if(dorehash)
-		{
-			rehash(1);
-			dorehash = 0;
-		}
-		if(dorehashbans)
-		{
-			rehash_bans(1);
-			dorehashbans = 0;
-		}
-		if(doremotd)
-		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					     "Got signal SIGUSR1, reloading ircd motd file");
-			free_cachefile(user_motd);
-			user_motd = cache_file(MPATH, "ircd.motd", 0);
-			doremotd = 0;
-		}
 	}
 }
 
@@ -497,9 +482,20 @@ setup_corefile(void)
 #endif
 }
 
+/*
+ * main
+ *
+ * Initializes the IRCd.
+ *
+ * Inputs       - number of commandline args, args themselves
+ * Outputs      - none
+ * Side Effects - this is where the ircd gets going right now
+ */
 int
 main(int argc, char *argv[])
 {
+	int fd;
+
 	/* Check to see if the user is running us as root, which is a nono */
 	if(geteuid() == 0)
 	{
@@ -578,8 +574,15 @@ main(int argc, char *argv[])
 	if (testing_conf)
 		server_state_foreground = 1;
 
-	/* We need this to initialise the fd array before anything else */
-
+	/* Make sure fd 0, 1 and 2 are in use -- jilles */
+	do
+	{
+		fd = open("/dev/null", O_RDWR);
+	} while (fd < 2 && fd != -1);
+	if (fd > 2)
+		close(fd);
+	else if (fd == -1)
+		exit(1);
 
 	/* Check if there is pidfile and daemon already running */
 	if(!testing_conf)
@@ -588,8 +591,7 @@ main(int argc, char *argv[])
 
 		if(!server_state_foreground)
 			make_daemon();
-		else
-			print_startup(getpid());
+		inotice("starting %s ...", ircd_version);
 	}
 
 	/* Init the event subsystem */
@@ -643,17 +645,15 @@ main(int argc, char *argv[])
 
 	if(ServerInfo.name == NULL)
 	{
-		fprintf(stderr, "ERROR: No server name specified in serverinfo block.\n");
-		ilog(L_MAIN, "No server name specified in serverinfo block.");
-		exit(EXIT_FAILURE);
+		ierror("no server name specified in serverinfo block.");
+		return -1;
 	}
 	strlcpy(me.name, ServerInfo.name, sizeof(me.name));
 
 	if(ServerInfo.sid[0] == '\0')
 	{
-		fprintf(stderr, "ERROR: No server sid specified in serverinfo block.\n");
-		ilog(L_MAIN, "No server sid specified in serverinfo block.");
-		exit(EXIT_FAILURE);
+		ierror("no server sid specified in serverinfo block.");
+		return -2;
 	}
 	strcpy(me.id, ServerInfo.sid);
 	init_uid();
@@ -661,9 +661,8 @@ main(int argc, char *argv[])
 	/* serverinfo{} description must exist.  If not, error out. */
 	if(ServerInfo.description == NULL)
 	{
-		fprintf(stderr, "ERROR: No server description specified in serverinfo block.\n");
-		ilog(L_MAIN, "ERROR: No server description specified in serverinfo block.");
-		exit(EXIT_FAILURE);
+		ierror("no server description specified in serverinfo block.");
+		return -3;
 	}
 	strlcpy(me.info, ServerInfo.description, sizeof(me.info));
 
@@ -671,7 +670,7 @@ main(int argc, char *argv[])
 	{
 		fprintf(stderr, "\nConfig testing complete.\n");
 		fflush(stderr);
-		exit(EXIT_SUCCESS);
+		return 0;	/* Why? We want the launcher to exit out. */
 	}
 
 	me.from = &me;
@@ -709,6 +708,8 @@ main(int argc, char *argv[])
 	/* Setup the timeout check. I'll shift it later :)  -- adrian */
 	eventAddIsh("comm_checktimeouts", comm_checktimeouts, NULL, 1);
 
+	eventAdd("check_rehash", check_rehash, NULL, 1);
+
 	if(ConfigServerHide.links_delay > 0)
 		eventAdd("cache_links", cache_links, NULL,
 			    ConfigServerHide.links_delay);
@@ -720,6 +721,9 @@ main(int argc, char *argv[])
 
 	ServerRunning = 1;
 
-	io_loop();
+	print_startup(getpid());
+
+	charybdis_io_loop();
+
 	return 0;
 }

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c 712 2006-02-06 04:42:14Z gxti $
+ *  $Id: client.c 1529 2006-05-30 21:34:57Z jilles $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -57,6 +57,7 @@
 #include "hook.h"
 #include "msg.h"
 #include "monitor.h"
+#include "blacklist.h"
 
 #define DEBUG_EXITED_CLIENTS
 
@@ -74,11 +75,11 @@ static int qs_server(struct Client *, struct Client *, struct Client *, const ch
 
 static EVH check_pings;
 
-static BlockHeap *client_heap = NULL;
-static BlockHeap *lclient_heap = NULL;
-static BlockHeap *pclient_heap = NULL;
+extern BlockHeap *client_heap;
+extern BlockHeap *lclient_heap;
+extern BlockHeap *pclient_heap;
 
-static char current_uid[IDLEN];
+extern char current_uid[IDLEN];
 
 enum
 {
@@ -177,11 +178,16 @@ make_client(struct Client *from)
 void
 free_pre_client(struct Client *client_p)
 {
+	struct Blacklist *blptr;
+
 	s_assert(NULL != client_p);
 
 	if(client_p->preClient == NULL)
 		return;
 
+	blptr = client_p->preClient->dnsbl_listed;
+	if (blptr != NULL)
+		unref_blacklist(blptr);
 	BlockHeapFree(pclient_heap, client_p->preClient);
 	client_p->preClient = NULL;
 }
@@ -938,6 +944,10 @@ get_client_name(struct Client *client, int showip)
 		if(ConfigFileEntry.hide_spoof_ips && 
 		   showip == SHOW_IP && IsIPSpoof(client))
 			showip = MASK_IP;
+#ifdef HIDE_SERVERS_IPS
+		if(IsAnyServer(client))
+			showip = MASK_IP;
+#endif
 
 		/* And finally, let's get the host information, ip or name */
 		switch (showip)
@@ -1401,6 +1411,9 @@ exit_unknown_client(struct Client *client_p, struct Client *source_p, struct Cli
 
 	close_connection(source_p);
 
+	if(has_id(source_p))
+		del_from_id_hash(source_p->id, source_p);
+
 	del_from_hostname_hash(source_p->host, source_p);
 	del_from_client_hash(source_p->name, source_p);
 	remove_client_from_list(source_p);
@@ -1509,12 +1522,14 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 	sendk = source_p->localClient->sendK;
 	recvk = source_p->localClient->receiveK;
 
-	if (IsPerson(from))
-		ircsnprintf(newcomment, sizeof(newcomment), "by %s: %s",
-				from->name, comment);
+	/* Always show source here, so the server notices show
+	 * which side initiated the split -- jilles
+	 */
+	ircsnprintf(newcomment, sizeof(newcomment), "by %s: %s",
+			from == source_p ? me.name : from->name, comment);
 	if (!IsIOError(source_p))
 		sendto_one(source_p, "SQUIT %s :%s", use_id(source_p),
-				IsPerson(from) ? newcomment : comment);
+				newcomment);
 	if(client_p != NULL && source_p != client_p && !IsIOError(source_p))
 	{
 		sendto_one(source_p, "ERROR :Closing Link: 127.0.0.1 %s (%s)",

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: supported.h 728 2006-02-08 22:03:57Z nenolod $
+ *  $Id: supported.h 1383 2006-05-20 18:15:46Z jilles $
  */
 
 #ifndef INCLUDED_supported_h
@@ -72,10 +72,12 @@
 	ConfigFileEntry.max_monitor
 
 #define FEATURES3 "TARGMAX=NAMES:1,LIST:1,KICK:1,WHOIS:1,PRIVMSG:%d,NOTICE:%d,ACCEPT:,MONITOR:" \
-		" FNC"
+		" FNC%s%s"
 
 #define FEATURES3VALUES \
-	ConfigFileEntry.max_targets, ConfigFileEntry.max_targets
+	ConfigFileEntry.max_targets, ConfigFileEntry.max_targets, \
+	*get_extban_string() != '\0' ? " EXTBAN=$:" : "", \
+	get_extban_string()
 
 /*
  * - from mirc's versions.txt

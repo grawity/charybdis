@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_stats.c 555 2006-01-23 15:11:11Z nenolod $
+ *  $Id: m_stats.c 1608 2006-06-04 02:11:40Z jilles $
  */
 
 #include "stdinc.h"
@@ -44,6 +44,7 @@
 #include "s_stats.h"		/* tstats */
 #include "s_user.h"		/* show_opers */
 #include "event.h"		/* events */
+#include "blacklist.h"		/* dnsbl stuff */
 #include "linebuf.h"
 #include "parse.h"
 #include "modules.h"
@@ -68,7 +69,7 @@ mapi_hlist_av1 stats_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(stats, NULL, NULL, stats_clist, stats_hlist, NULL, "$Revision: 555 $");
+DECLARE_MODULE_AV1(stats, NULL, NULL, stats_clist, stats_hlist, NULL, "$Revision: 1608 $");
 
 const char *Lformat = "%s %u %u %u %u %u :%u %u %s";
 
@@ -88,7 +89,7 @@ struct StatsStruct
 	int need_admin;
 };
 
-static void stats_adns_servers (struct Client *);
+static void stats_dns_servers (struct Client *);
 static void stats_delay(struct Client *);
 static void stats_hash(struct Client *);
 static void stats_connect(struct Client *);
@@ -103,6 +104,7 @@ static void stats_auth(struct Client *);
 static void stats_tklines(struct Client *);
 static void stats_klines(struct Client *);
 static void stats_messages(struct Client *);
+static void stats_dnsbl(struct Client *);
 static void stats_oper(struct Client *);
 static void stats_operedup(struct Client *);
 static void stats_ports(struct Client *);
@@ -127,8 +129,8 @@ static void stats_ziplinks(struct Client *);
  */
 static struct StatsStruct stats_cmd_table[] = {
     /* letter     function        need_oper need_admin */
-	{'a', stats_adns_servers,	1, 1, },
-	{'A', stats_adns_servers,	1, 1, },
+	{'a', stats_dns_servers,	1, 1, },
+	{'A', stats_dns_servers,	1, 1, },
 	{'b', stats_delay,		1, 1, },
 	{'B', stats_hash,		1, 1, },
 	{'c', stats_connect,		0, 0, },
@@ -151,6 +153,7 @@ static struct StatsStruct stats_cmd_table[] = {
 	{'L', stats_ltrace,		0, 0, },
 	{'m', stats_messages,		0, 0, },
 	{'M', stats_messages,		0, 0, },
+	{'n', stats_dnsbl,		0, 0, },
 	{'o', stats_oper,		0, 0, },
 	{'O', stats_oper,		0, 0, },
 	{'p', stats_operedup,		0, 0, },
@@ -247,9 +250,9 @@ m_stats(struct Client *client_p, struct Client *source_p, int parc, const char *
 }
 
 static void
-stats_adns_servers (struct Client *source_p)
+stats_dns_servers (struct Client *source_p)
 {
-	report_adns_servers (source_p);
+	report_dns_servers (source_p);
 }
 
 static void
@@ -715,6 +718,25 @@ static void
 stats_messages(struct Client *source_p)
 {
 	report_messages(source_p);
+}
+
+static void
+stats_dnsbl(struct Client *source_p)
+{
+	dlink_node *ptr;
+	struct Blacklist *blptr;
+
+	DLINK_FOREACH(ptr, blacklist_list.head)
+	{
+		blptr = ptr->data;
+
+		/* use RPL_STATSDEBUG for now -- jilles */
+		sendto_one_numeric(source_p, RPL_STATSDEBUG, "n :%d %s %s (%d)",
+				blptr->hits,
+				blptr->host,
+				blptr->status & CONF_ILLEGAL ? "disabled" : "active",
+				blptr->refcount);
+	}
 }
 
 static void
@@ -1272,7 +1294,9 @@ stats_ltrace(struct Client *source_p, int parc, const char *parv[])
 			stats_l_list(source_p, name, doall, wilds, &local_oper_list, statchar);
 		}
 
-		stats_l_list(source_p, name, doall, wilds, &serv_list, statchar);
+		if (!ConfigServerHide.flatten_links || IsOper(source_p) ||
+				IsExemptShide(source_p))
+			stats_l_list(source_p, name, doall, wilds, &serv_list, statchar);
 
 		return;
 	}

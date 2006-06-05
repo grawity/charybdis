@@ -9,6 +9,7 @@ ircd.conf file.
   GLINES   - Clears G Lines
   HELP     - Re-reads help files
   MOTD     - Re-reads MOTD file
+  NICKDELAY - Clears delayed nicks
   OMOTD    - Re-reads Oper MOTD file
   PGLINES  - Clears pending G Lines
   REJECTCACHE - Clears the reject cache

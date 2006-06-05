@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_challenge.c 678 2006-02-03 20:25:01Z jilles $
+ *  $Id: m_challenge.c 1483 2006-05-27 18:58:12Z jilles $
  */
 
 #include "stdinc.h"
@@ -70,7 +70,7 @@ static int	challenge_load(void)
 #endif
 }
 
-DECLARE_MODULE_AV1(challenge, challenge_load, NULL, NULL, NULL, NULL, "$Revision: 678 $");
+DECLARE_MODULE_AV1(challenge, challenge_load, NULL, NULL, NULL, NULL, "$Revision: 1483 $");
 #else
 
 static int m_challenge(struct Client *, struct Client *, int, const char **);
@@ -82,7 +82,7 @@ struct Message challenge_msgtab = {
 };
 
 mapi_clist_av1 challenge_clist[] = { &challenge_msgtab, NULL };
-DECLARE_MODULE_AV1(challenge, NULL, NULL, challenge_clist, NULL, NULL, "$Revision: 678 $");
+DECLARE_MODULE_AV1(challenge, NULL, NULL, challenge_clist, NULL, NULL, "$Revision: 1483 $");
 
 static int generate_challenge(char **r_challenge, char **r_response, RSA * key);
 
@@ -168,7 +168,7 @@ m_challenge(struct Client *client_p, struct Client *source_p, int parc, const ch
 
 		MyFree(b_response);
 
-		oper_p = find_oper_conf(source_p->username, source_p->host, 
+		oper_p = find_oper_conf(source_p->username, source_p->orighost, 
 					source_p->sockhost, 
 					source_p->localClient->opername);
 
@@ -201,7 +201,7 @@ m_challenge(struct Client *client_p, struct Client *source_p, int parc, const ch
 
 	cleanup_challenge(source_p);
 
-	oper_p = find_oper_conf(source_p->username, source_p->host, 
+	oper_p = find_oper_conf(source_p->username, source_p->orighost, 
 				source_p->sockhost, parv[1]);
 
 	if(oper_p == NULL)

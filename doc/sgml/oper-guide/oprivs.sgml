@@ -106,8 +106,9 @@
 	<title>oper_spy (S), use operspy</title>
 	<para>
 	  This allows using /mode !#channel, /whois !nick, /who !#channel,
-	  /chantrace !#channel, /who !mask and /masktrace !user@host :gecos
-	  to see through secret channels, invisible users, etc.
+	  /chantrace !#channel, /who !mask, /masktrace !user@host :gecos
+	  and /scan umodes +modes-modes global list to see through secret
+	  channels, invisible users, etc.
 	</para>
 	<para>
 	  All operspy usage is broadcasted to opers with snomask +Z set

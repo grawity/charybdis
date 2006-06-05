@@ -28,7 +28,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: s_log.h 6 2005-09-10 01:02:21Z nenolod $
+ * $Id: s_log.h 1481 2006-05-27 17:24:05Z nenolod $
  */
 
 #ifndef INCLUDED_s_log_h
@@ -57,6 +57,9 @@ struct Client;
 extern void init_main_logfile(void);
 extern void open_logfiles(void);
 extern void ilog(ilogfile dest, const char *fmt, ...) AFP(2, 3);
+extern void inotice(const char *fmt, ...) AFP(1, 2);
+extern void iwarn(const char *fmt, ...) AFP(1, 2);
+extern void ierror(const char *fmt, ...) AFP(1, 2);
 extern void report_operspy(struct Client *, const char *, const char *);
 extern const char *smalldate(void);
 extern void report_error(const char *, const char *, const char *, int);

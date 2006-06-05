@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: linebuf.c 364 2005-12-07 14:35:50Z nenolod $
+ *  $Id: linebuf.c 1110 2006-03-29 22:55:25Z nenolod $
  */
 
 #include "stdinc.h"
@@ -48,7 +48,7 @@
 # endif
 #endif
 
-static BlockHeap *linebuf_heap;
+extern BlockHeap *linebuf_heap;
 
 static int bufline_count = 0;
 

@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: tools.c 382 2005-12-07 15:15:59Z nenolod $
+ *  $Id: tools.c 1110 2006-03-29 22:55:25Z nenolod $
  *
  *  Here is the original header:
  *
@@ -61,7 +61,7 @@ mem_frob(void *data, int len)
  * init_dlink_nodes
  *
  */
-static BlockHeap *dnode_heap;
+extern BlockHeap *dnode_heap;
 void
 init_dlink_nodes(void)
 {

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: config.h 6 2005-09-10 01:02:21Z nenolod $
+ *  $Id: config.h 1142 2006-04-06 13:33:39Z nenolod $
  */
 
 #ifndef INCLUDED_config_h
@@ -50,6 +50,7 @@
 /* dirs */
 #define DPATH   IRCD_PREFIX
 #define BINPATH IRCD_PREFIX "/bin/"
+#define LIBPATH IRCD_PREFIX "/lib/"
 #define MODPATH MODULE_DIR
 #define AUTOMODPATH MODULE_DIR "/autoload/"
 #define ETCPATH ETC_DIR 
@@ -58,18 +59,19 @@
 #define HPATH  HELP_DIR "/opers"
 
 /* files */
-#define SPATH    BINPATH "/ircd"	/* ircd executable */
-#define SLPATH   BINPATH "/servlink"	/* servlink executable */
-#define CPATH    ETCPATH "/ircd.conf"	/* ircd.conf file */
-#define KPATH    ETCPATH "/kline.conf"	/* kline file */
-#define DLPATH   ETCPATH "/dline.conf"	/* dline file */
-#define XPATH	 ETCPATH "/xline.conf"	/* xline file */
-#define RESVPATH ETCPATH "/resv.conf"	/* resv file */
-#define RPATH    ETCPATH "/ircd.rsa"	/* ircd rsa private keyfile */
-#define MPATH    ETCPATH "/ircd.motd"	/* MOTD file */
-#define LPATH    LOGPATH "/ircd.log"	/* ircd logfile */
-#define PPATH    ETCPATH "/ircd.pid"	/* pid file */
-#define OPATH    ETCPATH "/opers.motd"	/* oper MOTD file */
+#define SPATH    BINPATH "/ircd"		   /* ircd executable */
+#define LIPATH   LIBPATH "/libircd" SHARED_SUFFIX  /* ircd library */
+#define SLPATH   BINPATH "/servlink"		   /* servlink executable */
+#define CPATH    ETCPATH "/ircd.conf"		   /* ircd.conf file */
+#define KPATH    ETCPATH "/kline.conf"		   /* kline file */
+#define DLPATH   ETCPATH "/dline.conf"		   /* dline file */
+#define XPATH	 ETCPATH "/xline.conf"		   /* xline file */
+#define RESVPATH ETCPATH "/resv.conf"		   /* resv file */
+#define RPATH    ETCPATH "/ircd.rsa"		   /* ircd rsa private keyfile */
+#define MPATH    ETCPATH "/ircd.motd"		   /* MOTD file */
+#define LPATH    LOGPATH "/ircd.log"		   /* ircd logfile */
+#define PPATH    ETCPATH "/ircd.pid"		   /* pid file */
+#define OPATH    ETCPATH "/opers.motd"		   /* oper MOTD file */
 
 /* IGNORE_BOGUS_TS
  * Ignore bogus timestamps from other servers. Yes this will desync
@@ -113,7 +115,7 @@
  */
 #define CLIENT_FLOOD 20
 
-/* HANGONGOODLINK and HANGONGOODLINK
+/* HANGONGOODLINK and HANGONRETRYDELAY
  * Often net breaks for a short time and it's useful to try to
  * establishing the same connection again faster than CONNECTFREQUENCY
  * would allow. But, to keep trying on bad connection, we require

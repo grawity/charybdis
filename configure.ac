@@ -1,4 +1,4 @@
-dnl $Id: configure.ac 712 2006-02-06 04:42:14Z gxti $
+dnl $Id: configure.ac 1549 2006-06-01 20:17:21Z jilles $
 dnl Process this file with autoconf to produce a configure script.
 
 dnl TODO: clean up all the OpenSSL and shared module checking stuff;
@@ -8,9 +8,9 @@ dnl said functions need to be just about as complex as they already are.
 AC_PREREQ(2.57)
 
 dnl Sneaky way to get an Id tag into the configure script
-AC_COPYRIGHT([$Id: configure.ac 712 2006-02-06 04:42:14Z gxti $])
+AC_COPYRIGHT([$Id: configure.ac 1549 2006-06-01 20:17:21Z jilles $])
 
-AC_INIT([charybdis],[1.1.0])
+AC_INIT([charybdis],[2.0.0])
 
 AC_CONFIG_HEADER(include/setup.h)
 
@@ -101,6 +101,7 @@ case "$OSNAME" in
 	SunOS*)
 		AC_MSG_RESULT(SunOS or Solaris)
 		AC_DEFINE(__EXTENSIONS__, 1, [This is needed to use strtok_r on Solaris.])
+		SUN=yes
 	;;
 	AIX*)
 		AC_MSG_RESULT(AIX - Sorry you poor bastard..really we are)
@@ -114,7 +115,7 @@ esac
 if test "$ac_cv_c_compiler_gnu" = yes; then
 	AC_MSG_CHECKING(if $CC is Apple GCC)
 
-	case `$CC -v 2>&1 | tail -1` in
+	case `$CC -v 2>&1 | tail -n 1` in
 	*Apple*)
 		AC_MSG_RESULT(yes)
 		AppleGCC=yes
@@ -125,7 +126,7 @@ if test "$ac_cv_c_compiler_gnu" = yes; then
 	;;
 	esac
 
-	IRC_CFLAGS="$IRC_CFLAGS -O2 -Wall"
+	IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall"
 fi
 
 dnl If we support -g, use it!
@@ -212,6 +213,7 @@ AC_PATH_PROG(AR, ar)
 AC_PATH_PROG(LD, ld)
 AC_PATH_PROG(RANLIB, ranlib)
 AC_PATH_PROG(TOUCH, touch)
+
 AC_PROG_YACC
 
 dnl AC_PROG_YACC defaults to yacc unconditionally if nothing can be found
@@ -235,12 +237,69 @@ fi
 dnl Checks for header files.
 AC_HEADER_STDC
 
-AC_CHECK_HEADERS([crypt.h sys/resource.h sys/param.h errno.h sys/syslog.h stddef.h sys/wait.h wait.h sys/epoll.h sys/uio.h])
+AC_CHECK_HEADERS([crypt.h sys/resource.h sys/param.h errno.h sys/syslog.h stddef.h sys/wait.h wait.h sys/epoll.h sys/uio.h machine/endian.h])
+
+dnl Stuff that the memory manager (imalloc) depends on
+dnl ==================================================
+
+AC_C_CONST
+if test "$ac_cv_header_machine_endian_h" = "no" ; then
+    AC_C_BIGENDIAN
+fi
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_CHECK_SIZEOF(short)
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
+
+dnl Memory manager
+dnl ==============
+
+AC_MSG_CHECKING([the system's memory page size])
+pagesize="no"
+AC_TRY_RUN([
+#include <stdio.h>
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
+int main(void) {
+    FILE *fp = fopen("conftest.malloc", "w");
+
+    if (fp != NULL) {
+        fprintf(fp, "%d\n", getpagesize());
+        fclose(fp);
+    } else
+        exit(1);
+    exit(0);
+}],[
+if test -f "conftest.malloc" ; then
+    pagesize=`cat conftest.malloc`
+fi
+])
+if test "$pagesize" != "no" ; then
+    AC_MSG_RESULT($pagesize)
+else
+    if test "$ac_cv_sizeof_int" = "4" ; then
+        pagesize=4096
+    else
+        pagesize=8192
+    fi
+    AC_MSG_RESULT([$pagesize (guessing)])
+fi
+AC_DEFINE_UNQUOTED(MALLOC_PAGESIZE, $pagesize,
+    [the system's memory page size])
 
 dnl Networking Functions
 dnl ====================
 
 AC_SEARCH_LIBS(socket, socket, , [AC_MSG_ERROR([You have no socket()! Aborting.])])
+
+dnl SunOS/Solaris required libnsl for inet_ntoa()
+if test x"$SUN" = xyes; then
+	AC_SEARCH_LIBS(inet_ntoa, nsl,, [AC_MSG_ERROR([libnsl not found! Aborting.])])
+fi
 
 AC_CHECK_MEMBER([struct sockaddr.sa_len], [AC_DEFINE(SOCKADDR_IN_HAS_LEN, 1, [Define to 1 if sockaddr has a 'sa_len'
 member.])],,[[#include <sys/types.h>
@@ -282,7 +341,9 @@ AC_COMPILE_IFELSE(
 		AC_COMPILE_IFELSE(
 			[AC_LANG_PROGRAM(
 				[[#define IN_AUTOCONF
-				#include "include/stdinc.h"]],
+				#include <sys/types.h>
+				#include <sys/socket.h>
+				#include <netinet/in.h>]],
 				[[struct in6_addr a = in6addr_any;]]
 			)],
 			[AC_MSG_RESULT(yes)],
@@ -516,7 +577,7 @@ if test "$cf_enable_openssl" != no; then
 		AC_LANG_PROGRAM(
 	    	[#include <openssl/opensslv.h>
 		#include <stdlib.h>],
-		[[if ( (OPENSSL_VERSION_NUMBER & 0x00906000) == 0x00906000)
+		[[if ( OPENSSL_VERSION_NUMBER >= 0x00906000)
 		exit(0); else exit(1);]]),
 	cf_openssl_version_ok=yes,
 	cf_openssl_version_ok=no,
@@ -609,14 +670,6 @@ AC_ARG_ENABLE(epoll, AC_HELP_STRING([--enable-epoll],[Force sys_epoll usage (Lin
 	SELECT_TYPE_EXPLICIT="epoll"
   else
   	use_epoll=no
-  fi
-],)
-
-AC_ARG_ENABLE(epoll, AC_HELP_STRING([--enable-epoll],[Force sys_epoll usage (Linux only).]),
-[ if test $enableval = yes; then
-        SELECT_TYPE_EXPLICIT="epoll"
-  else
-        use_epoll=no
   fi
 ],)
 
@@ -841,8 +894,9 @@ AC_HELP_STRING([--enable-profile],[Enable profiling]),
 
 if test "$profile" = yes; then
 	if test "$ac_cv_c_compiler_gnu" = yes; then
-		IRC_CFLAGS="$IRC_CFLAGS -pg -static"
-		AC_MSG_RESULT([yes, adding -pg -static])
+		IRC_CFLAGS="$IRC_CFLAGS -pg"
+		AC_MSG_RESULT([yes, adding -pg])
+		AC_DEFINE(CHARYBDIS_PROFILE, 1, [Define this if you are profiling.])
 	else
 		AC_MSG_RESULT([no, profile builds only work with gcc])
 	fi
@@ -850,9 +904,26 @@ else
 	AC_MSG_RESULT(no)
 fi
 
-AC_ARG_ENABLE(warnings,
-AC_HELP_STRING([--enable-warnings],[Enable all sorts of warnings for debugging.]),
-[IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall -Werror -Wcast-qual -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wshadow -Wwrite-strings -W -Wno-unused -Wno-sign-compare"],[])
+AC_ARG_ENABLE(balloc,
+AC_HELP_STRING([--disable-small-net],[Disable the block allocator.]),
+[balloc=$enableval], [balloc=yes])
+
+if test "$balloc" = no; then
+	AC_DEFINE([NOBALLOC], 1, [Define to 1 if you wish to disable the block allocator.])
+fi
+
+AC_ARG_ENABLE(ricer-hashing,
+AC_HELP_STRING([--enable-ricer-hashing],[Enable assembly-based hashing routines.]),
+[ricer_hashing=$enableval], [ricer_hashing=no])
+
+FNVHASH_S=""
+
+if test "$ricer_hashing" = "yes"; then
+	AC_DEFINE([RICER_HASHING], 1, [Define to 1 if you are using the assembly-based hashing routines.])
+	FNVHASH_S="fnvhash.s"
+fi
+
+AC_SUBST(FNVHASH_S)
 
 AC_ARG_ENABLE(small-net,
 AC_HELP_STRING([--enable-small-net],[Enable small network support.]),
@@ -940,13 +1011,6 @@ AC_HELP_STRING([--disable-shared-modules],[ Disable shared modules.]),
 dnl Some first-stage sanity checks.
 if test "$shared_modules" = yes; then
   	
-	if test "$profile" = "no"; then
-		shared_modules="yes"
-	else
-		AC_MSG_WARN([disabling shared modules; cannot coexist with profile builds])
-		shared_modules="no"
-	fi
-
 	if test "$CYGWIN" = yes; then
 		AC_MSG_WARN([disabling shared modules; Cygwin is at present unable to build them.])
 		shared_modules="no"
@@ -1073,6 +1137,39 @@ if test "$shared_modules" = yes; then
 	fi
 fi
 
+# This must be down here, or it will mess up checks like the ones
+# for -Wl,-export-dynamic
+# -- jilles
+AC_ARG_ENABLE(warnings,
+AC_HELP_STRING([--enable-warnings],[Enable all sorts of warnings for debugging.]),
+[
+IRC_CFLAGS="$IRC_CFLAGS -O0"
+CFLAGS="$IRC_CFLAGS"
+
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wall], charybdis_cv_c_gcc_w_all)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wpointer-arith], charybdis_cv_c_gcc_w_pointer_arith)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wimplicit -Wnested-externs], charybdis_cv_c_gcc_w_implicit)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wcast-align], charybdis_cv_c_gcc_w_cast_align)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wcast-qual], charybdis_cv_c_gcc_w_cast_qual)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations], charybdis_cv_c_gcc_prototypes)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wparenthesis], charybdis_cv_c_gcc_parenthesis)
+CHARYBDIS_C_GCC_TRY_FLAGS([-W -Wno-unused], charybdis_cv_c_gcc_w)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wextra], charybdis_cv_c_gcc_w_extra)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wshadow], charybdis_cv_c_gcc_w_shadow)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wmissing-noreturn], charybdis_cv_c_gcc_w_missing_noreturn)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wundef], charybdis_cv_c_gcc_w_undef)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wpacked], charybdis_cv_c_gcc_w_packed)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wnested-externs], charybdis_cv_c_gcc_w_nested_externs)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wbad-function-cast], charybdis_cv_c_gcc_w_bad_function_cast)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wunused-function -Wunused-label -Wunused-value -Wunused-variable], charybdis_cv_c_gcc_w_unused)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wredundant-decls], charybdis_cv_c_gcc_w_redundant_decls)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wfloat-equal], charybdis_cv_c_gcc_w_float_equal)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wformat=2], charybdis_cv_c_gcc_w_format)
+CHARYBDIS_C_GCC_TRY_FLAGS([-pedantic], charybdis_cv_c_gcc_pedantic)
+
+IRC_CFLAGS="$CFLAGS"
+],[])
+
 if test "$shared_modules" = no; then
 	DYNLINK_C=""
 	MOD_TARGET="libmodules.a"
@@ -1171,9 +1268,9 @@ fi
 AC_CONFIG_FILES(			\
 	Makefile			\
 	libcharybdis/Makefile		\
-	adns/Makefile			\
 	servlink/Makefile		\
-	contrib/Makefile		\
+	extensions/Makefile		\
+	unsupported/Makefile		\
 	src/Makefile			\
 	modules/Makefile		\
 	tools/Makefile			\
@@ -1183,7 +1280,7 @@ AC_CONFIG_FILES(			\
 
 AC_OUTPUT
 
-if test ! -z "$cf_openssl_ciphers"; then
+if test "$cf_openssl_version_ok" = yes; then
 	openssl="yes"
 else
 	openssl="no"
@@ -1196,7 +1293,6 @@ else
 fi
 
 echo "
-
 Configuration:
 	Install directory  : $prefix
 
@@ -1206,10 +1302,11 @@ Configuration:
 	IPv6 support       : $have_v6
 	Socket Engine      : $SELECT_TYPE
 	Small network      : $small_net
+	Block allocator    : $balloc
+	ASM hashing code   : $ricer_hashing
 
 	Nickname length    : $NICKLEN
 	Topic length       : $TOPICLEN
 
 Use make to compile Charybdis, then make install to install it.
-
 "

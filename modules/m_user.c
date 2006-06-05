@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_user.c 676 2006-02-03 20:05:09Z gxti $
+ *  $Id: m_user.c 1459 2006-05-26 20:50:41Z jilles $
  */
 
 #include "stdinc.h"
@@ -36,6 +36,7 @@
 #include "parse.h"
 #include "modules.h"
 #include "sprintf_irc.h"
+#include "blacklist.h"
 
 #define UFLAGS  (FLAGS_INVISIBLE|FLAGS_WALLOP|FLAGS_SERVNOTICE)
 
@@ -47,7 +48,7 @@ struct Message user_msgtab = {
 };
 
 mapi_clist_av1 user_clist[] = { &user_msgtab, NULL };
-DECLARE_MODULE_AV1(user, NULL, NULL, user_clist, NULL, NULL, "$Revision: 676 $");
+DECLARE_MODULE_AV1(user, NULL, NULL, user_clist, NULL, NULL, "$Revision: 1459 $");
 
 static int do_local_user(struct Client *client_p, struct Client *source_p,
 			 const char *username, const char *realname);
@@ -63,6 +64,12 @@ mr_user(struct Client *client_p, struct Client *source_p, int parc, const char *
 {
 	static char buf[BUFSIZE];
 	char *p;
+
+	if (strlen(client_p->id) == 3)
+	{
+		exit_client(client_p, client_p, client_p, "Mixing client and server protocol");
+		return 0;
+	}
 
 	if((p = strchr(parv[1], '@')))
 		*p = '\0';
@@ -87,7 +94,11 @@ do_local_user(struct Client *client_p, struct Client *source_p,
 	user = make_user(source_p);
 	user->server = me.name;
 
-	source_p->flags |= FLAGS_SENTUSER;
+	if (!(source_p->flags & FLAGS_SENTUSER))
+	{
+		lookup_blacklists(source_p);
+		source_p->flags |= FLAGS_SENTUSER;
+	}
 
 	strlcpy(source_p->info, realname, sizeof(source_p->info));
 

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: hash.c 722 2006-02-08 21:51:28Z nenolod $
+ *  $Id: hash.c 1321 2006-05-13 23:49:14Z nenolod $
  */
 
 #include "stdinc.h"
@@ -102,7 +102,7 @@ init_hash(void)
 	helpTable = MyMalloc(sizeof(dlink_list) * HELP_MAX);
 }
 
-
+#ifndef RICER_HASHING
 u_int32_t
 fnv_hash_upper(const unsigned char *s, int bits)
 {
@@ -158,6 +158,7 @@ fnv_hash_upper_len(const unsigned char *s, int bits, int len)
         h = (h >> bits) ^ (h & ((2^bits)-1));
 	return h;
 }
+#endif
 
 /* hash_nick()
  *

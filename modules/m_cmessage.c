@@ -30,7 +30,7 @@
  *  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: m_cmessage.c 756 2006-02-12 02:19:41Z jilles $
+ *  $Id: m_cmessage.c 1543 2006-06-01 18:18:28Z jilles $
  */
 #include "stdinc.h"
 #include "client.h"
@@ -41,6 +41,7 @@
 #include "hash.h"
 #include "send.h"
 #include "s_conf.h"
+#include "packet.h"
 
 static int m_cmessage(int, const char *, struct Client *, struct Client *, int, const char **);
 static int m_cprivmsg(struct Client *, struct Client *, int, const char **);
@@ -56,7 +57,7 @@ struct Message cnotice_msgtab = {
 };
 
 mapi_clist_av1 cmessage_clist[] = { &cprivmsg_msgtab, &cnotice_msgtab, NULL };
-DECLARE_MODULE_AV1(cmessage, NULL, NULL, cmessage_clist, NULL, NULL, "$Revision: 756 $");
+DECLARE_MODULE_AV1(cmessage, NULL, NULL, cmessage_clist, NULL, NULL, "$Revision: 1543 $");
 
 #define PRIVMSG 0
 #define NOTICE 1
@@ -80,6 +81,9 @@ m_cmessage(int p_or_n, const char *command,
 	struct Client *target_p;
 	struct Channel *chptr;
 	struct membership *msptr;
+
+	if(!IsFloodDone(source_p))
+		flood_endgrace(source_p);
 
 	if((target_p = find_named_person(parv[1])) == NULL)
 	{

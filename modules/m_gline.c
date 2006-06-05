@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_gline.c 494 2006-01-15 16:08:28Z jilles $
+ *  $Id: m_gline.c 1146 2006-04-07 22:52:35Z jilles $
  */
 
 #include "stdinc.h"
@@ -63,7 +63,7 @@ struct Message ungline_msgtab = {
 };
 
 mapi_clist_av1 gline_clist[] = { &gline_msgtab, &ungline_msgtab, NULL };
-DECLARE_MODULE_AV1(gline, NULL, NULL, gline_clist, NULL, NULL, "$Revision: 494 $");
+DECLARE_MODULE_AV1(gline, NULL, NULL, gline_clist, NULL, NULL, "$Revision: 1146 $");
 
 static int majority_gline(struct Client *source_p, const char *user,
 			  const char *host, const char *reason);
@@ -93,7 +93,7 @@ mo_gline(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	if(!ConfigFileEntry.glines)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :GLINE disabled",
+		sendto_one(source_p, ":%s NOTICE %s :GLINE disabled, perhaps you want a clustered or remote KLINE?",
 			   me.name, source_p->name);
 		return 0;
 	}
@@ -402,7 +402,7 @@ mo_ungline(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 	if(!ConfigFileEntry.glines)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :UNGLINE disabled", me.name, parv[0]);
+		sendto_one(source_p, ":%s NOTICE %s :UNGLINE disabled, perhaps you want UNKLINE?", me.name, parv[0]);
 		return 0;
 	}
 

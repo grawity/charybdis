@@ -29,7 +29,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: s_newconf.h 478 2006-01-15 10:14:17Z nenolod $
+ * $Id: s_newconf.h 1287 2006-05-05 15:06:00Z nenolod $
  */
 
 #ifndef INCLUDED_s_newconf_h
@@ -51,7 +51,8 @@ extern dlink_list hubleaf_conf_list;
 extern dlink_list server_conf_list;
 extern dlink_list xline_conf_list;
 extern dlink_list resv_conf_list;
-dlink_list tgchange_list;
+extern dlink_list nd_list;
+extern dlink_list tgchange_list;
 
 struct _patricia_tree_t *tgchange_tree;
 
@@ -207,7 +208,6 @@ struct server_conf
 	struct Class *class;
 	struct DNSQuery *dns_query;
 	dlink_node node;
-
 };
 
 #define SERVER_ILLEGAL		0x0001

@@ -29,7 +29,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: s_newconf.c 486 2006-01-15 10:36:32Z nenolod $
+ * $Id: s_newconf.c 932 2006-03-05 03:39:14Z nenolod $
  */
 
 #include "stdinc.h"
@@ -56,7 +56,7 @@ dlink_list hubleaf_conf_list;
 dlink_list server_conf_list;
 dlink_list xline_conf_list;
 dlink_list resv_conf_list;	/* nicks only! */
-static dlink_list nd_list;	/* nick delay */
+dlink_list nd_list;		/* nick delay */
 dlink_list tgchange_list;
 
 patricia_tree_t *tgchange_tree;
@@ -394,8 +394,6 @@ free_server_conf(struct server_conf *server_p)
 		MyFree(server_p->spasswd);
 	}
 
-	delete_adns_queries(server_p->dns_query);
-
 	MyFree(server_p->name);
 	MyFree(server_p->host);
 	MyFree(server_p->class_name);
@@ -413,31 +411,21 @@ free_server_conf(struct server_conf *server_p)
  * if successful save hp in the conf item it was called with
  */
 static void
-conf_dns_callback(void *vptr, adns_answer * reply)
+conf_dns_callback(void *vptr, struct DNSReply *reply)
 {
 	struct server_conf *server_p = (struct server_conf *) vptr;
 
-	if(reply && reply->status == adns_s_ok)
-	{
 #ifdef IPV6
-		if(reply->type ==  adns_r_addr6)
-		{
-			struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)&server_p->ipnum;
-			SET_SS_LEN(server_p->ipnum, sizeof(struct sockaddr_in6));
-			in6->sin6_family = AF_INET6;
-			in6->sin6_port = 0;
-			memcpy(&in6->sin6_addr, &reply->rrs.addr->addr.inet6.sin6_addr, sizeof(struct in6_addr));
-		}
-		else
+	if(reply->addr.ss_family == AF_INET6)
+	{
+		struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)&server_p->ipnum;
+		memcpy(&in6->sin6_addr, &((struct sockaddr_in6 *)&reply->addr)->sin6_addr, sizeof(struct in6_addr));
+	}
+	else
 #endif
-		{
-			struct sockaddr_in *in = (struct sockaddr_in *)&server_p->ipnum;
-			SET_SS_LEN(server_p->ipnum, sizeof(struct sockaddr_in));
-			in->sin_family = AF_INET;
-			in->sin_port = 0;
-			in->sin_addr.s_addr = reply->rrs.addr->addr.inet.sin_addr.s_addr;
-		}
-		MyFree(reply);
+	{
+		struct sockaddr_in *in = (struct sockaddr_in *)&server_p->ipnum;
+		in->sin_addr.s_addr = ((struct sockaddr_in *)&reply->addr)->sin_addr.s_addr;
 	}
 
 	MyFree(server_p->dns_query);
@@ -475,7 +463,7 @@ add_server_conf(struct server_conf *server_p)
 	server_p->dns_query = MyMalloc(sizeof(struct DNSQuery));
 	server_p->dns_query->ptr = server_p;
 	server_p->dns_query->callback = conf_dns_callback;
-	adns_gethost(server_p->host, server_p->ipnum.ss_family, server_p->dns_query);
+	gethost_byname(server_p->host, server_p->dns_query);
 }
 
 struct server_conf *

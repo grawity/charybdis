@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_stats.c 406 2005-12-19 16:52:45Z jilles $
+ *  $Id: s_stats.c 1409 2006-05-21 14:46:17Z jilles $
  */
 
 #include "stdinc.h"
@@ -142,6 +142,9 @@ tstats(struct Client *source_p)
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "T :auth successes %u fails %u",
 			   sp->is_asuc, sp->is_abad);
+	sendto_one_numeric(source_p, RPL_STATSDEBUG,
+			   "T :sasl successes %u fails %u",
+			   sp->is_ssuc, sp->is_sbad);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG, "T :Client Server");
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "T :connected %u %u", sp->is_cl, sp->is_sv);

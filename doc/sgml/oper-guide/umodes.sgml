@@ -1,13 +1,32 @@
   <chapter id="umodes">
     <title>Umodes</title>
     <sect1 id="umodelist">
-      <title>Meanings of umodes</title>
+      <title>Meanings of user modes</title>
       <sect2>
 	<title>+a, server administrator</title>
 	<para>
 	  This vanity usermode is used to denote a server administrator in WHOIS output.
-	  All local "admin" privileges are independent of it, though services
+	  All local <quote>admin</quote> privileges are independent of it, though services
 	  packages may grant extra privileges to +a users.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+D, deaf</title>
+	<para>
+	  <note>
+	    <para>
+	      This is a user umode, which anybody can set. It is not specific to operators.
+	    </para>
+	  </note>
+	  Users with the +D umode set will not receive messages sent to
+	  channels. Joins, parts, topic changes, mode changes, etc are
+	  received as normal, as are private messages.
+	</para>
+	<para>
+	  Support of this umode is indicated by the DEAF token in
+	  RPL_ISUPPORT (005); the parameter indicates the letter
+	  of the umode. Note that several common IRCD implementations have
+	  an umode like this (typically +d) but do not have the token in 005.
 	</para>
       </sect2>
       <sect2>
@@ -19,13 +38,18 @@
 	    </para>
 	  </note>
 	  Users with the +g umode set will only receive private messages from users on a
-	  session-defined whitelist, defined by the /accept command. If the user is not
-	  on a whitelist, then the target user will receive a rate-limited notice saying that the user
+	  session-defined whitelist, defined by the /accept command. If a user who is not
+	  on the whitelist attempts to send a private message, the target user will receive a rate-limited notice saying that the user
 	  wishes to speak to them.
 	</para>
 	<para>
 	  Network operators are not affected by the callerid whitelist system in the event
 	  that they need to speak to users who have it enabled.
+	</para>
+	<para>
+	  Support of this umode is indicated by the CALLERID token in
+	  RPL_ISUPPORT (005); the optional parameter indicates the letter
+	  of the umode, otherwise +g.
 	</para>
       </sect2>
       <sect2>
@@ -74,7 +98,7 @@
 	</para>
       </sect2>
       <sect2>
-	<title>+Q, block forwarding</title>
+	<title>+Q, disable forwarding</title>
 	<para>
 	  <note>
 	    <para>
@@ -104,7 +128,7 @@
 	</para>
       </sect2>
       <sect2>
-	<title>+s, server notices</title>
+	<title>+s, receive server notices</title>
 	<para>
 	  This umode allows an oper to receive server notices.
 	  The requested types of server notices are specified as a
@@ -148,6 +172,143 @@
 	<para>
 	  OPERWALL differs from WALLOPS in that the ability to receive such messages is
 	  restricted. Opers with +z set will receive OPERWALL messages.
+	</para>
+      </sect2>
+    </sect1>
+    <sect1 id="snomaskusage">
+      <title>Snomask usage</title>
+      <para>
+	Usage is as follows:
+      </para>
+      <cmdsynopsis><command>MODE</command> 
+	<arg choice=plain><replaceable>nick</replaceable></arg> 
+	<arg choice=plain>+s</arg>
+	<arg choice=plain><replaceable>+/-flags</replaceable></arg>
+      </cmdsynopsis>
+      <para>
+	To set snomasks.
+      </para>
+      <cmdsynopsis><command>MODE</command> 
+	<arg choice=plain><replaceable>nick</replaceable></arg> 
+	<arg choice=plain>-s</arg>
+      </cmdsynopsis>
+      <para>
+	To clear all snomasks.
+      </para>
+      <para>
+	Umode +s will be set if at least one snomask is set.
+      </para>
+      <para>
+	Umode +s is oper only by default, but even if you allow nonopers to
+	set it, they will not get any server notices.
+      </para>
+    </sect1>
+    <sect1 id="snomasklist">
+      <title>Meanings of server notice masks</title>
+      <sect2>
+	<title>+b, bot warnings</title>
+	<para>
+	  Opers with the +b snomask set will receive warning messages from the server when potential
+	  flooders and spambots are detected.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+c, client connections</title>
+	<para>
+	  Opers who have the +c snomask set will receive server notices when clients attach to the
+	  local server.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+C, extended client connection notices</title>
+	<para>
+	  Opers who have the +C snomask set will receive server notices when clients attach to the
+	  local server. Unlike the +c snomask, the information is displayed in a format intended
+	  to be parsed by scripts, and includes the two unused fields of the USER command.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+d, debug</title>
+	<para>
+	  The +d snomask provides opers extra information which may be of interest to debuggers.
+	  It will also cause the user to receive server notices if certain assertions fail inside the
+	  server. Its precise meaning is variable. Do not depend on the
+	  effects of this snomask as they can and will change without notice in later revisions.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+f, full warning</title>
+	<para>
+	  Opers with the +f snomask set will receive notices when a user
+	  connection is denied because a connection limit is exceeded
+	  (one of the limits in a class{} block, or the total per-server
+	  limit settable with /quote set max).
+	</para>
+      </sect2>
+      <sect2>
+	<title>+k, server kill notices</title>
+	<para>
+	  Opers with the +k snomask set will receive server notices when
+	  other servers kill and save (forced nick change to UID) users.
+	  Kills and saves by this server are on +d or +s.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+n, nick change notices</title>
+	<para>
+	  An oper with +n set will receive a server notice every time a local user changes their nick,
+	  giving the old and new nicks.
+	  This is mostly useful for bots that track all users on a single server.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+r, notices on name rejections</title>
+	<para>
+	  Opers with this snomask set will receive a server notice when somebody tries to use an
+	  invalid username, or if a dumb HTTP proxy tries to connect.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+s, generic server notices</title>
+	<para>
+	  This snomask allows an oper to receive generic server notices.
+	  This includes oper kills.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+u, unauthorized connections</title>
+	<para>
+	  This snomask allows an oper to see when users try to connect who do not have an
+	  available auth{} block.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+x, extra routing notices</title>
+	<para>
+	  Opers who have the +x snomask set will get notices about servers
+	  connecting and disconnecting on the whole network. This includes
+	  all servers connected behind the affected link. This can get
+	  rather noisy but is useful for keeping track of all linked
+	  servers.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+y, spy</title>
+	<para>
+	  Opers with +y receive notices when users try to join RESV'ed (<quote>juped</quote>) channels. 
+	  Additionally, if certain contrib modules are loaded, they will
+	  receive notices when special commands are used and/or when they
+	  are whoised.
+	</para>
+      </sect2>
+      <sect2>
+	<title>+Z, operspy notices</title>
+	<para>
+	  Opers with +Z receive notices whenever an oper anywhere on the
+	  network uses operspy.
+	</para>
+	<para>
+	  This snomask can be configured to be only effective for admins.
 	</para>
       </sect2>
     </sect1>

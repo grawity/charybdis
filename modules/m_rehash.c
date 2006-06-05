@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_rehash.c 494 2006-01-15 16:08:28Z jilles $
+ *  $Id: m_rehash.c 932 2006-03-05 03:39:14Z nenolod $
  */
 
 #include "stdinc.h"
@@ -55,7 +55,7 @@ struct Message rehash_msgtab = {
 };
 
 mapi_clist_av1 rehash_clist[] = { &rehash_msgtab, NULL };
-DECLARE_MODULE_AV1(rehash, NULL, NULL, rehash_clist, NULL, NULL, "$Revision: 494 $");
+DECLARE_MODULE_AV1(rehash, NULL, NULL, rehash_clist, NULL, NULL, "$Revision: 932 $");
 
 struct hash_commands
 {
@@ -263,6 +263,25 @@ rehash_help(struct Client *source_p)
 	load_help();
 }
 
+static void
+rehash_nickdelay(struct Client *source_p)
+{
+	struct nd_entry *nd;
+	dlink_node *ptr;
+	dlink_node *safe_ptr;
+
+	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			     "%s is clearing the nick delay table",
+			     get_oper_name(source_p));
+
+	DLINK_FOREACH_SAFE(ptr, safe_ptr, nd_list.head)
+	{
+		nd = ptr->data;
+	
+		free_nd_entry(nd);
+	}
+}
+
 /* *INDENT-OFF* */
 static struct hash_commands rehash_commands[] =
 {
@@ -278,6 +297,7 @@ static struct hash_commands rehash_commands[] =
 	{"TRESVS",	rehash_tresvs		},
 	{"REJECTCACHE",	rehash_rejectcache	},
 	{"HELP", 	rehash_help		},
+	{"NICKDELAY",	rehash_nickdelay        },
 	{NULL, 		NULL 			}
 };
 /* *INDENT-ON* */

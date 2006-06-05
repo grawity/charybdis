@@ -22,6 +22,7 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "s_serv.h"
+#include "s_user.h"
 #include "hash.h"
 #include "msg.h"
 #include "parse.h"
@@ -55,7 +56,7 @@ mapi_hfn_list_av1 chghost_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(chghost, NULL, NULL, chghost_clist, NULL, chghost_hfnlist, "$Revision: 712 $");
+DECLARE_MODULE_AV1(chghost, NULL, NULL, chghost_clist, NULL, chghost_hfnlist, "$Revision: 928 $");
 
 /*
  * me_realhost
@@ -112,7 +113,7 @@ static void
 do_chghost(struct Client *source_p, struct Client *target_p,
 		const char *newhost)
 {
-	strlcpy(target_p->host, newhost, HOSTLEN);
+	change_nick_user_host(target_p, target_p->name, target_p->username, newhost, 0, "Changing host");
 	if (irccmp(target_p->host, target_p->orighost))
 	{
 		SetDynSpoof(target_p);

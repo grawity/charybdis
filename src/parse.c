@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: parse.c 486 2006-01-15 10:36:32Z nenolod $
+ *  $Id: parse.c 1599 2006-06-04 01:55:34Z jilles $
  */
 
 #include "stdinc.h"
@@ -41,6 +41,7 @@
 #include "s_conf.h"
 #include "memory.h"
 #include "s_serv.h"
+#include "packet.h"
 
 /*
  * NOTE: parse() should not be called recursively by other functions!
@@ -54,15 +55,19 @@ static void cancel_clients(struct Client *, struct Client *, char *);
 static void remove_unknown(struct Client *, char *, char *);
 
 static void do_numeric(char[], struct Client *, struct Client *, int, char **);
+static void do_alias(struct alias_entry *, struct Client *, char *);
 
 static int handle_command(struct Message *, struct Client *, struct Client *, int, const char**);
 
 static int cmd_hash(const char *p);
 static struct Message *hash_parse(const char *);
+static struct alias_entry *alias_parse(const char *);
 
 struct MessageHash *msg_hash_table[MAX_MSG_HASH];
 
 static char buffer[1024];
+
+dlink_list alias_hash_table[MAX_MSG_HASH];
 
 /* turn a string into a parc/parv pair */
 
@@ -233,9 +238,20 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 			 */
 			if(pbuffer[0] != '\0')
 			{
+				if (IsPerson(client_p))
+				{
+					struct alias_entry *aptr = alias_parse(ch);
+					if (aptr != NULL)
+					{
+						do_alias(aptr, client_p, s);
+						return;
+					}
+				}
 				if(IsPerson(from))
+				{
 					sendto_one(from, form_str(ERR_UNKNOWNCOMMAND),
 						   me.name, from->name, ch);
+				}
 			}
 			ServerStats->is_unco++;
 			return;
@@ -507,6 +523,31 @@ hash_parse(const char *cmd)
 	return NULL;
 }
 
+/* alias_parse
+ *
+ * inputs	- command name
+ * output	- pointer to struct Message
+ * side effects - 
+ */
+static struct alias_entry *
+alias_parse(const char *cmd)
+{
+	dlink_node *ptr;
+	int msgindex;
+
+	msgindex = cmd_hash(cmd);
+
+	DLINK_FOREACH(ptr, alias_hash_table[msgindex].head)
+	{
+		struct alias_entry *ent = (struct alias_entry *) ptr->data;
+
+		if(strcasecmp(cmd, ent->name) == 0)
+			return ent;
+	}
+
+	return NULL;
+}
+
 /*
  * hash
  *
@@ -542,6 +583,7 @@ report_messages(struct Client *source_p)
 {
 	int i;
 	struct MessageHash *ptr;
+	dlink_node *pptr;
 
 	for (i = 0; i < MAX_MSG_HASH; i++)
 	{
@@ -554,6 +596,17 @@ report_messages(struct Client *source_p)
 					   form_str(RPL_STATSCOMMANDS),
 					   ptr->cmd, ptr->msg->count, 
 					   ptr->msg->bytes, ptr->msg->rcount);
+		}
+
+		DLINK_FOREACH(pptr, alias_hash_table[i].head)
+		{
+			struct alias_entry *aptr = (struct alias_entry *) pptr->data;
+
+			s_assert(aptr->name != NULL);
+
+			sendto_one_numeric(source_p, RPL_STATSCOMMANDS,
+					   form_str(RPL_STATSCOMMANDS),
+					   aptr->name, aptr->hits, 0, 0);
 		}
 	}
 }
@@ -730,6 +783,52 @@ do_numeric(char numeric[], struct Client *client_p, struct Client *source_p, int
 				     source_p->name, numeric, chptr->chname, buffer);
 }
 
+static void do_alias(struct alias_entry *aptr, struct Client *source_p, char *text)
+{
+	char *p;
+	struct Client *target_p;
+
+	if (!IsFloodDone(source_p) && source_p->localClient->receiveM > 20)
+		flood_endgrace(source_p);
+
+	p = strchr(aptr->target, '@');
+	if (p != NULL)
+	{
+		/* user@server */
+		target_p = find_server(NULL, p + 1);
+		if (target_p != NULL && IsMe(target_p))
+			target_p = NULL;
+	}
+	else
+	{
+		/* nick, must be +S */
+		target_p = find_named_person(aptr->target);
+		if (target_p != NULL && !IsService(target_p))
+			target_p = NULL;
+	}
+
+	if (target_p == NULL)
+	{
+		sendto_one_numeric(source_p, ERR_SERVICESDOWN, form_str(ERR_SERVICESDOWN), aptr->target);
+		return;
+	}
+
+	if (text != NULL && *text == ':')
+		text++;
+	if (text == NULL || *text == '\0')
+	{
+		sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
+		return;
+	}
+
+	/* increment the hitcounter on this alias */
+	aptr->hits++;
+
+	sendto_one(target_p, ":%s PRIVMSG %s :%s",
+			get_id(source_p, target_p),
+			p != NULL ? aptr->target : get_id(target_p, target_p),
+			text);
+}
 
 int
 m_not_oper(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_info.c 625 2006-01-29 18:55:28Z jilles $
+ *  $Id: m_info.c 930 2006-03-05 03:38:33Z gxti $
  */
 
 #include "stdinc.h"
@@ -63,7 +63,7 @@ mapi_hlist_av1 info_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(info, NULL, NULL, info_clist, info_hlist, NULL, "$Revision: 625 $");
+DECLARE_MODULE_AV1(info, NULL, NULL, info_clist, info_hlist, NULL, "$Revision: 930 $");
 
 /*
  * jdc -- Structure for our configuration value table
@@ -554,12 +554,6 @@ static struct InfoStruct info_table[] = {
 		OUTPUT_BOOLEAN_YN,
 		&ConfigChannel.no_join_on_split,
 		"Disallow joining channels when split",
-	},
-	{
-		"quiet_on_ban",
-		OUTPUT_BOOLEAN_YN,
-		&ConfigChannel.quiet_on_ban,
-		"Banned users may not send text to a channel"
 	},
 	{
 		"use_except",

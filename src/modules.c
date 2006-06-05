@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: modules.c 539 2006-01-18 22:56:51Z jilles $
+ *  $Id: modules.c 1509 2006-05-28 02:35:58Z nenolod $
  */
 
 #include "stdinc.h"
@@ -318,6 +318,9 @@ load_one_module(const char *path, int coremodule)
 
 	struct stat statbuf;
 
+	if (server_state_foreground == 1)
+		inotice("loading module %s ...", path);	
+
 	DLINK_FOREACH(pathst, mod_paths.head)
 	{
 		mpath = pathst->data;
@@ -341,7 +344,6 @@ load_one_module(const char *path, int coremodule)
 	}
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "Cannot locate module %s", path);
-	ilog(L_MAIN, "Cannot locate module %s", path);
 	return -1;
 }
 
@@ -540,6 +542,13 @@ mo_modrestart(struct Client *client_p, struct Client *source_p, int parc, const 
 
 #ifndef RTLD_NOW
 #define RTLD_NOW RTLD_LAZY	/* openbsd deficiency */
+#endif
+
+#ifdef CHARYBDIS_PROFILE
+# ifndef RTLD_PROFILE
+#  warning libdl may not support profiling, sucks. :(
+#  define RTLD_PROFILE 0
+# endif
 #endif
 
 static void increase_modlist(void);
@@ -793,7 +802,11 @@ load_a_module(const char *path, int warn, int core)
 
 	mod_basename = irc_basename(path);
 
+#ifdef CHARYBDIS_PROFILE
+	tmpptr = dlopen(path, RTLD_NOW | RTLD_PROFILE);
+#else
 	tmpptr = dlopen(path, RTLD_NOW);
+#endif
 
 	if(tmpptr == NULL)
 	{

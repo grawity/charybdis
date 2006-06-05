@@ -1,10 +1,11 @@
 /*
- *  ircd-ratbox: A slightly useful ircd.
+ *  charybdis: An advanced IRCd.
  *  ircd_defs.h: A header for ircd global definitions.
  *
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
  *  Copyright (C) 1996-2002 Hybrid Development Team
  *  Copyright (C) 2002-2004 ircd-ratbox development team
+ *  Copyright (C) 2005-2006 Charybdis development team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_defs.h 494 2006-01-15 16:08:28Z jilles $
+ *  $Id: ircd_defs.h 865 2006-02-16 14:05:37Z nenolod $
  */
 
 /*
@@ -82,6 +83,14 @@
 #if !defined(CONFIG_RATBOX_LEVEL_1)
 #  error Incorrect config.h for this revision of ircd.
 #endif
+
+/*
+ * This defines the version of the data structures used in the ircd.
+ * In the event of a mismatch (i.e. this is incremented due to a major
+ * change that cannot be accomidated for in the ircd), then a hard
+ * restart occurs.
+ */
+#define CHARYBDIS_DV	0x00010200	/* 1.2.0 */
 
 #define HOSTLEN         63	/* Length of hostname.  Updated to         */
 				/* comply with RFC1123                     */

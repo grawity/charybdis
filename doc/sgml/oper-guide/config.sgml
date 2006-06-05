@@ -7,9 +7,16 @@
 	of values inside it which pertain to configuration settings that apply to the given block.
       </para>
       <para>
-	A line may also be a #include directive, which is of the form <synopsis>#include "<replaceable>file</replaceable>"</synopsis>
+	Several values take lists of values and have defaults preset inside
+	them. Prefix a keyword with a tilde (~) to override the default and
+	disable it.
+      </para>
+      <para>
+	A line may also be a .include directive, which is of the form <synopsis>.include "<replaceable>file</replaceable>"</synopsis>
 	and causes <replaceable>file</replaceable> to be read in at that point, before the rest of the current file is
 	processed.
+	Relative paths are first tried relative to PREFIX and then relative
+	to ETCPATH (normally PREFIX/etc).
       </para>
       <para>
 	Anything from a # to the end of a line is a comment. Blank lines are ignored. C-style comments are also supported.
@@ -256,7 +263,7 @@ class "<replaceable>name</replaceable>" {
 	  <varlistentry>
 	    <term>connectfreq</term>
 	    <listitem>
-	      <para>The amount of time between autoconnects. This cannot be less than 5 minutes.</para>
+	      <para>The amount of time between autoconnects. This must at least be one minute, as autoconnects are evaluated with that granularity.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -347,9 +354,15 @@ auth {
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
+	    <term>dnsbl_exempt</term>
+	    <listitem>
+	      <para>Users in this auth{} block are exempted from DNS blacklist checks. However, they will still be warned if they are listed.</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
 	    <term>kline_exempt</term>
 	    <listitem>
-	      <para>Users in this auth{} block are exempted from k:lines, g:lines and x:lines, and will not be disconnected because of d:lines.</para>
+	      <para>Users in this auth{} block are exempted from DNS blacklists, k:lines, g:lines and x:lines, and will not be disconnected because of d:lines.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -403,7 +416,35 @@ auth {
 	  <varlistentry>
 	    <term>need_ident</term>
 	    <listitem>
-	      <para>Users in this auth{} block must have identd.</para>
+	      <para>Users in this auth{} block must have identd, otherwise they will be rejected.</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>need_sasl</term>
+	    <listitem>
+	      <para>Users in this auth{} block must identify via SASL, otherwise they will be rejected.</para>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+      </sect2>
+      <sect2>
+	<title>exempt {} block</title>
+	<synopsis>
+exempt {
+	ip = "<replaceable>ip</replaceable>";
+};</synopsis>
+	<para>
+	  An exempt block specifies IP addresses which are exempt from D:lines.
+	  Multiple addresses can be specified in one block.
+	  Clients coming from these addresses can still be K/G/X:lined unless
+	  they also have appropriate flags in their auth{} block.
+	</para>
+	<variablelist>
+	  <title>exempt {} variables</title>
+	  <varlistentry>
+	    <term>ip</term>
+	    <listitem>
+	      <para>The IP address or CIDR range to exempt.</para>
 	    </listitem>
 	  </varlistentry>
 	</variablelist>
@@ -427,7 +468,18 @@ operator "<replaceable>name</replaceable>" {
 	  <varlistentry>
 	    <term>user</term>
 	    <listitem>
-              <para>A hostmask that users trying to use this operator {} block must match.</para>
+	      <para>
+		A hostmask that users trying to use this operator {} block
+		must match. This is checked against the original host and IP
+		address; CIDR is also supported. So auth {} spoofs work in
+		operator {} blocks; the real host behind them is not checked.
+		Other kind of spoofs do not work in operator {} blocks; the
+		real host behind them is checked.
+	      </para>
+	      <para>
+		Note that this is different from charybdis 1.x where all
+		kinds of spoofs worked in operator {} blocks.
+	      </para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -469,6 +521,8 @@ operator "<replaceable>name</replaceable>" {
 	    <listitem>
               <para>
 		A listing of privileges granted to operators using this block.
+		By default, the operwall and remoteban privileges are granted;
+		use ~operwall and ~remoteban to disable them if necessary.
 	      </para>
 	      <para>
 		In addition, a flag designating if the password is encrypted is here.
@@ -627,7 +681,7 @@ modules {
 	module = <replaceable>text</replaceable>;
 };</synopsis>
 	<para>
-	  A modules block specifies information for loadable modules.
+	  The modules block specifies information for loadable modules.
 	</para>
 	<variablelist>
 	  <title>modules {} variables</title>
@@ -643,6 +697,358 @@ modules {
 	      <para>
 		Specifies a module to load, similar to loadmodule.
 	      </para>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+      </sect2>
+      <sect2>
+	<title>general {} block</title>
+	<synopsis>
+modules {
+	<replaceable>values</replaceable>
+};</synopsis>
+	<para>
+	  The general block specifies a variety of options, many of which
+	  were in <filename>config.h</filename> in older daemons.
+	  The options are documented in <filename>reference.conf</filename>.
+	</para>
+      </sect2>
+      <sect2>
+	<title>channel {} block</title>
+	<synopsis>
+modules {
+	<replaceable>values</replaceable>
+};</synopsis>
+	<para>
+	  The channel block specifies a variety of channel-related options,
+	  many of which were in <filename>config.h</filename> in older daemons.
+	  The options are documented in <filename>reference.conf</filename>.
+	</para>
+      </sect2>
+      <sect2>
+	<title>serverhide {} block</title>
+	<synopsis>
+modules {
+	<replaceable>values</replaceable>
+};</synopsis>
+	<para>
+	  The serverhide block specifies options related to server hiding.
+	  The options are documented in <filename>reference.conf</filename>.
+	</para>
+      </sect2>
+      <sect2>
+	<title>blacklist {} block</title>
+	<synopsis>
+blacklist {
+	host = "<replaceable>text</replaceable>";
+	reject_reason = "<replaceable>text</replaceable>";
+};</synopsis>
+	<para>
+	  The blacklist block specifies DNS blacklists to check.
+	  Listed clients will not be allowed to connect.
+	  IPv6 clients are not checked against these.
+	</para>
+	<para>
+	  Multiple blacklists can be specified, in pairs with first host
+	  then reject_reason.
+	</para>
+	<variablelist>
+	  <title>blacklist {} variables</title>
+	  <varlistentry>
+	    <term>host</term>
+	    <listitem>
+	      <para>The DNSBL to use.</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>reject_reason</term>
+	    <listitem>
+	      <para>The reason to send to listed clients when disconnecting them.</para>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+      </sect2>
+      <sect2>
+	<title>alias {} block</title>
+	<synopsis>
+alias "<replaceable>name</replaceable>" {
+	target = "<replaceable>text</replaceable>";
+};</synopsis>
+	<para>
+	  Alias blocks allow the definition of custom commands.
+	  These commands send PRIVMSG to the given target. A real
+	  command takes precedence above an alias.
+	</para>
+	<variablelist>
+	  <title>alias {} variables</title>
+	  <varlistentry>
+	    <term>target</term>
+	    <listitem>
+	      <para>
+		The target nick (must be a network service (umode +S)) or
+		user@server.
+		In the latter case, the server cannot be this server,
+		only opers can use user starting with "opers" reliably and
+		the user is interpreted on the target server only
+		so you may need to use nick@server instead).
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+      </sect2>
+      <sect2>
+	<title>cluster {} block</title>
+	<synopsis>
+cluster {
+	name = "<replaceable>text</replaceable>";
+	flags = <replaceable>list</replaceable>;
+};</synopsis>
+	<para>
+	  The cluster block specifies servers we propagate things to
+	  automatically.
+	  This does not allow them to set bans, you need a separate shared{}
+	  block for that.
+	</para>
+	<para>
+	  Having overlapping cluster{} items will cause the command to
+	  be executed twice on the target servers. This is particularly
+	  undesirable for ban removals.
+	</para>
+	<variablelist>
+	  <title>cluster {} variables</title>
+	  <varlistentry>
+	    <term>name</term>
+	    <listitem>
+	      <para>The server name to share with, this may contain wildcards
+	      and may be stacked.</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>flags</term>
+	    <listitem>
+	      <para>The list of what to share, all the name lines above this
+	      (up to another flags entry) will receive these flags.
+	      They are listed below.</para>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+	<variablelist>
+	  <title>cluster {} flags</title>
+	  <varlistentry>
+	    <term>kline</term>
+	    <listitem>
+	      <para>Permanent K:lines</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>tkline</term>
+	    <listitem>
+	      <para>Temporary K:lines</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>unkline</term>
+	    <listitem>
+	      <para>K:line removals</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>xline</term>
+	    <listitem>
+	      <para>Permanent X:lines</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>txline</term>
+	    <listitem>
+	      <para>Temporary X:lines</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>unxline</term>
+	    <listitem>
+	      <para>X:line removals</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>resv</term>
+	    <listitem>
+	      <para>Permanently reserved nicks/channels</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>tresv</term>
+	    <listitem>
+	      <para>Temporarily reserved nicks/channels</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>unresv</term>
+	    <listitem>
+	      <para>RESV removals</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>locops</term>
+	    <listitem>
+	      <para>LOCOPS messages (sharing this with * makes LOCOPS rather
+	      similar to OPERWALL which is not useful)</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>all</term>
+	    <listitem>
+	      <para>All of the above</para>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+      </sect2>
+      <sect2>
+	<title>shared {} block</title>
+	<synopsis>
+shared {
+	oper = "<replaceable>user@host</replaceable>", "<replaceable>server</replaceable>";
+	flags = <replaceable>list</replaceable>;
+};</synopsis>
+	<para>
+	  The shared block specifies opers allowed to perform certain actions
+	  on our server remotely.
+	  These are ordered top down. The first one matching will determine
+	  the oper's access.
+	  If access is denied, the command will be silently ignored.
+	</para>
+	<variablelist>
+	  <title>shared {} variables</title>
+	  <varlistentry>
+	    <term>oper</term>
+	    <listitem>
+	      <para>The user@host the oper must have, and the server they must
+	      be on. This may contain wildcards.</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>flags</term>
+	    <listitem>
+	      <para>The list of what to allow, all the oper lines above this
+	      (up to another flags entry) will receive these flags.
+	      They are listed below.</para>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+	<note><para>
+	  While they have the same names, the flags have subtly different
+	  meanings from those in the cluster{} block.
+	</para></note>
+	<variablelist>
+	  <title>shared {} flags</title>
+	  <varlistentry>
+	    <term>kline</term>
+	    <listitem>
+	      <para>Permanent and temporary K:lines</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>tkline</term>
+	    <listitem>
+	      <para>Temporary K:lines</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>unkline</term>
+	    <listitem>
+	      <para>K:line removals</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>xline</term>
+	    <listitem>
+	      <para>Permanent and temporary X:lines</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>txline</term>
+	    <listitem>
+	      <para>Temporary X:lines</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>unxline</term>
+	    <listitem>
+	      <para>X:line removals</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>resv</term>
+	    <listitem>
+	      <para>Permanently and temporarily reserved nicks/channels</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>tresv</term>
+	    <listitem>
+	      <para>Temporarily reserved nicks/channels</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>unresv</term>
+	    <listitem>
+	      <para>RESV removals</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>all</term>
+	    <listitem>
+	      <para>All of the above; this does not include locops or rehash</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>locops</term>
+	    <listitem>
+	      <para>LOCOPS messages (accepting this from * makes LOCOPS rather
+	      similar to OPERWALL which is not useful)</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>rehash</term>
+	    <listitem>
+	      <para>REHASH commands; all options can be used</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>none</term>
+	    <listitem>
+	      <para>Allow nothing to be done</para>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+      </sect2>
+      <sect2>
+	<title>service {} block</title>
+	<synopsis>
+service {
+	name = "<replaceable>text</replaceable>";
+};</synopsis>
+	<para>
+	  The service block specifies privileged servers (services). These
+	  servers have extra privileges such as setting login names on users
+	  and introducing clients with umode +S (unkickable, hide channels, etc).
+	  This does not allow them to set bans, you need a separate shared{}
+	  block for that.
+	</para>
+	<para>
+	  Do not place normal servers here.
+	</para>
+	<para>
+	  Multiple names may be specified but there may be only one service{}
+	  block.
+	</para>
+	<variablelist>
+	  <title>service {} variables</title>
+	  <varlistentry>
+	    <term>name</term>
+	    <listitem>
+	      <para>The server name to grant special privileges. This may not
+	      contain wildcards.</para>
 	    </listitem>
 	  </varlistentry>
 	</variablelist>

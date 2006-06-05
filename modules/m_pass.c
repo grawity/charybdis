@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_pass.c 254 2005-09-21 23:35:12Z nenolod $
+ *  $Id: m_pass.c 1291 2006-05-05 19:00:19Z jilles $
  */
 
 #include "stdinc.h"
@@ -45,7 +45,7 @@ struct Message pass_msgtab = {
 };
 
 mapi_clist_av1 pass_clist[] = { &pass_msgtab, NULL };
-DECLARE_MODULE_AV1(pass, NULL, NULL, pass_clist, NULL, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV1(pass, NULL, NULL, pass_clist, NULL, NULL, "$Revision: 1291 $");
 
 /*
  * m_pass() - Added Sat, 4 March 1989
@@ -69,7 +69,8 @@ mr_pass(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 	DupNString(client_p->localClient->passwd, parv[1], PASSWDLEN);
 
-	if(parc > 2)
+	/* These are for servers only */
+	if(parc > 2 && client_p->user == NULL)
 	{
 		/* 
 		 * It looks to me as if orabidoo wanted to have more
@@ -89,7 +90,8 @@ mr_pass(struct Client *client_p, struct Client *source_p, int parc, const char *
 		{
 			/* only mark as TS6 if the SID is valid.. */
 			if(IsDigit(parv[4][0]) && IsIdChar(parv[4][1]) &&
-			   IsIdChar(parv[4][2]) && parv[4][3] == '\0')
+			   IsIdChar(parv[4][2]) && parv[4][3] == '\0' &&
+			   EmptyString(client_p->id))
 			{
 				client_p->localClient->caps |= CAP_TS6;
 				strcpy(client_p->id, parv[4]);

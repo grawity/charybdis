@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c 754 2006-02-12 01:26:44Z jilles $
+ *  $Id: channel.c 1299 2006-05-11 15:43:03Z jilles $
  */
 
 #include "stdinc.h"
@@ -46,12 +46,13 @@
 #include "balloc.h"
 #include "s_log.h"
 
-struct config_channel_entry ConfigChannel;
-dlink_list global_channel_list;
-static BlockHeap *channel_heap;
-static BlockHeap *ban_heap;
-static BlockHeap *topic_heap;
-static BlockHeap *member_heap;
+extern dlink_list global_channel_list;
+
+extern struct config_channel_entry ConfigChannel;
+extern BlockHeap *channel_heap;
+extern BlockHeap *ban_heap;
+extern BlockHeap *topic_heap;
+extern BlockHeap *member_heap;
 
 static int channel_capabs[] = { CAP_EX, CAP_IE,
 	CAP_SERVICE,
@@ -511,7 +512,9 @@ is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
 	{
 		actualBan = ptr->data;
 		if(match(actualBan->banstr, s) ||
-		   match(actualBan->banstr, s2) || match_cidr(actualBan->banstr, s2))
+		   match(actualBan->banstr, s2) ||
+		   match_cidr(actualBan->banstr, s2) ||
+		   match_extban(actualBan->banstr, who, chptr, CHFL_BAN))
 			break;
 		else
 			actualBan = NULL;
@@ -525,7 +528,9 @@ is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
 
 			/* theyre exempted.. */
 			if(match(actualExcept->banstr, s) ||
-			   match(actualExcept->banstr, s2) || match_cidr(actualExcept->banstr, s2))
+			   match(actualExcept->banstr, s2) ||
+			   match_cidr(actualExcept->banstr, s2) ||
+			   match_extban(actualExcept->banstr, who, chptr, CHFL_EXCEPTION))
 			{
 				/* cache the fact theyre not banned */
 				if(msptr != NULL)
@@ -593,7 +598,9 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 	{
 		actualBan = ptr->data;
 		if(match(actualBan->banstr, s) ||
-		   match(actualBan->banstr, s2) || match_cidr(actualBan->banstr, s2))
+		   match(actualBan->banstr, s2) ||
+		   match_cidr(actualBan->banstr, s2) ||
+		   match_extban(actualBan->banstr, who, chptr, CHFL_QUIET))
 			break;
 		else
 			actualBan = NULL;
@@ -607,7 +614,9 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 
 			/* theyre exempted.. */
 			if(match(actualExcept->banstr, s) ||
-			   match(actualExcept->banstr, s2) || match_cidr(actualExcept->banstr, s2))
+			   match(actualExcept->banstr, s2) ||
+			   match_cidr(actualExcept->banstr, s2) ||
+			   match_extban(actualExcept->banstr, who, chptr, CHFL_EXCEPTION))
 			{
 				/* cache the fact theyre not banned */
 				if(msptr != NULL)
@@ -681,7 +690,8 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 				invex = ptr->data;
 				if(match(invex->banstr, src_host)
 				   || match(invex->banstr, src_iphost)
-				   || match_cidr(invex->banstr, src_iphost))
+				   || match_cidr(invex->banstr, src_iphost)
+			   	   || match_extban(invex->banstr, source_p, chptr, CHFL_INVEX))
 					break;
 			}
 			if(ptr == NULL)
@@ -756,7 +766,7 @@ can_send(struct Channel *chptr, struct Client *source_p, struct membership *mspt
 	if(chptr->mode.mode & MODE_MODERATED)
 		return CAN_SEND_NO;
 
-	if(ConfigChannel.quiet_on_ban && MyClient(source_p))
+	if(MyClient(source_p))
 	{
 		/* cached can_send */
 		if(msptr->bants == chptr->bants)
