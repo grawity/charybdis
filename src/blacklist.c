@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: blacklist.c 1473 2006-05-26 22:54:29Z jilles $
+ *  $Id: blacklist.c 1689 2006-06-21 19:56:53Z jilles $
  */
 
 #include "stdinc.h"
@@ -55,6 +55,18 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 {
 	struct BlacklistClient *blcptr = (struct BlacklistClient *) vptr;
 
+	if (blcptr == NULL || blcptr->client_p == NULL)
+		return;
+
+	if (blcptr->client_p->preClient == NULL)
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				"blacklist_dns_callback(): blcptr->client_p->preClient (%s) is NULL", get_client_name(blcptr->client_p, HIDE_IP));
+		MyFree(blcptr->dns_query);
+		MyFree(blcptr);
+		return;
+	}
+
 	/* they have a blacklist entry for this client */
 	if (reply != NULL && blcptr->client_p->preClient->dnsbl_listed == NULL)
 	{
@@ -76,6 +88,21 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 
 	MyFree(blcptr->dns_query);
 	MyFree(blcptr);
+}
+
+static int blacklist_query_compare(void *ptr, void *vptr)
+{
+	struct BlacklistClient *blcptr = ptr;
+
+	if (blcptr->client_p == vptr)
+	{
+		unref_blacklist(blcptr->blacklist);
+		MyFree(blcptr->dns_query);
+		MyFree(blcptr);
+		return 1;
+	}
+	else
+		return 0;
 }
 
 /* XXX: no IPv6 implementation, not to concerned right now though. */
@@ -152,6 +179,19 @@ void lookup_blacklists(struct Client *client_p)
 		if (!(blptr->status & CONF_ILLEGAL))
 			initiate_blacklist_dnsquery(blptr, client_p);
 	}
+}
+
+void abort_blacklist_queries(struct Client *client_p)
+{
+
+	if (client_p->preClient == NULL)
+		return;
+	/* This is not just an optimization. In the case
+	 * blacklist_dns_callback -> register_local_user it avoids
+	 * double freeing of reslist. -- jilles */
+	if (client_p->preClient->dnsbl_hits == 0)
+		return;
+	delete_resolver_queries_f(blacklist_dns_callback, blacklist_query_compare, client_p);
 }
 
 void destroy_blacklists(void)

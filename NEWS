@@ -1,6 +1,12 @@
 This is charybdis 2.0.0, Copyright (c) 2005-2006 Charybdis team.
 See LICENSE for licensing details (GPL v2).
 
+-- charybdis-2.0.1
+
+- Comment out blacklist{} block in example confs, as AHBL requires
+  notification before use.
+- Fix some bugs relating to the resolver.
+
 -- charybdis-2.0.0
 
 - Replace ADNS with a new smaller resolver from ircu and hybrid.
@@ -262,5 +268,5 @@ modules in case the developers need them.
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 1636 2006-06-04 19:19:02Z jilles $
+$Id: NEWS 1691 2006-06-21 20:03:42Z jilles $
 

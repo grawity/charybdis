@@ -1,7 +1,7 @@
 /*
  * res.h for referencing functions in res.c, reslib.c
  *
- * $Id: res.h 924 2006-02-28 13:24:51Z jilles $
+ * $Id: res.h 1689 2006-06-21 19:56:53Z jilles $
  */
 
 #ifndef _CHARYBDIS_RES_H
@@ -39,6 +39,7 @@ extern int irc_nscount;
 extern void init_resolver(void);
 extern void restart_resolver(void);
 extern void delete_resolver_queries(const struct DNSQuery *);
+extern void delete_resolver_queries_f(void (*)(void *, struct DNSReply *), int (*)(void *, void *), void *);
 extern void gethost_byname_type(const char *, struct DNSQuery *, int);
 extern void gethost_byname(const char *, struct DNSQuery *);
 extern void gethost_byaddr(const struct irc_sockaddr_storage *, struct DNSQuery *);

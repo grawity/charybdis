@@ -7,7 +7,7 @@
  * The authors takes no responsibility for any damage or loss
  * of property which results from the use of this software.
  *
- * $Id: res.c 924 2006-02-28 13:24:51Z jilles $
+ * $Id: res.c 1689 2006-06-21 19:56:53Z jilles $
  * from Hybrid Id: res.c 459 2006-02-12 22:21:37Z db $
  *
  * July 1999 - Rewrote a bunch of stuff here. Change hostent builder code,
@@ -324,6 +324,30 @@ void delete_resolver_queries(const struct DNSQuery *query)
 		if ((request = ptr->data) != NULL)
 		{
 			if (query == request->query)
+				rem_request(request);
+		}
+	}
+}
+
+/*
+ * delete_resolver_queries_f - version of delete_resolver_queries
+ * which does not require storing all DNSQuery pointers.
+ * For all outstanding requests with the given callback, call
+ * func with that request's ptr and the given vptr, and remove
+ * the request if it returns nonzero.
+ * -- jilles
+ */
+void delete_resolver_queries_f(void (*callback)(void *, struct DNSReply *), int (*func)(void *, void *), void *vptr)
+{
+	dlink_node *ptr;
+	dlink_node *next_ptr;
+	struct reslist *request;
+
+	DLINK_FOREACH_SAFE(ptr, next_ptr, request_list.head)
+	{
+		if ((request = ptr->data) != NULL)
+		{
+			if (request->query->callback == callback && func(request->query->ptr, vptr))
 				rem_request(request);
 		}
 	}

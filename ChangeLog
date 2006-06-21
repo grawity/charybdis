@@ -1,3 +1,191 @@
+jilles      2006/06/21 20:03:42 UTC	(20060621-1691)
+  Log:
+  Update NEWS file.
+  
+
+  Changes:	Modified:
+  +6 -0		branches/release-2.0/NEWS (File Modified) 
+
+
+jilles      2006/06/21 19:56:53 UTC	(20060621-1689)
+  Log:
+  Merged revisions 1673,1677,1679,1681,1683 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  resolver fixes
+  
+  ........
+    r1673 | nenolod | 2006-06-15 20:13:04 +0200 (Thu, 15 Jun 2006) | 2 lines
+    
+    - handle unavailable Client/preClient structs
+  ........
+    r1677 | jilles | 2006-06-16 16:43:33 +0200 (Fri, 16 Jun 2006) | 2 lines
+    
+    More dnsbl stuff
+  ........
+    r1679 | nenolod | 2006-06-20 10:33:20 +0200 (Tue, 20 Jun 2006) | 2 lines
+    
+    - handle a situation where a user can go away before DNS completes
+  ........
+    r1681 | nenolod | 2006-06-20 11:20:58 +0200 (Tue, 20 Jun 2006) | 2 lines
+    
+    - oh hey, that was in the wrong place
+  ........
+    r1683 | jilles | 2006-06-20 16:26:16 +0200 (Tue, 20 Jun 2006) | 3 lines
+    
+    Put back code that terminates DNS queries, which was
+    removed during the resolver changes.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.0/  (Property Modified)
+  +1 -0		branches/release-2.0/include/blacklist.h (File Modified) 
+  +1 -0		branches/release-2.0/include/res.h (File Modified) 
+  +40 -0	branches/release-2.0/src/blacklist.c (File Modified) 
+  +2 -0		branches/release-2.0/src/client.c (File Modified) 
+  +24 -0	branches/release-2.0/src/res.c (File Modified) 
+  +17 -0	branches/release-2.0/src/s_auth.c (File Modified) 
+
+
+jilles      2006/06/21 19:38:12 UTC	(20060621-1687)
+  Log:
+  Blocked revisions 1654,1659-1660,1663-1664,1667,1669-1672,1674,1676,1678,1680,1682,1684 via svnmerge
+  r1659,r1667 were already merged
+  
+  ........
+    r1654 | beu | 2006-06-07 13:00:04 +0200 (Wed, 07 Jun 2006) | 1 line
+    
+    automated serno/changelog
+  ........
+    r1659 | beu | 2006-06-07 13:42:54 +0200 (Wed, 07 Jun 2006) | 2 lines
+    
+    Comment out example blacklist{} block.
+  ........
+    r1660 | beu | 2006-06-07 13:42:59 +0200 (Wed, 07 Jun 2006) | 1 line
+    
+    automated serno/changelog
+  ........
+    r1663 | beu | 2006-06-07 13:53:21 +0200 (Wed, 07 Jun 2006) | 4 lines
+    
+    Post-release lovin':
+    - Update version to 2.1.0.
+    - Regenerate configure.
+  ........
+    r1664 | beu | 2006-06-07 13:53:25 +0200 (Wed, 07 Jun 2006) | 1 line
+    
+    automated serno/changelog
+  ........
+    r1667 | beu | 2006-06-07 14:12:05 +0200 (Wed, 07 Jun 2006) | 2 lines
+    
+    Update svn:keywords.
+  ........
+    r1669 | jilles | 2006-06-14 19:48:41 +0200 (Wed, 14 Jun 2006) | 2 lines
+    
+    Also do forwarding if the channel limit (+l) is exceeded.
+  ........
+    r1670 | apache | 2006-06-14 19:48:57 +0200 (Wed, 14 Jun 2006) | 1 line
+    
+    automated serno/changelog
+  ........
+    r1671 | jilles | 2006-06-14 19:52:20 +0200 (Wed, 14 Jun 2006) | 2 lines
+    
+    Add +lf to SGML docs.
+  ........
+    r1672 | apache | 2006-06-14 19:52:27 +0200 (Wed, 14 Jun 2006) | 1 line
+    
+    automated serno/changelog
+  ........
+    r1674 | apache | 2006-06-15 20:13:14 +0200 (Thu, 15 Jun 2006) | 1 line
+    
+    automated serno/changelog
+  ........
+    r1676 | apache | 2006-06-16 00:32:41 +0200 (Fri, 16 Jun 2006) | 1 line
+    
+    automated serno/changelog
+  ........
+    r1678 | apache | 2006-06-16 16:43:55 +0200 (Fri, 16 Jun 2006) | 1 line
+    
+    automated serno/changelog
+  ........
+    r1680 | apache | 2006-06-20 10:33:35 +0200 (Tue, 20 Jun 2006) | 1 line
+    
+    automated serno/changelog
+  ........
+    r1682 | apache | 2006-06-20 11:21:12 +0200 (Tue, 20 Jun 2006) | 1 line
+    
+    automated serno/changelog
+  ........
+    r1684 | apache | 2006-06-20 16:26:32 +0200 (Tue, 20 Jun 2006) | 1 line
+    
+    automated serno/changelog
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.0/  (Property Modified)
+
+
+jilles      2006/06/21 19:26:18 UTC	(20060621-1685)
+  Log:
+  Initialized merge tracking via "svnmerge" with revisions "1-1653" from 
+  http://svn.atheme.org/charybdis/trunk
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.0/  (Property Modified)
+
+
+beu         2006/06/07 12:12:05 UTC	(20060607-1667)
+  Log:
+  Update svn:keywords.
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.0/extensions/ip_cloaking.c  (Property Modified)
+  + -		trunk/extensions/ip_cloaking.c  (Property Modified)
+
+
+beu         2006/06/07 11:53:50 UTC	(20060607-1665)
+  Log:
+  Post-release lovin':
+  - Update version to 2.0.1.
+  - Regenerate configure.
+  
+
+  Changes:	Modified:
+  +9 -9		branches/release-2.0/configure (File Modified) 
+  +1 -1		branches/release-2.0/configure.ac (File Modified) 
+
+
+beu         2006/06/07 11:43:41 UTC	(20060607-1661)
+  Log:
+  Merge from trunk (r1659):
+  - Comment out example blacklist{} block.
+  
+
+  Changes:	Modified:
+  +7 -7		branches/release-2.0/doc/example.conf (File Modified) 
+  +7 -7		branches/release-2.0/doc/reference.conf (File Modified) 
+
+
+beu         2006/06/07 11:09:28 UTC	(20060607-1657)
+  Log:
+  Update version.
+  
+
+  Changes:	Modified:
+  +1 -1		branches/release-2.0/configure.ac (File Modified) 
+
+
+beu         2006/06/07 11:02:45 UTC	(20060607-1655)
+  Log:
+  Branch 2.0.
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.0/ (File Added) 
+
+
 jilles      2006/06/05 15:43:45 UTC	(20060605-1646)
   Log:
   Fix typos.
