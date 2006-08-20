@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: commio.c 829 2006-02-15 00:12:24Z jilles $
+ *  $Id: commio.c 1807 2006-08-20 17:01:30Z jilles $
  */
 
 #include "libcharybdis.h"
@@ -429,6 +429,10 @@ comm_connect_dns_callback(void *vptr, struct DNSReply *reply)
 {
 	fde_t *F = vptr;
 
+	/* Free dns_query now to avoid double reslist free -- jilles */
+	MyFree(F->dns_query);
+	F->dns_query = NULL;
+
 	if(!reply)
 	{
 		comm_connect_callback(F->fd, COMM_ERR_DNS);
@@ -728,6 +732,7 @@ comm_close(int fd)
 	
 	if (F->dns_query != NULL)
 	{
+		delete_resolver_queries(F->dns_query);
 		MyFree(F->dns_query);
 		F->dns_query = NULL;
 	}

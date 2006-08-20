@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: blacklist.c 1689 2006-06-21 19:56:53Z jilles $
+ *  $Id: blacklist.c 1813 2006-08-20 17:18:15Z jilles $
  */
 
 #include "stdinc.h"
@@ -60,7 +60,7 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 
 	if (blcptr->client_p->preClient == NULL)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				"blacklist_dns_callback(): blcptr->client_p->preClient (%s) is NULL", get_client_name(blcptr->client_p, HIDE_IP));
 		MyFree(blcptr->dns_query);
 		MyFree(blcptr);

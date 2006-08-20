@@ -29,7 +29,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: s_newconf.h 1287 2006-05-05 15:06:00Z nenolod $
+ * $Id: s_newconf.h 1807 2006-08-20 17:01:30Z jilles $
  */
 
 #ifndef INCLUDED_s_newconf_h
@@ -201,12 +201,11 @@ struct server_conf
 	int servers;
 	time_t hold;
 
-	struct irc_sockaddr_storage ipnum;
+	int aftype;
 	struct irc_sockaddr_storage my_ipnum;
 
 	char *class_name;
 	struct Class *class;
-	struct DNSQuery *dns_query;
 	dlink_node node;
 };
 

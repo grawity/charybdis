@@ -1,3 +1,114 @@
+jilles      2006/08/20 17:33:04 UTC	(20060820-1819)
+  Log:
+  Rerun autoconf (2.59 yay).
+  
+
+  Changes:	Modified:
+  +9 -9		branches/release-2.0/configure (File Modified) 
+
+
+jilles      2006/08/20 17:32:15 UTC	(20060820-1817)
+  Log:
+  Version bump to 2.0.2.
+  
+
+  Changes:	Modified:
+  +1 -1		branches/release-2.0/configure.ac (File Modified) 
+
+
+jilles      2006/08/20 17:26:58 UTC	(20060820-1815)
+  Log:
+  Update NEWS for 2.0.2.
+  
+
+  Changes:	Modified:
+  +8 -1		branches/release-2.0/NEWS (File Modified) 
+
+
+jilles      2006/08/20 17:18:15 UTC	(20060820-1813)
+  Log:
+  Merged revisions 1811 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r1811 | jilles | 2006-08-20 19:16:37 +0200 (Sun, 20 Aug 2006) | 2 lines
+    
+    Sorcerynet people want a debugging notice moved from +s to +d.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.0/  (Property Modified)
+  +1 -1		branches/release-2.0/src/blacklist.c (File Modified) 
+
+
+jilles      2006/08/20 17:06:59 UTC	(20060820-1809)
+  Log:
+  Merged revisions 1805 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r1805 | jilles | 2006-08-20 18:59:27 +0200 (Sun, 20 Aug 2006) | 3 lines
+    
+    Use source_p instead of client_p for free_pre_client().
+    client_p could be NULL or another client.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.0/  (Property Modified)
+  +1 -1		branches/release-2.0/src/client.c (File Modified) 
+
+
+jilles      2006/08/20 17:01:30 UTC	(20060820-1807)
+  Log:
+  Merged revisions 1747,1749,1753,1779,1785 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r1747 | jilles | 2006-07-25 23:22:45 +0200 (Tue, 25 Jul 2006) | 6 lines
+    
+    Remove ipnum (keep aftype) and dns_query from server_conf.
+    We don't keep track of binary form address in connect{}
+    blocks anymore, DNS lookups of names in host= gone.
+    As before the DNS lookup is done on connect.
+    This should unbreak hostnames in host= somewhat.
+  ........
+    r1749 | jilles | 2006-07-26 00:16:20 +0200 (Wed, 26 Jul 2006) | 6 lines
+    
+    Correct sockhost field in an outgoing server connection.
+    First copy the host field from the server_conf, then
+    take the IP from to where the connection was attempted
+    when the connection callback is called.
+    (Before r1747 this used the IP from the server_conf.)
+  ........
+    r1753 | jilles | 2006-07-26 00:48:38 +0200 (Wed, 26 Jul 2006) | 3 lines
+    
+    If the DNS lookup for an outgoing connection is still
+    pending when it is closed, clean it up.
+  ........
+    r1779 | jilles | 2006-07-30 18:36:39 +0200 (Sun, 30 Jul 2006) | 3 lines
+    
+    Free and zero dns_query in DNS callback for outgoing connect.
+    This avoids double free of reslist.
+  ........
+    r1785 | jilles | 2006-07-31 17:24:06 +0200 (Mon, 31 Jul 2006) | 4 lines
+    
+    When an outgoing server connection succeeds, set
+    localClient->ip by simply copying the whole sockaddr
+    struct instead of copying certain parts only.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.0/  (Property Modified)
+  +1 -2		branches/release-2.0/include/s_newconf.h (File Modified) 
+  +5 -0		branches/release-2.0/libcharybdis/commio.c (File Modified) 
+  +2 -2		branches/release-2.0/src/newconf.c (File Modified) 
+  +1 -42	branches/release-2.0/src/s_newconf.c (File Modified) 
+  +21 -52	branches/release-2.0/src/s_serv.c (File Modified) 
+
+
 jilles      2006/06/21 20:03:42 UTC	(20060621-1691)
   Log:
   Update NEWS file.

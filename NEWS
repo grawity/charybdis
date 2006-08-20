@@ -1,5 +1,12 @@
-This is charybdis 2.0.0, Copyright (c) 2005-2006 Charybdis team.
+This is charybdis 2.0.2, Copyright (c) 2005-2006 Charybdis team.
 See LICENSE for licensing details (GPL v2).
+
+-- charybdis-2.0.2
+
+- Fix crashes when there is a hostname (instead of an IP address) in
+  a connect{} block.
+- Fix a crash related to exiting unknown clients.
+- Move a dnsbl debugging notice from +s to +d.
 
 -- charybdis-2.0.1
 
@@ -268,5 +275,5 @@ modules in case the developers need them.
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 1691 2006-06-21 20:03:42Z jilles $
+$Id: NEWS 1815 2006-08-20 17:26:58Z jilles $
 

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c 1689 2006-06-21 19:56:53Z jilles $
+ *  $Id: client.c 1809 2006-08-20 17:06:59Z jilles $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -1418,7 +1418,7 @@ exit_unknown_client(struct Client *client_p, struct Client *source_p, struct Cli
 	del_from_hostname_hash(source_p->host, source_p);
 	del_from_client_hash(source_p->name, source_p);
 	remove_client_from_list(source_p);
-	free_pre_client(client_p);
+	free_pre_client(source_p);
 	SetDead(source_p);
 	dlinkAddAlloc(source_p, &dead_list);
 

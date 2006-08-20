@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c 1537 2006-06-01 17:41:10Z nenolod $
+ *  $Id: s_serv.c 1807 2006-08-20 17:01:30Z jilles $
  */
 
 #include "stdinc.h"
@@ -502,28 +502,6 @@ check_server(const char *name, struct Client *client_p)
 
 	if(!ServerConfTb(server_p))
 		ClearCap(client_p, CAP_TB);
-
-#ifdef IPV6
-	if(client_p->localClient->ip.ss_family == AF_INET6)
-	{
-		if(IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6 *)&server_p->ipnum)->sin6_addr))
-		{
-			memcpy(&((struct sockaddr_in6 *)&server_p->ipnum)->sin6_addr, 
-				&((struct sockaddr_in6 *)&client_p->localClient->ip)->sin6_addr, 
-				sizeof(struct in6_addr)); 
-			SET_SS_LEN(server_p->ipnum, sizeof(struct sockaddr_in6));
-		} 
-	}
-	else
-#endif
-	{
-		if(((struct sockaddr_in *)&server_p->ipnum)->sin_addr.s_addr == INADDR_NONE)
-		{
-			((struct sockaddr_in *)&server_p->ipnum)->sin_addr.s_addr = 
-				((struct sockaddr_in *)&client_p->localClient->ip)->sin_addr.s_addr;
-		}
-		SET_SS_LEN(server_p->ipnum, sizeof(struct sockaddr_in));
-	}
 
 	return 0;
 }
@@ -1477,10 +1455,6 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	if(server_p == NULL)
 		return 0;
 
-	/* log */
-	inetntop_sock((struct sockaddr *)&server_p->ipnum, buf, sizeof(buf));
-	ilog(L_SERVER, "Connect to *[%s] @%s", server_p->name, buf);
-
 	/*
 	 * Make sure this server isn't already connected
 	 */
@@ -1496,7 +1470,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	}
 
 	/* create a socket for the server connection */
-	if((fd = comm_socket(server_p->ipnum.ss_family, SOCK_STREAM, 0, NULL)) < 0)
+	if((fd = comm_socket(server_p->aftype, SOCK_STREAM, 0, NULL)) < 0)
 	{
 		/* Eek, failure to create the socket */
 		report_error("opening stream socket to %s: %s", 
@@ -1510,10 +1484,13 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	/* Create a local client */
 	client_p = make_client(NULL);
 
-	/* Copy in the server, hostname, fd */
+	/* Copy in the server, hostname, fd
+	 * The sockhost may be a hostname, this will be corrected later
+	 * -- jilles
+	 */
 	strlcpy(client_p->name, server_p->name, sizeof(client_p->name));
 	strlcpy(client_p->host, server_p->host, sizeof(client_p->host));
-	strlcpy(client_p->sockhost, buf, sizeof(client_p->sockhost));
+	strlcpy(client_p->sockhost, server_p->host, sizeof(client_p->sockhost));
 	client_p->localClient->fd = fd;
 
 	/*
@@ -1564,14 +1541,21 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	SetConnecting(client_p);
 	dlinkAddTail(client_p, &client_p->node, &global_client_list);
 
+	/* log */
+	ilog(L_SERVER, "Connect to *[%s] @%s [%s]", server_p->name, server_p->host,
+#ifdef IPV6
+			server_p->aftype == AF_INET6 ? "IPv6" :
+#endif
+			(server_p->aftype == AF_INET ? "IPv4" : "?"));
+
 	if(ServerConfVhosted(server_p))
 	{
 		memcpy(&myipnum, &server_p->my_ipnum, sizeof(myipnum));
 		((struct sockaddr_in *)&myipnum)->sin_port = 0;
-		myipnum.ss_family = server_p->my_ipnum.ss_family;
+		myipnum.ss_family = server_p->aftype;
 				
 	}
-	else if(server_p->ipnum.ss_family == AF_INET && ServerInfo.specific_ipv4_vhost)
+	else if(server_p->aftype == AF_INET && ServerInfo.specific_ipv4_vhost)
 	{
 		memcpy(&myipnum, &ServerInfo.ip, sizeof(myipnum));
 		((struct sockaddr_in *)&myipnum)->sin_port = 0;
@@ -1580,7 +1564,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	}
 	
 #ifdef IPV6
-	else if((server_p->ipnum.ss_family == AF_INET6) && ServerInfo.specific_ipv6_vhost)
+	else if((server_p->aftype == AF_INET6) && ServerInfo.specific_ipv6_vhost)
 	{
 		memcpy(&myipnum, &ServerInfo.ip6, sizeof(myipnum));
 		((struct sockaddr_in6 *)&myipnum)->sin6_port = 0;
@@ -1592,7 +1576,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	{
 		comm_connect_tcp(client_p->localClient->fd, server_p->host,
 				 server_p->port, NULL, 0, serv_connect_callback, 
-				 client_p, server_p->ipnum.ss_family, 
+				 client_p, server_p->aftype, 
 				 ConfigFileEntry.connect_timeout);
 		 return 1;
 	}
@@ -1637,25 +1621,10 @@ serv_connect_callback(int fd, int status, void *data)
 	}
 
 	/* Next, for backward purposes, record the ip of the server */
-#ifdef IPV6
-	if(fd_table[fd].connect.hostaddr.ss_family == AF_INET6)
-	{
-		struct sockaddr_in6 *lip = (struct sockaddr_in6 *)&client_p->localClient->ip;
-		struct sockaddr_in6 *hip = (struct sockaddr_in6 *)&fd_table[fd].connect.hostaddr;	
-		memcpy(&lip->sin6_addr, &hip->sin6_addr, sizeof(struct in6_addr));
-		SET_SS_LEN(client_p->localClient->ip, sizeof(struct sockaddr_in6));
-		SET_SS_LEN(fd_table[fd].connect.hostaddr, sizeof(struct sockaddr_in6));
-
-	} else
-#else
-	{
-		struct sockaddr_in *lip = (struct sockaddr_in *)&client_p->localClient->ip;
-		struct sockaddr_in *hip = (struct sockaddr_in *)&fd_table[fd].connect.hostaddr;	
-		lip->sin_addr.s_addr = hip->sin_addr.s_addr;
-		SET_SS_LEN(client_p->localClient->ip, sizeof(struct sockaddr_in));
-		SET_SS_LEN(fd_table[fd].connect.hostaddr, sizeof(struct sockaddr_in));
-	}	
-#endif	
+	memcpy(&client_p->localClient->ip, &fd_table[fd].connect.hostaddr, sizeof client_p->localClient->ip);
+	/* Set sockhost properly now -- jilles */
+	inetntop_sock((struct sockaddr *)&fd_table[fd].connect.hostaddr,
+			client_p->sockhost, sizeof client_p->sockhost);
 	
 	/* Check the status */
 	if(status != COMM_OK)

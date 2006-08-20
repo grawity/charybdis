@@ -1,5 +1,5 @@
 /* This code is in the public domain.
- * $Id: newconf.c 1481 2006-05-27 17:24:05Z nenolod $
+ * $Id: newconf.c 1807 2006-08-20 17:01:30Z jilles $
  */
 
 #include "stdinc.h"
@@ -1214,10 +1214,10 @@ conf_set_connect_aftype(void *data)
 	char *aft = data;
 
 	if(strcasecmp(aft, "ipv4") == 0)
-		yy_server->ipnum.ss_family = AF_INET;
+		yy_server->aftype = AF_INET;
 #ifdef IPV6
 	else if(strcasecmp(aft, "ipv6") == 0)
-		yy_server->ipnum.ss_family = AF_INET6;
+		yy_server->aftype = AF_INET6;
 #endif
 	else
 		conf_report_error("connect::aftype '%s' is unknown.", aft);
