@@ -24,6 +24,7 @@ SERVICES    - supports ratbox's services extensions
 SAVE        - supports SAVE extension (friendlier alternative to KILL on nick collide)
 RSFNC       - supports RSFNC extension (forcenick)
 CLUSTER     - supports remote XLINE, UNXLINE, RESV, UNRESV and LOCOPS
+EUID        - supports EUID, non-ENCAP CHGHOST and NICKDELAY
 ZIP         - supports ziplinks
 ENC         - supports encryption (cryptlinks)
 

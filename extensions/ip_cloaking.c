@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: ip_cloaking.c 1871 2006-08-27 15:36:00Z jilles $ */
 
 #include "stdinc.h"
 #include "modules.h"
@@ -34,25 +34,31 @@ _moddeinit(void)
 }
 
 static void check_umode_change(void *data);
+static void check_new_user(void *data);
 mapi_hfn_list_av1 ip_cloaking_hfnlist[] = {
 	{ "umode_changed", (hookfn) check_umode_change },
+	{ "new_local_user", (hookfn) check_new_user },
 	{ NULL, NULL }
 };
 
 DECLARE_MODULE_AV1(ip_cloaking, _modinit, _moddeinit, NULL, NULL,
-			ip_cloaking_hfnlist, "$Revision$");
+			ip_cloaking_hfnlist, "$Revision: 1871 $");
 
 static void
 distribute_hostchange(struct Client *client)
 {
 	if (irccmp(client->host, client->orighost))
-	{
 		sendto_one_numeric(client, RPL_HOSTHIDDEN, "%s :is now your hidden host",
 			client->host);
-	}
+	else
+		sendto_one_numeric(client, RPL_HOSTHIDDEN, "%s :hostname reset",
+			client->host);
 
 	sendto_server(NULL, NULL,
-		CAP_TS6, NOCAPS, ":%s ENCAP * CHGHOST %s :%s",
+		CAP_EUID | CAP_TS6, NOCAPS, ":%s CHGHOST %s :%s",
+		use_id(&me), use_id(client), client->host);
+	sendto_server(NULL, NULL,
+		CAP_TS6, CAP_EUID, ":%s ENCAP * CHGHOST %s :%s",
 		use_id(&me), use_id(client), client->host);
 	sendto_server(NULL, NULL,
 		NOCAPS, CAP_TS6, ":%s ENCAP * CHGHOST %s :%s",
@@ -105,21 +111,54 @@ check_umode_change(void *vdata)
 	if (!((data->oldumodes ^ source_p->umodes) & user_modes['h']))
 		return;
 
-	if ((source_p->umodes & user_modes['h']) &&
-		!irccmp(source_p->orighost, source_p->host))
+	if (source_p->umodes & user_modes['h'])
 	{
-		if (!irccmp(source_p->orighost, source_p->sockhost))
-			do_host_cloak(source_p->orighost, source_p->host, 1);
-		else
-			do_host_cloak(source_p->orighost, source_p->host, 0);
-
-		/* do cloaking here */
-		distribute_hostchange(source_p);
+		if (IsIPSpoof(source_p) || source_p->localClient->mangledhost == NULL || (IsDynSpoof(source_p) && strcmp(source_p->host, source_p->localClient->mangledhost)))
+		{
+			source_p->umodes &= ~user_modes['h'];
+			return;
+		}
+		if (strcmp(source_p->host, source_p->localClient->mangledhost))
+		{
+			strlcpy(source_p->host, source_p->localClient->mangledhost, HOSTLEN);
+			distribute_hostchange(source_p);
+		}
+		else /* not really nice, but we need to send this numeric here */
+			sendto_one_numeric(source_p, RPL_HOSTHIDDEN, "%s :is now your hidden host",
+				source_p->host);
 	}
-	else if (!(source_p->umodes & user_modes['h']) &&
-		irccmp(source_p->orighost, source_p->host))
+	else if (!(source_p->umodes & user_modes['h']))
 	{
-		strlcpy(source_p->host, source_p->orighost, HOSTLEN);
-		distribute_hostchange(source_p);
+		if (source_p->localClient->mangledhost != NULL &&
+				!strcmp(source_p->host, source_p->localClient->mangledhost))
+		{
+			strlcpy(source_p->host, source_p->orighost, HOSTLEN);
+			distribute_hostchange(source_p);
+		}
+	}
+}
+
+static void
+check_new_user(void *vdata)
+{
+	struct Client *source_p = (void *)vdata;
+
+	if (IsIPSpoof(source_p))
+	{
+		source_p->umodes &= ~user_modes['h'];
+		return;
+	}
+	source_p->localClient->mangledhost = MyMalloc(HOSTLEN);
+	if (!irccmp(source_p->orighost, source_p->sockhost))
+		do_host_cloak(source_p->orighost, source_p->localClient->mangledhost, 1);
+	else
+		do_host_cloak(source_p->orighost, source_p->localClient->mangledhost, 0);
+	if (IsDynSpoof(source_p))
+		source_p->umodes &= ~user_modes['h'];
+	if (source_p->umodes & user_modes['h'])
+	{
+		strlcpy(source_p->host, source_p->localClient->mangledhost, sizeof(source_p->host));
+		if (irccmp(source_p->host, source_p->orighost))
+			SetDynSpoof(source_p);
 	}
 }

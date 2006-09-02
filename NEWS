@@ -1,5 +1,52 @@
-This is charybdis 2.0.0, Copyright (c) 2005-2006 Charybdis team.
+This is charybdis 2.1.0, Copyright (c) 2005-2006 Charybdis team.
 See LICENSE for licensing details (GPL v2).
+
+-- charybdis-2.1.0
+
+- Our official website is now http;//www.ircd-charybdis.org/.
+- Make RPL_ISUPPORT (005 numeric) modularizable.
+- Also do forwarding if the channel limit (+l) is exceeded.
+- Don't count opers on service{} servers in /lusers.
+- Allow servers to send to @#chan and +#chan.
+- Allow +S clients (services) to send to channels and @/+ channels always.
+- Allow normal match() on IP address also in /masktrace.
+- Add new testmask from ratbox 2.2. Allows matches on nick, ip and gecos
+  in addition to user and host, and is fully analogous to masktrace.
+  The numeric has changed from 724 to 727 and fields in it have changed.
+- Show IP addresses to opers in /whowas.
+- Add extb_extgecos extban option ($x:nick!user@host#gecos), from sorcery
+  modules.
+- Add extb_canjoin extban option ($j:#channel), matches if the user is banned
+  from the other channel.
+- Allow opers to /who based on realhost.
+- Allow opers to /masktrace, /testmask based on realhost.
+- Add general::operspy_dont_care_user_info, limits operspy accountability to
+  channel-related information.
+- Make host mangling more reliable.
+- Prevent ban evasion by enabling/disabling host mangling.
+- Add EUID, sends real host and services account in the same command as other
+  user information.
+- Make it possible to send CHGHOST without ENCAP (fixes problems with old
+  services).
+- Allow service{} servers to manipulate the nick delay table (for "nickserv
+  enforcement", aka SVSHOLD).
+- Send server notices about connections initiated by remote opers network wide.
+- Fix too early truncation of JOIN channel list.
+- Make the newconf system available to modules.
+- Add /stats s to the hurt module to list active hurts.
+- Add general::servicestring, shown in /whois for opered services (+oS).
+- Show real host/IP behind dynamic spoof in /whois to the user themselves
+  and opers.
+- Document option to disable nick delay.
+- Improve logging of server connections.
+- Clean up handling of hostnames in connect blocks.
+- Remove support for resolving ip6.int, people should be using ip6.arpa.
+- Unbreak --disable-balloc (useful for debugging with tools like valgrind).
+- Make Solaris 10 I/O ports code compile.
+- Add WEBIRC module to allow showing the real host/IP of CGI:IRC users.
+- Comment out blacklist{} block in example confs, as AHBL requires
+  notification before use.
+- Fix some bugs relating to the resolver.
 
 -- charybdis-2.0.0
 
@@ -262,5 +309,5 @@ modules in case the developers need them.
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 1636 2006-06-04 19:19:02Z jilles $
+$Id: NEWS 2031 2006-09-02 23:57:18Z jilles $
 

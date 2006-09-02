@@ -2,7 +2,7 @@
  * Channel extban type: matches users who are in a certain public channel
  * -- jilles
  *
- * $Id: extb_channel.c 1299 2006-05-11 15:43:03Z jilles $
+ * $Id: extb_channel.c 1723 2006-07-06 15:23:58Z jilles $
  */
 
 #include "stdinc.h"
@@ -16,7 +16,7 @@ static int _modinit(void);
 static void _moddeinit(void);
 static int eb_channel(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
 
-DECLARE_MODULE_AV1(extb_channel, _modinit, _moddeinit, NULL, NULL, NULL, "$Revision: 1299 $");
+DECLARE_MODULE_AV1(extb_channel, _modinit, _moddeinit, NULL, NULL, NULL, "$Revision: 1723 $");
 
 static int
 _modinit(void)
@@ -43,6 +43,9 @@ static int eb_channel(const char *data, struct Client *client_p,
 		return EXTBAN_INVALID;
 	chptr2 = find_channel(data);
 	if (chptr2 == NULL)
+		return EXTBAN_INVALID;
+	/* require consistent target */
+	if (chptr->chname[0] == '#' && data[0] == '&')
 		return EXTBAN_INVALID;
 	/* privacy! don't allow +s/+p channels to influence another channel */
 	if (!PubChannel(chptr2))

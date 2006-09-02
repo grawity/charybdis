@@ -1,7 +1,7 @@
 #
 # Makefile.in for ircd/contrib
 #
-# $Id: Makefile.in 1569 2006-06-03 21:21:44Z jilles $
+# $Id: Makefile.in 1849 2006-08-23 12:40:21Z jilles $
 #
 CC		= @CC@
 RM		= @RM@
@@ -29,10 +29,12 @@ CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
 SRCS =                          \
   createauthonly.c		\
   extb_account.c		\
+  extb_canjoin.c		\
   extb_channel.c		\
   extb_oper.c			\
   extb_server.c			\
   extb_realname.c		\
+  extb_extgecos.c		\
   hurt.c			\
   ip_cloaking.c			\
   sno_farconnect.c		\
@@ -47,6 +49,7 @@ SRCS =                          \
   m_okick.c			\
   m_omode.c			\
   m_opme.c			\
+  m_webirc.c			\
   no_oper_invis.c		\
   spy_admin_notice.c		\
   spy_info_notice.c		\

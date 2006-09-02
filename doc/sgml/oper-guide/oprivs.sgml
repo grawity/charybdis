@@ -117,6 +117,12 @@
 	  concrete policies describing what it is to be used for, and
 	  what not.
 	</para>
+	<para>
+	  If operspy_dont_care_user_info is enabled, /who mask is operspy
+	  also, and /who !mask, /who mask, /masktrace !user@host :gecos
+	  and /scan umodes +modes-modes global list do not generate +Z notices
+	  or logs.
+	</para>
       </sect2>
       <sect2>
 	<title>unkline (U), unkline</title>

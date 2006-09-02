@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_who.c 940 2006-03-05 23:15:38Z jilles $
+ *  $Id: m_who.c 1853 2006-08-24 18:30:52Z jilles $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -51,7 +51,7 @@ struct Message who_msgtab = {
 };
 
 mapi_clist_av1 who_clist[] = { &who_msgtab, NULL };
-DECLARE_MODULE_AV1(who, NULL, NULL, who_clist, NULL, NULL, "$Revision: 940 $");
+DECLARE_MODULE_AV1(who, NULL, NULL, who_clist, NULL, NULL, "$Revision: 1853 $");
 
 static void do_who_on_channel(struct Client *source_p, struct Channel *chptr,
 			      int server_oper, int member);
@@ -189,6 +189,11 @@ m_who(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 			last_used = CurrentTime;
 	}
 
+	/* Note: operspy_dont_care_user_info does not apply to
+	 * who on channels */
+	if(IsOperSpy(source_p) && ConfigFileEntry.operspy_dont_care_user_info)
+		operspy = 1;
+
 	/* '/who 0' for a global list.  this forces clients to actually
 	 * request a full list.  I presume its because of too many typos
 	 * with "/who" ;) --fl
@@ -240,6 +245,7 @@ who_common_channel(struct Client *source_p, struct Channel *chptr,
 			if((mask == NULL) ||
 					match(mask, target_p->name) || match(mask, target_p->username) ||
 					match(mask, target_p->host) || match(mask, target_p->user->server) ||
+					(IsOper(source_p) && match(mask, target_p->orighost)) ||
 					match(mask, target_p->info))
 			{
 				do_who(source_p, target_p, NULL, "");
@@ -280,7 +286,7 @@ who_global(struct Client *source_p, const char *mask, int server_oper, int opers
 			who_common_channel(source_p, msptr->chptr, mask, server_oper, &maxmatches);
 		}
 	}
-	else
+	else if (!ConfigFileEntry.operspy_dont_care_user_info)
 		report_operspy(source_p, "WHO", mask);
 
 	/* second, list all matching visible clients and clear all marks
@@ -308,6 +314,7 @@ who_global(struct Client *source_p, const char *mask, int server_oper, int opers
 			if(!mask ||
 					match(mask, target_p->name) || match(mask, target_p->username) ||
 					match(mask, target_p->host) || match(mask, target_p->user->server) ||
+					(IsOper(source_p) && match(mask, target_p->orighost)) ||
 					match(mask, target_p->info))
 			{
 				do_who(source_p, target_p, NULL, "");

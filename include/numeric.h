@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: numeric.h 756 2006-02-12 02:19:41Z jilles $
+ *  $Id: numeric.h 1793 2006-08-04 19:56:03Z jilles $
  */
 
 #ifndef INCLUDED_numeric_h
@@ -173,6 +173,7 @@ extern const char *form_str(int);
 #define RPL_WHOREPLY         352
 #define RPL_ENDOFWHO         315
 #define RPL_NAMREPLY         353
+#define RPL_WHOWASREAL       360
 #define RPL_ENDOFNAMES       366
 
 #define RPL_KILLDONE         361
@@ -191,6 +192,7 @@ extern const char *form_str(int);
 #define RPL_ENDOFINFO        374
 #define RPL_MOTDSTART        375
 #define RPL_ENDOFMOTD        376
+#define RPL_WHOISHOST        378
 
 #define RPL_YOUREOPER        381
 #define RPL_REHASHING        382
@@ -334,6 +336,7 @@ extern const char *form_str(int);
 #define RPL_TESTMASK		724
 #define RPL_TESTLINE		725
 #define RPL_NOTESTLINE		726
+#define RPL_TESTMASKGECOS	727
 
 #define RPL_MONONLINE		730
 #define RPL_MONOFFLINE		731

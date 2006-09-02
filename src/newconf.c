@@ -1,5 +1,5 @@
 /* This code is in the public domain.
- * $Id: newconf.c 1481 2006-05-27 17:24:05Z nenolod $
+ * $Id: newconf.c 1853 2006-08-24 18:30:52Z jilles $
  */
 
 #include "stdinc.h"
@@ -77,7 +77,7 @@ conf_strtype(int type)
 	}
 }
 
-static int
+int
 add_top_conf(const char *name, int (*sfunc) (struct TopConf *), 
 		int (*efunc) (struct TopConf *), struct ConfEntry *items)
 {
@@ -94,7 +94,7 @@ add_top_conf(const char *name, int (*sfunc) (struct TopConf *),
 	return 0;
 }
 
-static struct TopConf *
+struct TopConf *
 find_top_conf(const char *name)
 {
 	dlink_node *d;
@@ -111,7 +111,7 @@ find_top_conf(const char *name)
 }
 
 
-static struct ConfEntry *
+struct ConfEntry *
 find_conf_item(const struct TopConf *top, const char *name)
 {
 	struct ConfEntry *cf;
@@ -140,8 +140,7 @@ find_conf_item(const struct TopConf *top, const char *name)
 	return NULL;
 }
 
-#if 0				/* XXX unused */
-static int
+int
 remove_top_conf(char *name)
 {
 	struct TopConf *tc;
@@ -159,7 +158,6 @@ remove_top_conf(char *name)
 
 	return 0;
 }
-#endif
 
 static void
 conf_set_serverinfo_name(void *data)
@@ -1125,6 +1123,13 @@ conf_end_connect(struct TopConf *tc)
 		return 0;
 	}
 
+	if(ServerInfo.name != NULL && !irccmp(ServerInfo.name, yy_server->name))
+	{
+		conf_report_error("Ignoring connect block for %s -- name is equal to my own name.",
+				yy_server->name);
+		return 0;
+	}
+
 	if(EmptyString(yy_server->passwd) || EmptyString(yy_server->spasswd))
 	{
 		conf_report_error("Ignoring connect block for %s -- missing password.",
@@ -1159,6 +1164,8 @@ conf_set_connect_host(void *data)
 {
 	MyFree(yy_server->host);
 	DupString(yy_server->host, data);
+	if (strchr(yy_server->host, ':'))
+		yy_server->aftype = AF_INET6;
 }
 
 static void
@@ -1214,10 +1221,10 @@ conf_set_connect_aftype(void *data)
 	char *aft = data;
 
 	if(strcasecmp(aft, "ipv4") == 0)
-		yy_server->ipnum.ss_family = AF_INET;
+		yy_server->aftype = AF_INET;
 #ifdef IPV6
 	else if(strcasecmp(aft, "ipv6") == 0)
-		yy_server->ipnum.ss_family = AF_INET6;
+		yy_server->aftype = AF_INET6;
 #endif
 	else
 		conf_report_error("connect::aftype '%s' is unknown.", aft);
@@ -1875,7 +1882,6 @@ add_conf_item(const char *topconf, const char *name, int type, void (*func) (voi
 	return 0;
 }
 
-#if 0
 int
 remove_conf_item(const char *topconf, const char *name)
 {
@@ -1893,12 +1899,10 @@ remove_conf_item(const char *topconf, const char *name)
 		return -1;
 
 	dlinkDestroy(ptr, &tc->tc_items);
-	MyFree(cf->cf_name);
 	MyFree(cf);
 
 	return 0;
 }
-#endif
 
 /* *INDENT-OFF* */
 static struct ConfEntry conf_serverinfo_table[] =
@@ -2007,6 +2011,7 @@ static struct ConfEntry conf_general_table[] =
 
 	{ "default_operstring",	CF_QSTRING, NULL, REALLEN,    &ConfigFileEntry.default_operstring },
 	{ "default_adminstring",CF_QSTRING, NULL, REALLEN,    &ConfigFileEntry.default_adminstring },
+	{ "servicestring",	CF_QSTRING, NULL, REALLEN,    &ConfigFileEntry.servicestring },
 	{ "egdpool_path",	CF_QSTRING, NULL, MAXPATHLEN, &ConfigFileEntry.egdpool_path },
 	{ "kline_reason",	CF_QSTRING, NULL, REALLEN, &ConfigFileEntry.kline_reason },
 	{ "identify_service",	CF_QSTRING, NULL, REALLEN, &ConfigFileEntry.identifyservice },
@@ -2050,6 +2055,7 @@ static struct ConfEntry conf_general_table[] =
 	{ "nick_delay",		CF_TIME,  NULL, 0, &ConfigFileEntry.nick_delay		},
 	{ "no_oper_flood",	CF_YESNO, NULL, 0, &ConfigFileEntry.no_oper_flood	},
 	{ "operspy_admin_only",	CF_YESNO, NULL, 0, &ConfigFileEntry.operspy_admin_only	},
+	{ "operspy_dont_care_user_info", CF_YESNO, NULL, 0, &ConfigFileEntry.operspy_dont_care_user_info },
 	{ "pace_wait",		CF_TIME,  NULL, 0, &ConfigFileEntry.pace_wait		},
 	{ "pace_wait_simple",	CF_TIME,  NULL, 0, &ConfigFileEntry.pace_wait_simple	},
 	{ "ping_cookie",	CF_YESNO, NULL, 0, &ConfigFileEntry.ping_cookie		},
@@ -2069,9 +2075,6 @@ static struct ConfEntry conf_general_table[] =
 	{ "ts_warn_delta",	CF_TIME,  NULL, 0, &ConfigFileEntry.ts_warn_delta	},
 	{ "use_whois_actually", CF_YESNO, NULL, 0, &ConfigFileEntry.use_whois_actually	},
 	{ "warn_no_nline",	CF_YESNO, NULL, 0, &ConfigFileEntry.warn_no_nline	},
-#ifdef IPV6
-	{ "fallback_to_ip6_int", CF_YESNO, NULL, 0, &ConfigFileEntry.fallback_to_ip6_int },
-#endif
 	{ "\0", 		0, 	  NULL, 0, NULL }
 };
 

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_whowas.c 254 2005-09-21 23:35:12Z nenolod $
+ *  $Id: m_whowas.c 1717 2006-07-04 14:41:11Z jilles $
  */
 
 #include "stdinc.h"
@@ -49,7 +49,7 @@ struct Message whowas_msgtab = {
 };
 
 mapi_clist_av1 whowas_clist[] = { &whowas_msgtab, NULL };
-DECLARE_MODULE_AV1(whowas, NULL, NULL, whowas_clist, NULL, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV1(whowas, NULL, NULL, whowas_clist, NULL, NULL, "$Revision: 1717 $");
 
 /*
 ** m_whowas
@@ -105,7 +105,16 @@ m_whowas(struct Client *client_p, struct Client *source_p, int parc, const char 
 			sendto_one(source_p, form_str(RPL_WHOWASUSER),
 				   me.name, source_p->name, temp->name,
 				   temp->username, temp->hostname, temp->realname);
-
+			if (MyOper(source_p) && !EmptyString(temp->sockhost))
+#if 0
+				sendto_one(source_p, form_str(RPL_WHOWASREAL),
+					   me.name, source_p->name, temp->name,
+					   "<untracked>", temp->sockhost);
+#else
+				sendto_one_numeric(source_p, RPL_WHOISACTUALLY,
+						   form_str(RPL_WHOISACTUALLY),
+						   temp->name, temp->sockhost);
+#endif
 			sendto_one_numeric(source_p, RPL_WHOISSERVER,
 					   form_str(RPL_WHOISSERVER),
 					   temp->name, temp->servername,

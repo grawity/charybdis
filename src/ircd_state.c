@@ -130,6 +130,7 @@ int dorehashbans = 0;
 int doremotd = 0;
 int kline_queued = 0;
 int server_state_foreground = 0;
+int opers_see_all_users = 0;
 
 int testing_conf = 0;
 

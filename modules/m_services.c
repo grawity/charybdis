@@ -26,7 +26,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_services.c 1439 2006-05-25 15:20:48Z jilles $
+ * $Id: m_services.c 1907 2006-08-29 19:18:15Z jilles $
  */
 
 #include "stdinc.h"
@@ -41,6 +41,7 @@
 #include "numeric.h"
 #include "memory.h"
 #include "s_conf.h"
+#include "s_newconf.h"
 #include "s_serv.h"
 #include "hash.h"
 #include "msg.h"
@@ -53,12 +54,11 @@
 static int me_su(struct Client *, struct Client *, int, const char **);
 static int me_login(struct Client *, struct Client *, int, const char **);
 static int me_rsfnc(struct Client *, struct Client *, int, const char **);
+static int me_nickdelay(struct Client *, struct Client *, int, const char **);
 
 static void h_svc_server_introduced(hook_data_client *);
-static void h_svc_burst_client(hook_data_client *);
 static void h_svc_whois(hook_data_client *);
 static void h_svc_stats(hook_data_int *);
-static void h_svc_introduce_client(hook_data_client *);
 
 struct Message su_msgtab = {
 	"SU", 0, 0, 0, MFLG_SLOW,
@@ -72,21 +72,23 @@ struct Message rsfnc_msgtab = {
 	"RSFNC", 0, 0, 0, MFLG_SLOW,
 	{mg_ignore, mg_ignore, mg_ignore, mg_ignore, {me_rsfnc, 4}, mg_ignore}
 };
+struct Message nickdelay_msgtab = {
+	"NICKDELAY", 0, 0, 0, MFLG_SLOW,
+	{mg_unreg, mg_ignore, mg_ignore, mg_ignore, {me_nickdelay, 3}, mg_ignore}
+};
 
 mapi_clist_av1 services_clist[] = { 
-	&su_msgtab, &login_msgtab, &rsfnc_msgtab, NULL
+	&su_msgtab, &login_msgtab, &rsfnc_msgtab, &nickdelay_msgtab, NULL
 };
 mapi_hfn_list_av1 services_hfnlist[] = {
 	{ "doing_stats",	(hookfn) h_svc_stats },
 	{ "doing_whois",	(hookfn) h_svc_whois },
 	{ "doing_whois_global",	(hookfn) h_svc_whois },
-	{ "burst_client",	(hookfn) h_svc_burst_client },
 	{ "server_introduced",	(hookfn) h_svc_server_introduced },
-	{ "introduce_client",	(hookfn) h_svc_introduce_client },
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(services, NULL, NULL, services_clist, NULL, services_hfnlist, "$Revision: 1439 $");
+DECLARE_MODULE_AV1(services, NULL, NULL, services_clist, NULL, services_hfnlist, "$Revision: 1907 $");
 
 static int
 me_su(struct Client *client_p, struct Client *source_p,
@@ -239,15 +241,39 @@ me_rsfnc(struct Client *client_p, struct Client *source_p,
 	return 0;
 }
 
-static void
-h_svc_burst_client(hook_data_client *hdata)
+/*
+** me_nickdelay
+**      parv[0] = sender prefix
+**      parv[1] = duration in seconds (0 to remove)
+**      parv[2] = nick
+*/
+static int
+me_nickdelay(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	if(EmptyString(hdata->target->user->suser))
-		return;
+	int duration;
+	struct nd_entry *nd;
 
-	sendto_one(hdata->client, ":%s ENCAP * LOGIN %s",
-			get_id(hdata->target, hdata->client),
-			hdata->target->user->suser);
+	if(!(source_p->flags & FLAGS_SERVICE))
+		return 0;
+
+	duration = atoi(parv[1]);
+	if (duration <= 0)
+	{
+		nd = hash_find_nd(parv[2]);
+		if (nd != NULL)
+			free_nd_entry(nd);
+	}
+	else
+	{
+		if (duration > 86400)
+			duration = 86400;
+		add_nd_entry(parv[2]);
+		nd = hash_find_nd(parv[2]);
+		if (nd != NULL)
+			nd->expire = CurrentTime + duration;
+	}
+
+	return 0;
 }
 
 static void
@@ -281,7 +307,8 @@ h_svc_whois(hook_data_client *data)
 			p = data->target->user->suser;
 
 		sendto_one(data->client, form_str(RPL_WHOISLOGGEDIN),
-				me.name, data->client->name,
+				get_id(&me, data->client),
+				get_id(data->client, data->client),
 				data->target->name, p);
 	}
 }
@@ -302,16 +329,3 @@ h_svc_stats(hook_data_int *data)
 		}
 	}
 }
-
-static void
-h_svc_introduce_client(hook_data_client *data)
-{
-	if(EmptyString(data->target->user->suser))
-		return;
-
-	sendto_server(data->client, NULL, CAP_TS6, NOCAPS, ":%s ENCAP * LOGIN %s",
-			data->target->id, data->target->user->suser);
-	sendto_server(data->client, NULL, NOCAPS, CAP_TS6, ":%s ENCAP * LOGIN %s",
-			data->target->name, data->target->user->suser);
-}
-

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: blacklist.c 1473 2006-05-26 22:54:29Z jilles $
+ *  $Id: blacklist.c 2023 2006-09-02 23:47:27Z jilles $
  */
 
 #include "stdinc.h"
@@ -55,6 +55,17 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 {
 	struct BlacklistClient *blcptr = (struct BlacklistClient *) vptr;
 
+	if (blcptr == NULL || blcptr->client_p == NULL)
+		return;
+
+	if (blcptr->client_p->preClient == NULL)
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				"blacklist_dns_callback(): blcptr->client_p->preClient (%s) is NULL", get_client_name(blcptr->client_p, HIDE_IP));
+		MyFree(blcptr);
+		return;
+	}
+
 	/* they have a blacklist entry for this client */
 	if (reply != NULL && blcptr->client_p->preClient->dnsbl_listed == NULL)
 	{
@@ -64,34 +75,31 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 	else
 		unref_blacklist(blcptr->blacklist);
 
-	blcptr->client_p->preClient->dnsbl_hits--;
+	dlinkDelete(&blcptr->node, &blcptr->client_p->preClient->dnsbl_queries);
 
 	/* yes, it can probably happen... */
-	if (blcptr->client_p->preClient->dnsbl_hits <= 0 && blcptr->client_p->flags & FLAGS_SENTUSER && !EmptyString(blcptr->client_p->name))
+	if (dlink_list_length(&blcptr->client_p->preClient->dnsbl_queries) == 0 && blcptr->client_p->flags & FLAGS_SENTUSER && !EmptyString(blcptr->client_p->name))
 	{
 		char buf[USERLEN];
 		strlcpy(buf, blcptr->client_p->username, USERLEN);
 		register_local_user(blcptr->client_p, blcptr->client_p, buf);
 	}
 
-	MyFree(blcptr->dns_query);
 	MyFree(blcptr);
 }
 
 /* XXX: no IPv6 implementation, not to concerned right now though. */
 static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *client_p)
 {
-	struct DNSQuery *dns_query = MyMalloc(sizeof(struct DNSQuery));
 	struct BlacklistClient *blcptr = MyMalloc(sizeof(struct BlacklistClient));
 	char buf[IRCD_BUFSIZE];
 	int ip[4];
 
 	blcptr->blacklist = blptr;
 	blcptr->client_p = client_p;
-	blcptr->dns_query = dns_query;
 
-	dns_query->ptr = blcptr;
-	dns_query->callback = blacklist_dns_callback;
+	blcptr->dns_query.ptr = blcptr;
+	blcptr->dns_query.callback = blacklist_dns_callback;
 
 	/* XXX: yes I know this is bad, I don't really care right now */
 	sscanf(client_p->sockhost, "%d.%d.%d.%d", &ip[3], &ip[2], &ip[1], &ip[0]);
@@ -99,9 +107,9 @@ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *
 	/* becomes 2.0.0.127.torbl.ahbl.org or whatever */
 	ircsnprintf(buf, IRCD_BUFSIZE, "%d.%d.%d.%d.%s", ip[0], ip[1], ip[2], ip[3], blptr->host);
 
-	gethost_byname_type(buf, dns_query, T_A);
+	gethost_byname_type(buf, &blcptr->dns_query, T_A);
 
-	client_p->preClient->dnsbl_hits++;
+	dlinkAdd(blcptr, &blcptr->node, &client_p->preClient->dnsbl_queries);
 	blptr->refcount++;
 }
 
@@ -151,6 +159,23 @@ void lookup_blacklists(struct Client *client_p)
 
 		if (!(blptr->status & CONF_ILLEGAL))
 			initiate_blacklist_dnsquery(blptr, client_p);
+	}
+}
+
+void abort_blacklist_queries(struct Client *client_p)
+{
+	dlink_node *ptr, *next_ptr;
+	struct BlacklistClient *blcptr;
+
+	if (client_p->preClient == NULL)
+		return;
+	DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->preClient->dnsbl_queries.head)
+	{
+		blcptr = ptr->data;
+		dlinkDelete(&blcptr->node, &client_p->preClient->dnsbl_queries);
+		unref_blacklist(blcptr->blacklist);
+		delete_resolver_queries(&blcptr->dns_query);
+		MyFree(blcptr);
 	}
 }
 

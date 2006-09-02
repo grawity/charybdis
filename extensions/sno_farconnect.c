@@ -5,7 +5,7 @@
  * of all clients.
  * -- jilles
  *
- * $Id: sno_farconnect.c 613 2006-01-29 03:03:02Z nenolod $
+ * $Id: sno_farconnect.c 1869 2006-08-27 14:24:25Z jilles $
  */
 
 #include "stdinc.h"
@@ -28,13 +28,16 @@ mapi_hfn_list_av1 gcn_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(globalconnexit, _modinit, _moddeinit, NULL, NULL, gcn_hfnlist, "$Revision: 613 $");
+DECLARE_MODULE_AV1(globalconnexit, _modinit, _moddeinit, NULL, NULL, gcn_hfnlist, "$Revision: 1869 $");
 
 static int
 _modinit(void)
 {
 	/* add the snomask to the available slot */
 	snomask_modes['F'] = find_snomask_slot();
+
+	/* show the fact that we are showing user information in /version */
+	opers_see_all_users = 1;
 
 	return 0;
 }
@@ -54,7 +57,7 @@ h_gcn_new_remote_user(struct Client *source_p)
 		return;
 	sendto_realops_snomask_from(snomask_modes['F'], L_ALL, source_p->servptr,
 			"Client connecting: %s (%s@%s) [%s] {%s} [%s]",
-			source_p->name, source_p->username, source_p->host,
+			source_p->name, source_p->username, source_p->orighost,
 			show_ip(NULL, source_p) ? source_p->sockhost : "255.255.255.255",
 			"?", source_p->info);
 }

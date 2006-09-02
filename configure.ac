@@ -1,4 +1,4 @@
-dnl $Id: configure.ac 1549 2006-06-01 20:17:21Z jilles $
+dnl $Id: configure.ac 2025 2006-09-02 23:49:29Z jilles $
 dnl Process this file with autoconf to produce a configure script.
 
 dnl TODO: clean up all the OpenSSL and shared module checking stuff;
@@ -8,9 +8,9 @@ dnl said functions need to be just about as complex as they already are.
 AC_PREREQ(2.57)
 
 dnl Sneaky way to get an Id tag into the configure script
-AC_COPYRIGHT([$Id: configure.ac 1549 2006-06-01 20:17:21Z jilles $])
+AC_COPYRIGHT([$Id: configure.ac 2025 2006-09-02 23:49:29Z jilles $])
 
-AC_INIT([charybdis],[2.0.0])
+AC_INIT([charybdis],[2.1.0rc1])
 
 AC_CONFIG_HEADER(include/setup.h)
 
@@ -905,7 +905,7 @@ else
 fi
 
 AC_ARG_ENABLE(balloc,
-AC_HELP_STRING([--disable-small-net],[Disable the block allocator.]),
+AC_HELP_STRING([--disable-balloc],[Disable the block allocator.]),
 [balloc=$enableval], [balloc=yes])
 
 if test "$balloc" = no; then

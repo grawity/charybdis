@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: whowas.h 6 2005-09-10 01:02:21Z nenolod $
+ *  $Id: whowas.h 1717 2006-07-04 14:41:11Z jilles $
  */
 #ifndef INCLUDED_whowas_h
 #define INCLUDED_whowas_h
@@ -52,6 +52,7 @@ struct Whowas
 	char name[NICKLEN + 1];
 	char username[USERLEN + 1];
 	char hostname[HOSTLEN + 1];
+	char sockhost[HOSTIPLEN + 1];
 	const char *servername;
 	char realname[REALLEN + 1];
 	time_t logoff;

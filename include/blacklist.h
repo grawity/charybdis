@@ -19,12 +19,13 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: blacklist.h 1463 2006-05-26 21:25:28Z jilles $
+ *  $Id: blacklist.h 2023 2006-09-02 23:47:27Z jilles $
  */
 
 #ifndef _BLACKLIST_H_
 #define _BLACKLIST_H_
 
+/* A configured DNSBL */
 struct Blacklist {
 	unsigned int status;	/* If CONF_ILLEGAL, delete when no clients */
 	int refcount;
@@ -33,15 +34,18 @@ struct Blacklist {
 	unsigned int hits;
 };
 
+/* A lookup in progress for a particular DNSBL for a particular client */
 struct BlacklistClient {
 	struct Blacklist *blacklist;
 	struct Client *client_p;
-	struct DNSQuery *dns_query;
+	struct DNSQuery dns_query;
+	dlink_node node;
 };
 
 /* public interfaces */
 struct Blacklist *new_blacklist(char *host, char *reject_entry);
 void lookup_blacklists(struct Client *client_p);
+void abort_blacklist_queries(struct Client *client_p);
 void unref_blacklist(struct Blacklist *blptr);
 void destroy_blacklists(void);
 

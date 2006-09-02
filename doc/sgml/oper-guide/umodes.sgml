@@ -296,7 +296,7 @@
 	<title>+y, spy</title>
 	<para>
 	  Opers with +y receive notices when users try to join RESV'ed (<quote>juped</quote>) channels. 
-	  Additionally, if certain contrib modules are loaded, they will
+	  Additionally, if certain extension modules are loaded, they will
 	  receive notices when special commands are used and/or when they
 	  are whoised.
 	</para>

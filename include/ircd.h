@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.h 861 2006-02-15 23:15:08Z nenolod $
+ *  $Id: ircd.h 1851 2006-08-24 17:16:53Z jilles $
  */
 
 #ifndef INCLUDED_ircd_h
@@ -77,6 +77,8 @@ extern int dorehashbans;
 extern int doremotd;
 extern int kline_queued;
 extern int server_state_foreground;
+extern int opers_see_all_users; /* sno_farconnect.so loaded, operspy without
+				   accountability, etc */
 
 extern struct Client me;
 extern dlink_list global_client_list;

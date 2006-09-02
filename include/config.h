@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: config.h 1142 2006-04-06 13:33:39Z nenolod $
+ *  $Id: config.h 1701 2006-06-27 16:25:52Z jilles $
  */
 
 #ifndef INCLUDED_config_h
@@ -87,13 +87,6 @@
  * noone can.
  */
 #define  HIDE_SERVERS_IPS
-
-/* HIDE_SPOOF_IPS
- *
- * If this is undefined, opers will be allowed to see the real IP of spoofed
- * users in /trace etc.  If this is defined they will be shown a masked IP.
- */
-#define HIDE_SPOOF_IPS
 
 /* TS6_ONLY
  *

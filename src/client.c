@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c 1529 2006-05-30 21:34:57Z jilles $
+ *  $Id: client.c 1861 2006-08-26 23:21:42Z jilles $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -188,6 +188,7 @@ free_pre_client(struct Client *client_p)
 	blptr = client_p->preClient->dnsbl_listed;
 	if (blptr != NULL)
 		unref_blacklist(blptr);
+	abort_blacklist_queries(client_p);
 	BlockHeapFree(pclient_heap, client_p->preClient);
 	client_p->preClient = NULL;
 }
@@ -226,6 +227,7 @@ free_local_client(struct Client *client_p)
 	MyFree(client_p->localClient->challenge);
 	MyFree(client_p->localClient->fullcaps);
 	MyFree(client_p->localClient->opername);
+	MyFree(client_p->localClient->mangledhost);
 
 	BlockHeapFree(lclient_heap, client_p->localClient);
 	client_p->localClient = NULL;
@@ -345,7 +347,7 @@ check_pings_list(dlink_list * list)
 			{
 				if(IsAnyServer(client_p))
 				{
-					sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !IsServer(client_p) ? L_NETWIDE : L_ALL,
 							     "No response from %s, closing link",
 							     get_server_name(client_p, HIDE_IP));
 					ilog(L_SERVER,
@@ -1057,6 +1059,19 @@ log_client_name(struct Client *target_p, int showip)
 	return target_p->name;
 }
 
+/* is_remote_connect - Returns whether a server was /connect'ed by a remote
+ * oper (send notices netwide) */
+int
+is_remote_connect(struct Client *client_p)
+{
+	struct Client *oper;
+
+	if (client_p->serv == NULL)
+		return FALSE;
+	oper = find_named_person(client_p->serv->by);
+	return oper != NULL && IsOper(oper) && !MyConnect(oper);
+}
+
 static void
 free_exited_clients(void *unused)
 {
@@ -1417,6 +1432,7 @@ exit_unknown_client(struct Client *client_p, struct Client *source_p, struct Cli
 	del_from_hostname_hash(source_p->host, source_p);
 	del_from_client_hash(source_p->name, source_p);
 	remove_client_from_list(source_p);
+	free_pre_client(source_p);
 	SetDead(source_p);
 	dlinkAddAlloc(source_p, &dead_list);
 
@@ -2133,7 +2149,7 @@ error_exit_client(struct Client *client_p, int error)
 
 		if(error == 0)
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !IsServer(client_p) ? L_NETWIDE : L_ALL,
 					     "Server %s closed the connection",
 					     get_server_name(client_p, SHOW_IP));
 
@@ -2142,10 +2158,11 @@ error_exit_client(struct Client *client_p, int error)
 		}
 		else
 		{
-			report_error("Lost connection to %s: %s",
-					get_server_name(client_p, SHOW_IP),
-					log_client_name(client_p, SHOW_IP),
-					current_error);
+			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !IsServer(client_p) ? L_NETWIDE : L_ALL,
+					"Lost connection to %s: %s",
+					client_p->name, strerror(current_error));
+			ilog(L_SERVER, "Lost connection to %s: %s",
+				log_client_name(client_p, SHOW_IP), strerror(current_error));
 		}
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,

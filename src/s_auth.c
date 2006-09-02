@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_auth.c 1413 2006-05-22 17:13:15Z nenolod $ */
+ *  $Id: s_auth.c 1683 2006-06-20 14:26:16Z jilles $ */
 
 /*
  * Changes:
@@ -175,6 +175,19 @@ auth_dns_callback(void *vptr, struct DNSReply *reply)
 {
         struct AuthRequest *auth = (struct AuthRequest *) vptr;
         ClearDNSPending(auth);
+
+	/* XXX: this shouldn't happen, but it does. -nenolod */
+	if(auth->client->localClient == NULL)
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			"auth_dns_callback(): auth->client->localClient (%s) is NULL", get_client_name(auth->client, HIDE_IP));
+
+		dlinkDelete(&auth->node, &auth_poll_list);
+		free_auth_request(auth);
+
+		/* and they will silently drop through and all will hopefully be ok... -nenolod */
+		return;
+	}
 
         if(reply)
         {
@@ -439,6 +452,7 @@ timeout_auth_queries_event(void *notused)
 			if(IsDNSPending(auth))
 			{
 				ClearDNSPending(auth);
+				delete_resolver_queries(&auth->dns_query);
 				sendheader(auth->client, REPORT_FAIL_DNS);
 			}
 
@@ -592,6 +606,9 @@ delete_auth_queries(struct Client *target_p)
 	
 	auth = target_p->localClient->auth_request;
 	target_p->localClient->auth_request = NULL;
+
+	if(IsDNSPending(auth))
+		delete_resolver_queries(&auth->dns_query);
 
 	if(auth->fd >= 0)
 		comm_close(auth->fd);

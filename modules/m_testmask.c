@@ -29,7 +29,7 @@
  *  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: m_testmask.c 254 2005-09-21 23:35:12Z nenolod $
+ *  $Id: m_testmask.c 1889 2006-08-29 13:49:29Z jilles $
  *
  */
 
@@ -57,7 +57,10 @@ struct Message testmask_msgtab = {
 };
 
 mapi_clist_av1 testmask_clist[] = { &testmask_msgtab, NULL };
-DECLARE_MODULE_AV1(testmask, NULL, NULL, testmask_clist, NULL, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV1(testmask, NULL, NULL, testmask_clist, NULL, NULL, "$Revision: 1889 $");
+
+static const char *empty_sockhost = "255.255.255.255";
+static const char *spoofed_sockhost = "0";
 
 static int
 mo_testmask(struct Client *client_p, struct Client *source_p,
@@ -66,14 +69,16 @@ mo_testmask(struct Client *client_p, struct Client *source_p,
 	struct Client *target_p;
 	int lcount = 0;
 	int gcount = 0;
-	char *username;
-	char *hostname;
+	char *name, *username, *hostname;
+	const char *sockhost;
+	char *gecos = NULL, *mangle_gecos = NULL;
 	dlink_node *ptr;
 
-	username = LOCAL_COPY(parv[1]);
-	collapse(username);
+	name = LOCAL_COPY(parv[1]);
+	collapse(name);
 
-	if((hostname = strchr(username, '@')) == NULL)
+	/* username is required */
+	if((hostname = strchr(name, '@')) == NULL)
 	{
 		sendto_one(source_p, ":%s NOTICE %s :Invalid parameters",
 				me.name, source_p->name);
@@ -82,6 +87,60 @@ mo_testmask(struct Client *client_p, struct Client *source_p,
 
 	*hostname++ = '\0';
 
+	/* nickname is optional */
+	if((username = strchr(name, '!')) == NULL)
+	{
+		username = name;
+		name = NULL;
+	}
+	else
+		*username++ = '\0';
+
+	if(EmptyString(username) || EmptyString(hostname))
+	{
+		sendto_one(source_p, ":%s NOTICE %s :Invalid parameters",
+				me.name, source_p->name);
+		return 0;
+	}
+
+	if(parc > 2 && !EmptyString(parv[2]))
+	{
+		gecos = LOCAL_COPY(parv[2]);
+		collapse_esc(gecos);
+		if(strstr(gecos, "\\s"))
+		{
+			char *tmp = LOCAL_COPY(gecos);
+			char *orig = tmp;
+			char *new = tmp; 
+			while(*orig)
+			{
+				if(*orig == '\\')
+				{
+					if(*(orig + 1) == 's')
+					{
+						*new++ = ' ';
+						orig += 2;   
+					}
+					/* otherwise skip that and the escaped
+					 * character after it, so we dont mistake
+					 * \\s as \s --fl
+					 */
+					else
+					{   
+						*new++ = *orig++;
+						*new++ = *orig++;
+					}
+				}
+				else
+					*new++ = *orig++;
+			}
+
+			*new = '\0';
+			mangle_gecos = LOCAL_COPY(tmp);
+		} else
+			mangle_gecos = gecos;
+	}
+
 	DLINK_FOREACH(ptr, global_client_list.head)
 	{
 		target_p = ptr->data;
@@ -89,9 +148,24 @@ mo_testmask(struct Client *client_p, struct Client *source_p,
 		if(!IsPerson(target_p))
 			continue;
 
+		if(EmptyString(target_p->sockhost))
+			sockhost = empty_sockhost;
+		else if(!show_ip(source_p, target_p))
+			sockhost = spoofed_sockhost;
+		else
+			sockhost = target_p->sockhost;
+
 		if(match(username, target_p->username) &&
-		   match(hostname, target_p->host))
+		   (match(hostname, target_p->host) ||
+		    match(hostname, target_p->orighost) ||
+		    match(hostname, sockhost) || match_ips(hostname, sockhost)))
 		{
+			if(name && !match(name, target_p->name))
+				continue;
+
+			if(mangle_gecos && !match_esc(mangle_gecos, target_p->info))
+				continue;
+
 			if(MyClient(target_p))
 				lcount++;
 			else
@@ -99,8 +173,9 @@ mo_testmask(struct Client *client_p, struct Client *source_p,
 		}
 	}
 
-	sendto_one(source_p, form_str(RPL_TESTMASK),
-			me.name, source_p->name, username, hostname,
-			lcount, gcount);
+	sendto_one(source_p, form_str(RPL_TESTMASKGECOS),
+			me.name, source_p->name,
+			lcount, gcount, name ? name : "*",
+			username, hostname, gecos ? gecos : "*");
 	return 0;
 }

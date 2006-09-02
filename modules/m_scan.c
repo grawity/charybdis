@@ -28,7 +28,7 @@
  *  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: m_scan.c 1020 2006-03-10 00:16:30Z jilles $
+ *  $Id: m_scan.c 1853 2006-08-24 18:30:52Z jilles $
  */
 
 #include "stdinc.h"
@@ -61,7 +61,7 @@ struct Message scan_msgtab = {
 };
 
 mapi_clist_av1 scan_clist[] = { &scan_msgtab, NULL };
-DECLARE_MODULE_AV1(scan, NULL, NULL, scan_clist, NULL, NULL, "$Revision: 1020 $");
+DECLARE_MODULE_AV1(scan, NULL, NULL, scan_clist, NULL, NULL, "$Revision: 1853 $");
 
 typedef int (*scan_handler)(struct Client *, struct Client *, int, 
 	const char **);
@@ -177,13 +177,16 @@ scan_umodes(struct Client *client_p, struct Client *source_p, int parc,
 	{
 		if (IsOperSpy(source_p))
 		{
-			strlcpy(buf, "UMODES", sizeof buf);
-			for (i = 2; i < parc; i++)
+			if (!ConfigFileEntry.operspy_dont_care_user_info)
 			{
-				strlcat(buf, " ", sizeof buf);
-				strlcat(buf, parv[i], sizeof buf);
+				strlcpy(buf, "UMODES", sizeof buf);
+				for (i = 2; i < parc; i++)
+				{
+					strlcat(buf, " ", sizeof buf);
+					strlcat(buf, parv[i], sizeof buf);
+				}
+				report_operspy(source_p, "SCAN", buf);
 			}
-			report_operspy(source_p, "SCAN", buf);
 		}
 		else
 		{

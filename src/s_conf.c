@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c 1445 2006-05-26 17:38:52Z jilles $
+ *  $Id: s_conf.c 1853 2006-08-24 18:30:52Z jilles $
  */
 
 #include "stdinc.h"
@@ -742,6 +742,7 @@ set_default_conf(void)
 
 	DupString(ConfigFileEntry.default_operstring, "is an IRC operator");
 	DupString(ConfigFileEntry.default_adminstring, "is a Server Administrator");
+	DupString(ConfigFileEntry.servicestring, "is a Network Service");
 
 	ConfigFileEntry.default_umodes = UMODE_INVISIBLE;	
 	ConfigFileEntry.failed_oper_notice = YES;
@@ -802,6 +803,7 @@ set_default_conf(void)
 	ConfigFileEntry.burst_away = NO;
 	ConfigFileEntry.collision_fnc = YES;
 	ConfigFileEntry.global_snotices = YES;
+	ConfigFileEntry.operspy_dont_care_user_info = NO;
 
 #ifdef HAVE_LIBZ
 	ConfigFileEntry.compression_level = 4;

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: commio.h 376 2005-12-07 15:00:41Z nenolod $
+ *  $Id: commio.h 1757 2006-07-25 23:34:45Z jilles $
  */
 
 #ifndef INCLUDED_commio_h
@@ -37,15 +37,6 @@ typedef void PF(int fd, void *);
 /* Callback for completed connections */
 /* int fd, int status, void * */
 typedef void CNCB(int fd, int, void *);
-
-/*
- * priority values used in fdlist code
- */
-#define FDL_SERVER   0x01
-#define FDL_BUSY     0x02
-#define FDL_OPER     0x04
-#define FDL_DEFAULT  0x08
-#define FDL_ALL      0xFF
 
 #define FD_DESC_SZ 128		/* hostlen + comment */
 
@@ -130,8 +121,6 @@ struct _fde
 	flags;
 	struct
 	{
-		/* We don't need the host here ? */
-		struct irc_sockaddr_storage S;
 		struct irc_sockaddr_storage hostaddr;
 		CNCB *callback;
 		void *data;

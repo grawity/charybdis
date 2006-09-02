@@ -29,7 +29,7 @@
 
 #include "stdinc.h"
 #include <port.h>
-#include <time.h> /* for timers */
+#include <time.h>
 
 #include "libcharybdis.h"
 
@@ -98,7 +98,7 @@ void
 ircd_setselect(int fd, fdlist_t list, unsigned int type, PF * handler,
 	       void *client_data)
 {
-	fde_t *F = find_fd(fd);
+	fde_t *F = &fd_table[fd];
 	s_assert(fd >= 0);
 	s_assert(F->flags.open);
 
@@ -141,14 +141,14 @@ ircd_select(unsigned long delay)
 	ircd_set_time();
 
 	if (i == -1)
-		return IRCD_OK;
+		return COMM_ERROR;
 
 	for (i = 0; i < nget; i++) {
 		switch(pelst[i].portev_source) {
 		case PORT_SOURCE_FD:
 			fd = pelst[i].portev_object;
 			PF *hdl = NULL;
-			fde_t *F = find_fd(fd);
+			fde_t *F = &fd_table[fd];
 
 			if ((pelst[i].portev_events & POLLRDNORM) && (hdl = F->read_handler)) {
 				F->read_handler = NULL;
@@ -170,50 +170,5 @@ ircd_select(unsigned long delay)
 			break;
 		}
 	}
-	return IRCD_OK;
-}
-
-ircd_event_id
-ircd_schedule_event(time_t when, int repeat, ircd_event_cb_t cb, void *udata)
-{
-	timer_t	 	 id;
-	port_notify_t	 not;
-	struct	timer_data	*tdata;
-	struct	sigevent	 ev;
-	struct	itimerspec	 ts;
-	
-	memset(&ev, 0, sizeof(ev));
-	ev.sigev_notify = SIGEV_PORT;
-	ev.sigev_value.sival_ptr = &not;
-
-	tdata = malloc(sizeof(struct timer_data));
-	tdata->td_cb = cb;
-	tdata->td_udata = udata;
-
-	not.portnfy_port = pe;
-	not.portnfy_user = tdata;
-
-	if (timer_create(CLOCK_REALTIME, &ev, &id) < 0)
-		libcharybdis_log("timer_create: %s\n", strerror(errno));
-
-	tdata->td_timer_id = id;
-
-	memset(&ts, 0, sizeof(ts));
-	ts.it_value.tv_sec = when;
-	ts.it_value.tv_nsec = 0;
-
-	if (repeat)
-		ts.it_interval = ts.it_value;
-	tdata->td_repeat = repeat;
-
-	if (timer_settime(id, 0, &ts, NULL) < 0)
-		libcharybdis_log("timer_settime: %s\n", strerror(errno));
-	return tdata;
-}
-
-void
-ircd_unschedule_event(ircd_event_id id)
-{
-	timer_delete(id->td_timer_id);
-	free(id);
+	return COMM_OK;
 }

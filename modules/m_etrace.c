@@ -29,7 +29,7 @@
  *  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: m_etrace.c 583 2006-01-27 14:41:47Z jilles $
+ *  $Id: m_etrace.c 1889 2006-08-29 13:49:29Z jilles $
  */
 
 #include "stdinc.h"
@@ -70,7 +70,7 @@ struct Message masktrace_msgtab = {
 };
 
 mapi_clist_av1 etrace_clist[] = { &etrace_msgtab, &chantrace_msgtab, &masktrace_msgtab, NULL };
-DECLARE_MODULE_AV1(etrace, NULL, NULL, etrace_clist, NULL, NULL, "$Revision: 583 $");
+DECLARE_MODULE_AV1(etrace, NULL, NULL, etrace_clist, NULL, NULL, "$Revision: 1889 $");
 
 static void do_etrace(struct Client *source_p, int ipv4, int ipv6);
 static void do_etrace_full(struct Client *source_p);
@@ -342,9 +342,10 @@ match_masktrace(struct Client *source_p, dlink_list *list,
 		else
 			sockhost = target_p->sockhost;
 
-		if(match(username, target_p->username) && 
-			(match(hostname, target_p->host) || 
-			 match_ips(hostname, sockhost)))
+		if(match(username, target_p->username) &&
+		   (match(hostname, target_p->host) ||
+		    match(hostname, target_p->orighost) ||
+		    match(hostname, sockhost) || match_ips(hostname, sockhost)))
 		{
 			if(name != NULL && !match(name, target_p->name))
 				continue;
@@ -375,7 +376,6 @@ mo_masktrace(struct Client *client_p, struct Client *source_p, int parc,
 	name = LOCAL_COPY(parv[1]);	
 	collapse(name);
 
-	
 	if(IsOperSpy(source_p) && parv[1][0] == '!')
 	{
 		name++;
@@ -413,14 +413,17 @@ mo_masktrace(struct Client *client_p, struct Client *source_p, int parc,
 	}
 			
 	if(operspy) {
-		char buf[512];
-		strlcpy(buf, mask, sizeof(buf));
-		if(!EmptyString(gecos)) {
-			strlcat(buf, " ", sizeof(buf));
-			strlcat(buf, gecos, sizeof(buf));
-		}		
+		if (!ConfigFileEntry.operspy_dont_care_user_info)
+		{
+			char buf[512];
+			strlcpy(buf, mask, sizeof(buf));
+			if(!EmptyString(gecos)) {
+				strlcat(buf, " ", sizeof(buf));
+				strlcat(buf, gecos, sizeof(buf));
+			}		
 
-		report_operspy(source_p, "MASKTRACE", buf);	
+			report_operspy(source_p, "MASKTRACE", buf);	
+		}
 		match_masktrace(source_p, &global_client_list, username, hostname, name, gecos);		
 	} else
 		match_masktrace(source_p, &lclient_list, username, hostname, name, gecos);

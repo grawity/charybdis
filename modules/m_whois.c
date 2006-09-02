@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_whois.c 318 2005-11-15 16:33:26Z jilles $
+ *  $Id: m_whois.c 1879 2006-08-27 21:18:43Z jilles $
  */
 
 #include "stdinc.h"
@@ -67,7 +67,7 @@ mapi_hlist_av1 whois_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(whois, NULL, NULL, whois_clist, whois_hlist, NULL, "$Revision: 318 $");
+DECLARE_MODULE_AV1(whois, NULL, NULL, whois_clist, whois_hlist, NULL, "$Revision: 1879 $");
 
 /*
  * m_whois
@@ -182,7 +182,7 @@ do_whois(struct Client *client_p, struct Client *source_p, int parc, const char 
 	int operspy = 0;
 
 	nick = LOCAL_COPY(parv[1]);
-	if((p = strchr(parv[1], ',')))
+	if((p = strchr(nick, ',')))
 		*p = '\0';
 
 	if(IsOperSpy(source_p) && *nick == '!')
@@ -210,7 +210,7 @@ do_whois(struct Client *client_p, struct Client *source_p, int parc, const char 
 	else
 		sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 				   form_str(ERR_NOSUCHNICK), 
-				   IsDigit(*nick) ? "*" : parv[1]);
+				   IsDigit(*nick) ? "*" : nick);
 
 	sendto_one_numeric(source_p, RPL_ENDOFWHOIS, 
 			   form_str(RPL_ENDOFWHOIS), parv[1]);
@@ -320,13 +320,26 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 	{
 		sendto_one_numeric(source_p, RPL_WHOISOPERATOR, form_str(RPL_WHOISOPERATOR),
 				   target_p->name,
-				   IsAdmin(target_p) ? GlobalSetOptions.adminstring :
-				    GlobalSetOptions.operstring);
+				   IsService(target_p) ? ConfigFileEntry.servicestring :
+				   (IsAdmin(target_p) ? GlobalSetOptions.adminstring :
+				    GlobalSetOptions.operstring));
 	}
 
 	if(MyClient(target_p))
 	{
-		if(ConfigFileEntry.use_whois_actually && show_ip(source_p, target_p))
+		if (IsDynSpoof(target_p) && (IsOper(source_p) || source_p == target_p))
+		{
+			/* trick here: show a nonoper their own IP if
+			 * dynamic spoofed but not if auth{} spoofed
+			 * -- jilles */
+			ClearDynSpoof(target_p);
+			sendto_one_numeric(source_p, RPL_WHOISHOST,
+					   form_str(RPL_WHOISHOST),
+					   target_p->name, target_p->orighost,
+					   show_ip(source_p, target_p) ? target_p->sockhost : "255.255.255.255");
+			SetDynSpoof(target_p);
+		}
+		else if(ConfigFileEntry.use_whois_actually && show_ip(source_p, target_p))
 			sendto_one_numeric(source_p, RPL_WHOISACTUALLY,
 					   form_str(RPL_WHOISACTUALLY),
 					   target_p->name, target_p->sockhost);
@@ -338,7 +351,16 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 	}
 	else
 	{
-		if(ConfigFileEntry.use_whois_actually && show_ip(source_p, target_p) &&
+		if (IsDynSpoof(target_p) && (IsOper(source_p) || source_p == target_p))
+		{
+			ClearDynSpoof(target_p);
+			sendto_one_numeric(source_p, RPL_WHOISHOST,
+					   form_str(RPL_WHOISHOST),
+					   target_p->name, target_p->orighost,
+					   show_ip(source_p, target_p) && !EmptyString(target_p->sockhost) && strcmp(target_p->sockhost, "0")? target_p->sockhost : "255.255.255.255");
+			SetDynSpoof(target_p);
+		}
+		else if(ConfigFileEntry.use_whois_actually && show_ip(source_p, target_p) &&
 		   !EmptyString(target_p->sockhost) && strcmp(target_p->sockhost, "0"))
 		{
 			sendto_one_numeric(source_p, RPL_WHOISACTUALLY,

@@ -1,6 +1,6 @@
                               Server VERSION Info
 
-   $Id: server-version-info 6 2005-09-10 01:02:21Z nenolod $
+   $Id: server-version-info 1851 2006-08-24 17:16:53Z jilles $
 
    Copyright (c) 2001 by ircd-hybrid team
    Copyright (c) 2002 ircd-ratbox development team
@@ -30,6 +30,8 @@
    | 'M'  | IDLE_FROM_MSG       |
    |------+---------------------|
    | 'p'  | CRYPT_OPER_PASSWORD |
+   |------+---------------------|
+   | 'S'  | OPERS_SEE_ALL_USERS |
    |------+---------------------|
    | 'T'  | IGNORE_BOGUS_TS     |
    |------+---------------------|

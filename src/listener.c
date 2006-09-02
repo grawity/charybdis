@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: listener.c 494 2006-01-15 16:08:28Z jilles $
+ *  $Id: listener.c 1675 2006-06-15 22:32:23Z jilles $
  */
 
 #include "stdinc.h"
@@ -512,10 +512,6 @@ accept_connection(int pfd, void *data)
 	 */
 
 	fd = comm_accept(listener->fd, (struct sockaddr *)&sai, &addrlen);
-
-	/* This needs to be done here, otherwise we break dlines */
-	mangle_mapped_sockaddr((struct sockaddr *)&sai);
-
 	if(fd < 0)
 	{
 		/* Re-register a new IO request for the next accept .. */
@@ -523,6 +519,10 @@ accept_connection(int pfd, void *data)
 			       COMM_SELECT_READ, accept_connection, listener, 0);
 		return;
 	}
+
+	/* This needs to be done here, otherwise we break dlines */
+	mangle_mapped_sockaddr((struct sockaddr *)&sai);
+
 	/*
 	 * check for connection limit
 	 */

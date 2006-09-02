@@ -29,7 +29,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: s_newconf.c 932 2006-03-05 03:39:14Z nenolod $
+ * $Id: s_newconf.c 1747 2006-07-25 21:22:45Z jilles $
  */
 
 #include "stdinc.h"
@@ -371,7 +371,7 @@ struct server_conf *
 make_server_conf(void)
 {
 	struct server_conf *server_p = MyMalloc(sizeof(struct server_conf));
-	server_p->ipnum.ss_family = AF_INET;
+	server_p->aftype = AF_INET;
 	return server_p;
 }
 
@@ -400,39 +400,6 @@ free_server_conf(struct server_conf *server_p)
 	MyFree(server_p);
 }
 
-/*
- * conf_dns_callback
- * inputs	- pointer to struct ConfItem
- *		- pointer to adns reply
- * output	- none
- * side effects	- called when resolver query finishes
- * if the query resulted in a successful search, hp will contain
- * a non-null pointer, otherwise hp will be null.
- * if successful save hp in the conf item it was called with
- */
-static void
-conf_dns_callback(void *vptr, struct DNSReply *reply)
-{
-	struct server_conf *server_p = (struct server_conf *) vptr;
-
-#ifdef IPV6
-	if(reply->addr.ss_family == AF_INET6)
-	{
-		struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)&server_p->ipnum;
-		memcpy(&in6->sin6_addr, &((struct sockaddr_in6 *)&reply->addr)->sin6_addr, sizeof(struct in6_addr));
-	}
-	else
-#endif
-	{
-		struct sockaddr_in *in = (struct sockaddr_in *)&server_p->ipnum;
-		in->sin_addr.s_addr = ((struct sockaddr_in *)&reply->addr)->sin_addr.s_addr;
-	}
-
-	MyFree(server_p->dns_query);
-	server_p->dns_query = NULL;
-}
-
-
 void
 add_server_conf(struct server_conf *server_p)
 {
@@ -456,14 +423,6 @@ add_server_conf(struct server_conf *server_p)
 
 	if(strchr(server_p->host, '*') || strchr(server_p->host, '?'))
 		return;
-
-	if(inetpton_sock(server_p->host, (struct sockaddr *)&server_p->ipnum) > 0)
-		return;
-
-	server_p->dns_query = MyMalloc(sizeof(struct DNSQuery));
-	server_p->dns_query->ptr = server_p;
-	server_p->dns_query->callback = conf_dns_callback;
-	gethost_byname(server_p->host, server_p->dns_query);
 }
 
 struct server_conf *

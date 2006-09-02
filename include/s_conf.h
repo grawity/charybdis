@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h 1469 2006-05-26 22:18:23Z jilles $
+ *  $Id: s_conf.h 1853 2006-08-24 18:30:52Z jilles $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -167,6 +167,7 @@ struct config_file_entry
 
 	char *default_operstring;
 	char *default_adminstring;
+	char *servicestring;
 	char *kline_reason;
 
 	char *identifyservice;
@@ -248,9 +249,7 @@ struct config_file_entry
 	int collision_fnc;
 	int default_umodes;
 	int global_snotices;
-#ifdef IPV6
-	int fallback_to_ip6_int;
-#endif
+	int operspy_dont_care_user_info;
 };
 
 struct config_channel_entry

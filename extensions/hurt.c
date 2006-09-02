@@ -4,7 +4,7 @@
  * Copyright (C) 2006 charybdis development team
  * All rights reserved
  *
- * $Id: hurt.c 1628 2006-06-04 03:05:20Z nenolod $
+ * $Id: hurt.c 1905 2006-08-29 14:51:31Z jilles $
  */
 #include "stdinc.h"
 #include "modules.h"
@@ -19,7 +19,33 @@
 #include "s_newconf.h"
 #include "hash.h"
 
-#include "hurt.h"
+/* {{{ Structures */
+#define HURT_CUTOFF             (10)            /* protocol messages. */
+#define HURT_DEFAULT_EXPIRE     (7 * 24 * 60)   /* minutes. */
+#define HURT_EXIT_REASON        "Hurt: Failed to identify to services"
+
+enum {
+        HEAL_NICK = 0,
+        HEAL_IP
+};
+
+typedef struct _hurt_state {
+        time_t start_time;
+        uint32_t n_hurts;
+        dlink_list hurt_clients;
+        uint16_t cutoff;
+        time_t default_expire;
+        const char *exit_reason;
+} hurt_state_t;
+
+typedef struct _hurt {
+        const char *ip;
+        struct sockaddr *saddr;
+        int saddr_bits;
+        const char *reason;
+        time_t expire;
+} hurt_t;
+/* }}} */
 
 /* {{{ Prototypes */
 static int mo_hurt(struct Client *, struct Client *, int, const char **);
@@ -32,6 +58,7 @@ static void modfini(void);
 
 static void client_exit_hook(hook_data_client_exit *);
 static void new_local_user_hook(struct Client *);
+static void doing_stats_hook(hook_data_int *hdata);
 
 static void hurt_check_event(void *);
 static void hurt_expire_event(void *);
@@ -75,6 +102,7 @@ struct Message heal_msgtab = {
 mapi_hfn_list_av1 hurt_hfnlist[] = {
 	{"client_exit",		(hookfn) client_exit_hook},
 	{"new_local_user",	(hookfn) new_local_user_hook},
+	{"doing_stats",		(hookfn) doing_stats_hook},
 	{NULL, 			NULL},
 };
 
@@ -87,7 +115,7 @@ DECLARE_MODULE_AV1(
 	hurt_clist,
 	NULL,
 	hurt_hfnlist,
-	"$Revision: 1628 $"
+	"$Revision: 1905 $"
 );
 /* }}} */
 
@@ -105,9 +133,6 @@ hurt_state_t hurt_state = {
 static int
 modinit(void)
 {
-	/* HURT-related snotes only go to opers with +h snomask. */
-	SNO('h') = find_snomask_slot();
-
 	/* set-up hurt_state. */
 	hurt_state.start_time = CurrentTime;
 
@@ -124,9 +149,6 @@ static void
 modfini(void)
 {
 	dlink_node	*ptr, *next_ptr;
-
-	/* free up +hH snomasks. */
-	SNO('h') = 0;
 
 	/* and delete our events. */
 	eventDelete(hurt_expire_event, NULL);
@@ -158,6 +180,7 @@ mo_hurt(struct Client *client_p, struct Client *source_p,
 	const char			*ip, *expire, *reason;
 	int				expire_time;
 	hurt_t				*hurt;
+	struct Client			*target_p;
 
 	if (!IsOperK(source_p)) {
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name,
@@ -184,6 +207,31 @@ mo_hurt(struct Client *client_p, struct Client *source_p,
 				me.name, source_p->name);
 		return 0;
 	}
+
+	/* Is this a client? */
+	if (strchr(ip, '.') == NULL && strchr(ip, ':') == NULL)
+	{
+		target_p = find_named_person(ip);
+		if (target_p == NULL)
+		{
+			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+					   form_str(ERR_NOSUCHNICK), ip);
+			return 0;
+		}
+		ip = target_p->orighost;
+	}
+	else
+	{
+		if (!strncmp(ip, "*@", 2))
+			ip += 2;
+		if (strchr(ip, '!') || strchr(ip, '@'))
+		{
+			sendto_one_notice(source_p, ":Invalid HURT mask [%s]",
+					ip);
+			return 0;
+		}
+	}
+
 	if (hurt_find(ip) != NULL) {
 		sendto_one(source_p,
 				":%s NOTICE %s :[%s] already HURT",
@@ -421,6 +469,54 @@ new_local_user_hook(struct Client *source_p)
 }
 /* }}} */
 
+/* {{{ static void doing_stats_hook() */
+static void
+doing_stats_hook(hook_data_int *hdata)
+{
+	dlink_node	*ptr;
+	hurt_t		*hurt;
+	struct Client	*source_p;
+
+	s_assert(hdata);
+	s_assert(hdata->client);
+
+	source_p = hdata->client;
+	if(hdata->arg2 != (int) 's')
+		return;
+	if((ConfigFileEntry.stats_k_oper_only == 2) && !IsOper(source_p))
+		return;
+	if ((ConfigFileEntry.stats_k_oper_only == 1) && !IsOper(source_p))
+	{
+		hurt = hurt_find(source_p->sockhost);
+		if (hurt != NULL)
+		{
+			sendto_one_numeric(source_p, RPL_STATSKLINE,
+					form_str(RPL_STATSKLINE), 's',
+					"*", hurt->ip, hurt->reason, "", "");
+			return;
+		}
+
+		hurt = hurt_find(source_p->orighost);
+		if (hurt != NULL)
+		{
+			sendto_one_numeric(source_p, RPL_STATSKLINE,
+					form_str(RPL_STATSKLINE), 's',
+					"*", hurt->ip, hurt->reason, "", "");
+			return;
+		}
+		return;
+	}
+
+	DLINK_FOREACH(ptr, hurt_confs.head)
+	{
+		hurt = (hurt_t *) ptr->data;
+		sendto_one_numeric(source_p, RPL_STATSKLINE,
+				form_str(RPL_STATSKLINE), 's',
+				"*", hurt->ip, hurt->reason, "", "");
+	}
+}
+/* }}} */
+
 /* {{{ static void hurt_propagate()
  *
  * client_p - specific server to propagate HURT to, or NULL to propagate to all
@@ -453,6 +549,7 @@ hurt_new(time_t expire, const char *ip, const char *reason)
 	hurt_t *hurt;
 
 	hurt = MyMalloc(sizeof(hurt_t));
+
 	DupString(hurt->ip, ip);
 	DupString(hurt->reason, reason);
 	hurt->expire = CurrentTime + expire;
@@ -471,9 +568,9 @@ hurt_destroy(void *hurt)
 		return;
 
 	h = (hurt_t *) hurt;
-	free((void *) h->ip);
-	free((void *) h->reason);
-	free(h);
+	MyFree((char *) h->ip);
+	MyFree((char *) h->reason);
+	MyFree(h);
 }
 /* }}} */
 
@@ -558,7 +655,7 @@ nick_is_valid(const char *nick)
 {
 	const char *s = nick;
 
-	for (; *s != '\0'; *s++) {
+	for (; *s != '\0'; s++) {
 		if (!IsNickChar(*s))
 			return 0;
 	}

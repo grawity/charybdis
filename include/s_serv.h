@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.h 1287 2006-05-05 15:06:00Z nenolod $
+ *  $Id: s_serv.h 1863 2006-08-27 13:40:37Z jilles $
  */
 
 #ifndef INCLUDED_serv_h
@@ -73,12 +73,13 @@ struct Capability
 #define CAP_SERVICE	0x10000
 #define CAP_RSFNC	0x20000 /* rserv FNC */
 #define CAP_SAVE	0x40000 /* supports SAVE (nick collision FNC) */
+#define CAP_EUID	0x80000 /* supports EUID (ext UID + nonencap CHGHOST) */
 
 #define CAP_MASK        (CAP_QS  | CAP_EX   | CAP_CHW  | \
                          CAP_IE  | CAP_KLN  | CAP_SERVICE |\
                          CAP_GLN | CAP_CLUSTER | CAP_ENCAP | \
                          CAP_ZIP  | CAP_KNOCK  | CAP_UNKLN | \
-			 CAP_RSFNC | CAP_SAVE)
+			 CAP_RSFNC | CAP_SAVE | CAP_EUID)
 
 #ifdef HAVE_LIBZ
 #define CAP_ZIP_SUPPORTED       CAP_ZIP

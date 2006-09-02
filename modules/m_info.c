@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_info.c 930 2006-03-05 03:38:33Z gxti $
+ *  $Id: m_info.c 1853 2006-08-24 18:30:52Z jilles $
  */
 
 #include "stdinc.h"
@@ -63,7 +63,7 @@ mapi_hlist_av1 info_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(info, NULL, NULL, info_clist, info_hlist, NULL, "$Revision: 930 $");
+DECLARE_MODULE_AV1(info, NULL, NULL, info_clist, info_hlist, NULL, "$Revision: 1853 $");
 
 /*
  * jdc -- Structure for our configuration value table
@@ -86,6 +86,12 @@ struct InfoStruct
 /* *INDENT-OFF* */
 static struct InfoStruct info_table[] = {
 	/* --[  START OF TABLE  ]-------------------------------------------- */
+	{
+		"opers_see_all_users",
+		OUTPUT_BOOLEAN_YN,
+		&opers_see_all_users,
+		"Farconnect notices available or operspy accountability limited"
+	},
 	{
 		"anti_nick_flood",
 		OUTPUT_BOOLEAN,
@@ -139,6 +145,12 @@ static struct InfoStruct info_table[] = {
 		OUTPUT_STRING,
 		&ConfigFileEntry.default_operstring,
 		"Default operstring at startup.",
+	},
+	{
+		"servicestring",
+		OUTPUT_STRING,
+		&ConfigFileEntry.servicestring,
+		"String shown in whois for opered services.",
 	},
 	{
 		"disable_auth",
@@ -374,6 +386,12 @@ static struct InfoStruct info_table[] = {
 		OUTPUT_BOOLEAN,
 		&ConfigFileEntry.operspy_admin_only,
 		"Send +Z operspy notices to admins only"
+	},
+	{
+		"operspy_dont_care_user_info",
+		OUTPUT_BOOLEAN,
+		&ConfigFileEntry.operspy_dont_care_user_info,
+		"Remove accountability and some '!' requirement from non-channel operspy"
 	},
 	{
 		"pace_wait",

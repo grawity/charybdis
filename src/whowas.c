@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: whowas.c 254 2005-09-21 23:35:12Z nenolod $
+ *  $Id: whowas.c 1717 2006-07-04 14:41:11Z jilles $
  */
 
 #include "stdinc.h"
@@ -81,6 +81,10 @@ void add_history(struct Client *client_p, int online)
 	strcpy(who->username, client_p->username);
 	strcpy(who->hostname, client_p->host);
 	strcpy(who->realname, client_p->info);
+	if (!EmptyString(client_p->sockhost) && strcmp(client_p->sockhost, "0") && show_ip(NULL, client_p))
+		strcpy(who->sockhost, client_p->sockhost);
+	else
+		who->sockhost[0] = '\0';
 
 	who->servername = client_p->user->server;
 

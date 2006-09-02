@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 1469 2006-05-26 22:18:23Z jilles $
+ *  $Id: s_user.c 2023 2006-09-02 23:47:27Z jilles $
  */
 
 #include "stdinc.h"
@@ -149,9 +149,9 @@ show_lusers(struct Client *source_p)
 			   (Count.total - Count.invisi),
 			   Count.invisi, dlink_list_length(&global_serv_list));
 
-	if(Count.oper > 0)
+	if(dlink_list_length(&oper_list) > 0)
 		sendto_one_numeric(source_p, RPL_LUSEROP, 
-				   form_str(RPL_LUSEROP), Count.oper);
+				   form_str(RPL_LUSEROP), dlink_list_length(&oper_list));
 
 	if(dlink_list_length(&unknown_list) > 0)
 		sendto_one_numeric(source_p, RPL_LUSERUNKNOWN, 
@@ -193,31 +193,6 @@ show_lusers(struct Client *source_p)
 
 	return 0;
 }
-
-/*
- * show_isupport
- *
- * inputs	- pointer to client
- * output	- 
- * side effects	- display to client what we support (for them)
- */
-void
-show_isupport(struct Client *source_p)
-{
-	char isupportbuffer[512];
-
-	ircsprintf(isupportbuffer, FEATURES, FEATURESVALUES);
-	sendto_one_numeric(source_p, RPL_ISUPPORT, form_str(RPL_ISUPPORT), isupportbuffer);
-
-	ircsprintf(isupportbuffer, FEATURES2, FEATURES2VALUES);
-	sendto_one_numeric(source_p, RPL_ISUPPORT, form_str(RPL_ISUPPORT), isupportbuffer);
-
-	ircsprintf(isupportbuffer, FEATURES3, FEATURES3VALUES);
-	sendto_one_numeric(source_p, RPL_ISUPPORT, form_str(RPL_ISUPPORT), isupportbuffer);
-
-	return;
-}
-
 
 /*
 ** register_local_user
@@ -284,7 +259,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		return -1;
 
 	/* still has DNSbls to validate against */
-	if(source_p->preClient->dnsbl_hits > 0)
+	if(dlink_list_length(&source_p->preClient->dnsbl_queries) > 0)
 		return -1;
 
 	client_p->localClient->last = CurrentTime;
@@ -571,14 +546,14 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	if(find_tgchange(source_p->sockhost))
 		USED_TARGETS(source_p) = 6;
 
+	call_hook(h_new_local_user, source_p);
+
 	monitor_signon(source_p);
 	user_welcome(source_p);
 
-	call_hook(h_new_local_user, source_p);
-
 	free_pre_client(source_p);
 
-	return (introduce_client(client_p, source_p, user, source_p->name));
+	return (introduce_client(client_p, source_p, user, source_p->name, 1));
 }
 
 /*
@@ -591,7 +566,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
  *		  from a remote connect.
  */
 int
-introduce_client(struct Client *client_p, struct Client *source_p, struct User *user, const char *nick)
+introduce_client(struct Client *client_p, struct Client *source_p, struct User *user, const char *nick, int use_euid)
 {
 	static char ubuf[12];
 	struct Client *identifyservice_p;
@@ -624,7 +599,20 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 		} else
 			strcpy(sockhost, source_p->sockhost);
 		
-		sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
+		if (use_euid)
+			sendto_server(client_p, NULL, CAP_EUID | CAP_TS6, NOCAPS,
+					":%s EUID %s %d %ld %s %s %s %s %s %s %s :%s",
+					source_p->servptr->id, nick,
+					source_p->hopcount + 1,
+					(long) source_p->tsinfo, ubuf,
+					source_p->username, source_p->host,
+					IsIPSpoof(source_p) ? "0" : sockhost,
+					source_p->id,
+					IsDynSpoof(source_p) ? source_p->orighost : "*",
+					EmptyString(source_p->user->suser) ? "*" : source_p->user->suser,
+					source_p->info);
+
+		sendto_server(client_p, NULL, CAP_TS6, use_euid ? CAP_EUID : NOCAPS,
 			      ":%s UID %s %d %ld %s %s %s %s %s :%s",
 			      source_p->servptr->id, nick,
 			      source_p->hopcount + 1,
@@ -648,6 +636,20 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 			      ubuf, source_p->username, source_p->host,
 			      user->server, source_p->info);
 
+	if (IsDynSpoof(source_p))
+	{
+		sendto_server(client_p, NULL, CAP_TS6, use_euid ? CAP_EUID : NOCAPS, ":%s ENCAP * REALHOST %s",
+				use_id(source_p), source_p->orighost);
+		sendto_server(client_p, NULL, NOCAPS, CAP_TS6, ":%s ENCAP * REALHOST %s",
+				source_p->name, source_p->orighost);
+	}
+	if (!EmptyString(source_p->user->suser))
+	{
+		sendto_server(client_p, NULL, CAP_TS6, use_euid ? CAP_EUID : NOCAPS, ":%s ENCAP * LOGIN %s",
+				use_id(source_p), source_p->user->suser);
+		sendto_server(client_p, NULL, NOCAPS, CAP_TS6, ":%s ENCAP * LOGIN %s",
+				source_p->name, source_p->user->suser);
+	}
 
 	if(MyConnect(source_p) && source_p->localClient->passwd)
 	{

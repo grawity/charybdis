@@ -15,7 +15,13 @@
 	  CIDR is supported, like *!*@10.0.0.0/8. This is most useful with
 	  IPv6.
 	  Bans are not checked against the real hostname behind any kind
-	  of spoof.
+	  of spoof, except if host mangling is in use (e.g.
+	  <filename>extensions/ip_cloaking.so</filename>):
+	  if the user's host is mangled, their real hostname is checked
+	  additionally, and if a user has no spoof but could enable mangling,
+	  the mangled form of their hostname is checked additionally.
+	  Hence, it is not possible to evade bans by toggling
+	  host mangling.
 	</para>
 	<para>
 	  The second form (extban) is +b $type or +b $type:data. 
@@ -64,8 +70,9 @@
 	  will also be sent a 470 numeric giving the original and target channels.
 	</para>
         <para>
-          Users are similarly forwarded if the +j cmode is set and their attempt to join is throttled, or
-          if +r is set and they are not identified.
+          Users are similarly forwarded if the +j cmode is set and their attempt to join is throttled,
+	  if +l is set and there are already too many users in the channel
+	  or if +r is set and they are not identified.
         </para>
         <para>
           Forwards may only be set to +F channels, or to channels the setter

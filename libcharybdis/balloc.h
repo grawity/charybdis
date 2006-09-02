@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: balloc.h 380 2005-12-07 15:08:37Z nenolod $
+ *  $Id: balloc.h 1781 2006-07-30 18:07:38Z jilles $
  */
 
 #ifndef INCLUDED_blalloc_h
@@ -45,6 +45,11 @@ typedef struct BlockHeap BlockHeap;
 #define BlockHeapDestroy(x) 	 
 #define BlockHeapAlloc(x) MyMalloc((int)x) 	 
 #define BlockHeapFree(x,y) MyFree(y) 	 
+#define BlockHeapUsage(bh, bused, bfree, bmemusage) do { if (bused) (*(size_t *)bused) = 0; if (bfree) *((size_t *)bfree) = 0; if (bmemusage) *((size_t *)bmemusage) = 0; } while(0)
+typedef struct MemBlock
+{
+	void *dummy;
+} MemBlock;
  
 #else
 

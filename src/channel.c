@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c 1299 2006-05-11 15:43:03Z jilles $
+ *  $Id: channel.c 1861 2006-08-26 23:21:42Z jilles $
  */
 
 #include "stdinc.h"
@@ -491,6 +491,8 @@ is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
 {
 	char src_host[NICKLEN + USERLEN + HOSTLEN + 6];
 	char src_iphost[NICKLEN + USERLEN + HOSTLEN + 6];
+	char src_althost[NICKLEN + USERLEN + HOSTLEN + 6];
+	char *s3 = NULL;
 	dlink_node *ptr;
 	struct Ban *actualBan = NULL;
 	struct Ban *actualExcept = NULL;
@@ -507,6 +509,22 @@ is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
 		s = src_host;
 		s2 = src_iphost;
 	}
+	if(who->localClient->mangledhost != NULL)
+	{
+		/* if host mangling mode enabled, also check their real host */
+		if(!strcmp(who->host, who->localClient->mangledhost))
+		{
+			ircsprintf(src_althost, "%s!%s@%s", who->name, who->username, who->orighost);
+			s3 = src_althost;
+		}
+		/* if host mangling mode not enabled and no other spoof,
+		 * also check the mangled form of their host */
+		else if (!IsDynSpoof(who))
+		{
+			ircsprintf(src_althost, "%s!%s@%s", who->name, who->username, who->localClient->mangledhost);
+			s3 = src_althost;
+		}
+	}
 
 	DLINK_FOREACH(ptr, chptr->banlist.head)
 	{
@@ -514,7 +532,8 @@ is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
 		if(match(actualBan->banstr, s) ||
 		   match(actualBan->banstr, s2) ||
 		   match_cidr(actualBan->banstr, s2) ||
-		   match_extban(actualBan->banstr, who, chptr, CHFL_BAN))
+		   match_extban(actualBan->banstr, who, chptr, CHFL_BAN) ||
+		   (s3 != NULL && match(actualBan->banstr, s3)))
 			break;
 		else
 			actualBan = NULL;
@@ -530,7 +549,8 @@ is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
 			if(match(actualExcept->banstr, s) ||
 			   match(actualExcept->banstr, s2) ||
 			   match_cidr(actualExcept->banstr, s2) ||
-			   match_extban(actualExcept->banstr, who, chptr, CHFL_EXCEPTION))
+			   match_extban(actualExcept->banstr, who, chptr, CHFL_EXCEPTION) ||
+			   (s3 != NULL && match(actualBan->banstr, s3)))
 			{
 				/* cache the fact theyre not banned */
 				if(msptr != NULL)
@@ -577,6 +597,8 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 {
 	char src_host[NICKLEN + USERLEN + HOSTLEN + 6];
 	char src_iphost[NICKLEN + USERLEN + HOSTLEN + 6];
+	char src_althost[NICKLEN + USERLEN + HOSTLEN + 6];
+	char *s3 = NULL;
 	dlink_node *ptr;
 	struct Ban *actualBan = NULL;
 	struct Ban *actualExcept = NULL;
@@ -593,6 +615,22 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 		s = src_host;
 		s2 = src_iphost;
 	}
+	if(who->localClient->mangledhost != NULL)
+	{
+		/* if host mangling mode enabled, also check their real host */
+		if(!strcmp(who->host, who->localClient->mangledhost))
+		{
+			ircsprintf(src_althost, "%s!%s@%s", who->name, who->username, who->orighost);
+			s3 = src_althost;
+		}
+		/* if host mangling mode not enabled and no other spoof,
+		 * also check the mangled form of their host */
+		else if (!IsDynSpoof(who))
+		{
+			ircsprintf(src_althost, "%s!%s@%s", who->name, who->username, who->localClient->mangledhost);
+			s3 = src_althost;
+		}
+	}
 
 	DLINK_FOREACH(ptr, chptr->quietlist.head)
 	{
@@ -600,7 +638,8 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 		if(match(actualBan->banstr, s) ||
 		   match(actualBan->banstr, s2) ||
 		   match_cidr(actualBan->banstr, s2) ||
-		   match_extban(actualBan->banstr, who, chptr, CHFL_QUIET))
+		   match_extban(actualBan->banstr, who, chptr, CHFL_QUIET) ||
+		   (s3 != NULL && match(actualBan->banstr, s3)))
 			break;
 		else
 			actualBan = NULL;
@@ -616,7 +655,8 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 			if(match(actualExcept->banstr, s) ||
 			   match(actualExcept->banstr, s2) ||
 			   match_cidr(actualExcept->banstr, s2) ||
-			   match_extban(actualExcept->banstr, who, chptr, CHFL_EXCEPTION))
+			   match_extban(actualExcept->banstr, who, chptr, CHFL_EXCEPTION) ||
+			   (s3 != NULL && match(actualBan->banstr, s3)))
 			{
 				/* cache the fact theyre not banned */
 				if(msptr != NULL)
@@ -664,12 +704,30 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 	struct Ban *invex = NULL;
 	char src_host[NICKLEN + USERLEN + HOSTLEN + 6];
 	char src_iphost[NICKLEN + USERLEN + HOSTLEN + 6];
+	char src_althost[NICKLEN + USERLEN + HOSTLEN + 6];
+	int use_althost = 0;
 	hook_data_channel moduledata;
 
 	s_assert(source_p->localClient != NULL);
 
 	ircsprintf(src_host, "%s!%s@%s", source_p->name, source_p->username, source_p->host);
 	ircsprintf(src_iphost, "%s!%s@%s", source_p->name, source_p->username, source_p->sockhost);
+	if(source_p->localClient->mangledhost != NULL)
+	{
+		/* if host mangling mode enabled, also check their real host */
+		if(!strcmp(source_p->host, source_p->localClient->mangledhost))
+		{
+			ircsprintf(src_althost, "%s!%s@%s", source_p->name, source_p->username, source_p->orighost);
+			use_althost = 1;
+		}
+		/* if host mangling mode not enabled and no other spoof,
+		 * also check the mangled form of their host */
+		else if (!IsDynSpoof(source_p))
+		{
+			ircsprintf(src_althost, "%s!%s@%s", source_p->name, source_p->username, source_p->localClient->mangledhost);
+			use_althost = 1;
+		}
+	}
 
 	if((is_banned(chptr, source_p, NULL, src_host, src_iphost)) == CHFL_BAN)
 		return (ERR_BANNEDFROMCHAN);
@@ -691,7 +749,8 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 				if(match(invex->banstr, src_host)
 				   || match(invex->banstr, src_iphost)
 				   || match_cidr(invex->banstr, src_iphost)
-			   	   || match_extban(invex->banstr, source_p, chptr, CHFL_INVEX))
+			   	   || match_extban(invex->banstr, source_p, chptr, CHFL_INVEX)
+				   || (use_althost && match(invex->banstr, src_althost)))
 					break;
 			}
 			if(ptr == NULL)
@@ -736,7 +795,7 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 int
 can_send(struct Channel *chptr, struct Client *source_p, struct membership *msptr)
 {
-	if(IsServer(source_p))
+	if(IsServer(source_p) || IsService(source_p))
 		return CAN_SEND_OPV;
 
 	if(MyClient(source_p) && hash_find_resv(chptr->chname) &&

@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.h 1463 2006-05-26 21:25:28Z jilles $
+ *  $Id: client.h 2023 2006-09-02 23:47:27Z jilles $
  */
 
 #ifndef INCLUDED_client_h
@@ -297,7 +297,8 @@ struct LocalUser
 
 	list_client_t *safelist_data;
 
-	struct DNSQuery *dns_query;	/* DNS state --nenolod */
+	char *mangledhost; /* non-NULL if host mangling module loaded and
+			      applicable to this client */
 };
 
 struct PreClient
@@ -310,7 +311,7 @@ struct PreClient
 	unsigned char sasl_out;
 	unsigned char sasl_complete;
 
-	unsigned int dnsbl_hits;
+	dlink_list dnsbl_queries; /* list of struct BlacklistClient * */
 	struct Blacklist *dnsbl_listed; /* first dnsbl where it's listed */
 };
 
@@ -595,6 +596,7 @@ extern void check_xlines(void);
 extern const char *get_client_name(struct Client *client, int show_ip);
 extern const char *get_server_name(struct Client *client, int show_ip);
 extern const char *log_client_name(struct Client *, int);
+extern int is_remote_connect(struct Client *);
 extern void init_client(void);
 extern client_t *make_client(struct Client *from);
 extern void free_pre_client(struct Client *client);

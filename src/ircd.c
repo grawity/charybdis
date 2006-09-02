@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c 1610 2006-06-04 02:16:18Z jilles $
+ *  $Id: ircd.c 1903 2006-08-29 14:46:33Z jilles $
  */
 
 #include "stdinc.h"
@@ -55,6 +55,7 @@
 #include "s_stats.h"
 #include "scache.h"
 #include "send.h"
+#include "supported.h"
 #include "whowas.h"
 #include "modules.h"
 #include "memory.h"
@@ -623,6 +624,7 @@ main(int argc, char *argv[])
 	init_reject();
 	init_cache();
 	init_monitor();
+	init_isupport();
 	load_all_modules(1);
 #ifndef STATIC_MODULES
 	load_core_modules(1);

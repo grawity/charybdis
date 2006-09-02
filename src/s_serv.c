@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c 1537 2006-06-01 17:41:10Z nenolod $
+ *  $Id: s_serv.c 1863 2006-08-27 13:40:37Z jilles $
  */
 
 #include "stdinc.h"
@@ -100,6 +100,7 @@ struct Capability captab[] = {
 	{ "SERVICES",	CAP_SERVICE },
 	{ "RSFNC",	CAP_RSFNC },
 	{ "SAVE",	CAP_SAVE },
+	{ "EUID",	CAP_EUID },
 	{0, 0}
 };
 
@@ -503,28 +504,6 @@ check_server(const char *name, struct Client *client_p)
 	if(!ServerConfTb(server_p))
 		ClearCap(client_p, CAP_TB);
 
-#ifdef IPV6
-	if(client_p->localClient->ip.ss_family == AF_INET6)
-	{
-		if(IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6 *)&server_p->ipnum)->sin6_addr))
-		{
-			memcpy(&((struct sockaddr_in6 *)&server_p->ipnum)->sin6_addr, 
-				&((struct sockaddr_in6 *)&client_p->localClient->ip)->sin6_addr, 
-				sizeof(struct in6_addr)); 
-			SET_SS_LEN(server_p->ipnum, sizeof(struct sockaddr_in6));
-		} 
-	}
-	else
-#endif
-	{
-		if(((struct sockaddr_in *)&server_p->ipnum)->sin_addr.s_addr == INADDR_NONE)
-		{
-			((struct sockaddr_in *)&server_p->ipnum)->sin_addr.s_addr = 
-				((struct sockaddr_in *)&client_p->localClient->ip)->sin_addr.s_addr;
-		}
-		SET_SS_LEN(server_p->ipnum, sizeof(struct sockaddr_in));
-	}
-
 	return 0;
 }
 
@@ -719,6 +698,13 @@ burst_TS5(struct Client *client_p)
 			   target_p->username, target_p->host,
 			   target_p->user->server, target_p->info);
 
+		if(IsDynSpoof(target_p))
+			sendto_one(client_p, ":%s ENCAP * REALHOST %s",
+					target_p->name, target_p->orighost);
+		if(!EmptyString(target_p->user->suser))
+			sendto_one(client_p, ":%s ENCAP * LOGIN %s",
+					target_p->name, target_p->user->suser);
+
 		if(ConfigFileEntry.burst_away && !EmptyString(target_p->user->away))
 			sendto_one(client_p, ":%s AWAY :%s",
 				   target_p->name, target_p->user->away);
@@ -838,7 +824,18 @@ burst_TS6(struct Client *client_p)
 			ubuf[1] = '\0';
 		}
 
-		if(has_id(target_p))
+		if(has_id(target_p) && IsCapable(client_p, CAP_EUID))
+			sendto_one(client_p, ":%s EUID %s %d %ld %s %s %s %s %s %s %s :%s",
+				   target_p->servptr->id, target_p->name,
+				   target_p->hopcount + 1, 
+				   (long) target_p->tsinfo, ubuf,
+				   target_p->username, target_p->host,
+				   IsIPSpoof(target_p) ? "0" : target_p->sockhost,
+				   target_p->id,
+				   IsDynSpoof(target_p) ? target_p->orighost : "*",
+				   EmptyString(target_p->user->suser) ? "*" : target_p->user->suser,
+				   target_p->info);
+		else if(has_id(target_p))
 			sendto_one(client_p, ":%s UID %s %d %ld %s %s %s %s %s :%s",
 				   target_p->servptr->id, target_p->name,
 				   target_p->hopcount + 1, 
@@ -854,6 +851,16 @@ burst_TS6(struct Client *client_p)
 					ubuf,
 					target_p->username, target_p->host,
 					target_p->user->server, target_p->info);
+
+		if(!has_id(target_p) || !IsCapable(client_p, CAP_EUID))
+		{
+			if(IsDynSpoof(target_p))
+				sendto_one(client_p, ":%s ENCAP * REALHOST %s",
+						use_id(target_p), target_p->orighost);
+			if(!EmptyString(target_p->user->suser))
+				sendto_one(client_p, ":%s ENCAP * LOGIN %s",
+						use_id(target_p), target_p->user->suser);
+		}
 
 		if(ConfigFileEntry.burst_away && !EmptyString(target_p->user->away))
 			sendto_one(client_p, ":%s AWAY :%s",
@@ -1004,7 +1011,7 @@ server_estab(struct Client *client_p)
 	if((server_p = client_p->localClient->att_sconf) == NULL)
 	{
 		/* This shouldn't happen, better tell the ops... -A1kmm */
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 				     "Warning: Lost connect{} block for server %s!", host);
 		return exit_client(client_p, client_p, client_p, "Lost connect{} block!");
 	}
@@ -1075,7 +1082,7 @@ server_estab(struct Client *client_p)
 	{
 		if(fork_server(client_p) < 0)
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					     "Warning: fork failed for server %s -- check servlink_path (%s)",
 					     get_server_name(client_p, HIDE_IP),
 					     ConfigFileEntry.servlink_path);
@@ -1477,10 +1484,6 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	if(server_p == NULL)
 		return 0;
 
-	/* log */
-	inetntop_sock((struct sockaddr *)&server_p->ipnum, buf, sizeof(buf));
-	ilog(L_SERVER, "Connect to *[%s] @%s", server_p->name, buf);
-
 	/*
 	 * Make sure this server isn't already connected
 	 */
@@ -1496,7 +1499,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	}
 
 	/* create a socket for the server connection */
-	if((fd = comm_socket(server_p->ipnum.ss_family, SOCK_STREAM, 0, NULL)) < 0)
+	if((fd = comm_socket(server_p->aftype, SOCK_STREAM, 0, NULL)) < 0)
 	{
 		/* Eek, failure to create the socket */
 		report_error("opening stream socket to %s: %s", 
@@ -1510,10 +1513,13 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	/* Create a local client */
 	client_p = make_client(NULL);
 
-	/* Copy in the server, hostname, fd */
+	/* Copy in the server, hostname, fd
+	 * The sockhost may be a hostname, this will be corrected later
+	 * -- jilles
+	 */
 	strlcpy(client_p->name, server_p->name, sizeof(client_p->name));
 	strlcpy(client_p->host, server_p->host, sizeof(client_p->host));
-	strlcpy(client_p->sockhost, buf, sizeof(client_p->sockhost));
+	strlcpy(client_p->sockhost, server_p->host, sizeof(client_p->sockhost));
 	client_p->localClient->fd = fd;
 
 	/*
@@ -1564,14 +1570,21 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	SetConnecting(client_p);
 	dlinkAddTail(client_p, &client_p->node, &global_client_list);
 
+	/* log */
+	ilog(L_SERVER, "Connecting to %s[%s] port %d (%s)", server_p->name, server_p->host, server_p->port,
+#ifdef IPV6
+			server_p->aftype == AF_INET6 ? "IPv6" :
+#endif
+			(server_p->aftype == AF_INET ? "IPv4" : "?"));
+
 	if(ServerConfVhosted(server_p))
 	{
 		memcpy(&myipnum, &server_p->my_ipnum, sizeof(myipnum));
 		((struct sockaddr_in *)&myipnum)->sin_port = 0;
-		myipnum.ss_family = server_p->my_ipnum.ss_family;
+		myipnum.ss_family = server_p->aftype;
 				
 	}
-	else if(server_p->ipnum.ss_family == AF_INET && ServerInfo.specific_ipv4_vhost)
+	else if(server_p->aftype == AF_INET && ServerInfo.specific_ipv4_vhost)
 	{
 		memcpy(&myipnum, &ServerInfo.ip, sizeof(myipnum));
 		((struct sockaddr_in *)&myipnum)->sin_port = 0;
@@ -1580,7 +1593,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	}
 	
 #ifdef IPV6
-	else if((server_p->ipnum.ss_family == AF_INET6) && ServerInfo.specific_ipv6_vhost)
+	else if((server_p->aftype == AF_INET6) && ServerInfo.specific_ipv6_vhost)
 	{
 		memcpy(&myipnum, &ServerInfo.ip6, sizeof(myipnum));
 		((struct sockaddr_in6 *)&myipnum)->sin6_port = 0;
@@ -1592,7 +1605,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	{
 		comm_connect_tcp(client_p->localClient->fd, server_p->host,
 				 server_p->port, NULL, 0, serv_connect_callback, 
-				 client_p, server_p->ipnum.ss_family, 
+				 client_p, server_p->aftype, 
 				 ConfigFileEntry.connect_timeout);
 		 return 1;
 	}
@@ -1619,6 +1632,7 @@ serv_connect_callback(int fd, int status, void *data)
 {
 	struct Client *client_p = data;
 	struct server_conf *server_p;
+	char *errstr;
 
 	/* First, make sure its a real client! */
 	s_assert(client_p != NULL);
@@ -1637,25 +1651,10 @@ serv_connect_callback(int fd, int status, void *data)
 	}
 
 	/* Next, for backward purposes, record the ip of the server */
-#ifdef IPV6
-	if(fd_table[fd].connect.hostaddr.ss_family == AF_INET6)
-	{
-		struct sockaddr_in6 *lip = (struct sockaddr_in6 *)&client_p->localClient->ip;
-		struct sockaddr_in6 *hip = (struct sockaddr_in6 *)&fd_table[fd].connect.hostaddr;	
-		memcpy(&lip->sin6_addr, &hip->sin6_addr, sizeof(struct in6_addr));
-		SET_SS_LEN(client_p->localClient->ip, sizeof(struct sockaddr_in6));
-		SET_SS_LEN(fd_table[fd].connect.hostaddr, sizeof(struct sockaddr_in6));
-
-	} else
-#else
-	{
-		struct sockaddr_in *lip = (struct sockaddr_in *)&client_p->localClient->ip;
-		struct sockaddr_in *hip = (struct sockaddr_in *)&fd_table[fd].connect.hostaddr;	
-		lip->sin_addr.s_addr = hip->sin_addr.s_addr;
-		SET_SS_LEN(client_p->localClient->ip, sizeof(struct sockaddr_in));
-		SET_SS_LEN(fd_table[fd].connect.hostaddr, sizeof(struct sockaddr_in));
-	}	
-#endif	
+	memcpy(&client_p->localClient->ip, &fd_table[fd].connect.hostaddr, sizeof client_p->localClient->ip);
+	/* Set sockhost properly now -- jilles */
+	inetntop_sock((struct sockaddr *)&fd_table[fd].connect.hostaddr,
+			client_p->sockhost, sizeof client_p->sockhost);
 	
 	/* Check the status */
 	if(status != COMM_OK)
@@ -1664,7 +1663,8 @@ serv_connect_callback(int fd, int status, void *data)
 		 * the others will.. --fl
 		 */
 		if(status == COMM_ERR_TIMEOUT)
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		{
+			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Error connecting to %s[%s]: %s",
 					client_p->name, 
 #ifdef HIDE_SERVERS_IPS
@@ -1673,8 +1673,14 @@ serv_connect_callback(int fd, int status, void *data)
 					client_p->host,
 #endif
 					comm_errstr(status));
+			ilog(L_SERVER, "Error connecting to %s[%s]: %s",
+				client_p->name, client_p->sockhost,
+				comm_errstr(status));
+		}
 		else
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		{
+			errstr = strerror(comm_get_sockerr(fd));
+			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Error connecting to %s[%s]: %s (%s)",
 					client_p->name,
 #ifdef HIDE_SERVERS_IPS
@@ -1682,7 +1688,11 @@ serv_connect_callback(int fd, int status, void *data)
 #else
 					client_p->host,
 #endif
-					comm_errstr(status), strerror(comm_get_sockerr(fd)));
+					comm_errstr(status), errstr);
+			ilog(L_SERVER, "Error connecting to %s[%s]: %s (%s)",
+				client_p->name, client_p->sockhost,
+				comm_errstr(status), errstr);
+		}
 
 		exit_client(client_p, client_p, &me, comm_errstr(status));
 		return;
@@ -1692,7 +1702,7 @@ serv_connect_callback(int fd, int status, void *data)
 	/* Get the C/N lines */
 	if((server_p = client_p->localClient->att_sconf) == NULL)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Lost connect{} block for %s",
+		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL, "Lost connect{} block for %s",
 				get_server_name(client_p, HIDE_IP));
 		exit_client(client_p, client_p, &me, "Lost connect{} block");
 		return;
@@ -1729,7 +1739,7 @@ serv_connect_callback(int fd, int status, void *data)
 	 */
 	if(IsAnyDead(client_p))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 				     "%s went dead during handshake", client_p->name);
 		exit_client(client_p, client_p, &me, "Went dead during handshake");
 		return;

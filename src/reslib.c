@@ -96,7 +96,7 @@
 #define DNS_LABELTYPE_BITSTRING 0x41
 #define MAXLINE 128
 
-/* $Id: reslib.c 825 2006-02-14 22:40:55Z jilles $ */
+/* $Id: reslib.c 1695 2006-06-27 15:11:23Z jilles $ */
 /* from Hybrid Id: reslib.c 177 2005-10-22 09:05:05Z michael $ */
 
 struct irc_sockaddr_storage irc_nsaddr_list[IRCD_MAXNS];
@@ -179,10 +179,6 @@ parse_resvconf(void)
     if ((p = strpbrk(input, "\r\n")) != NULL)
       *p = '\0';
 
-    /* Ignore comment lines immediately */
-    if (input[0] == '#' || input[0] == ';')
-      continue;
-
     p = input;
     /* skip until something thats not a space is seen */
     while (IsSpace(*p))
@@ -191,11 +187,16 @@ parse_resvconf(void)
     if (*p == '\0')
       continue;
 
+    /* Ignore comment lines immediately */
+    if (*p == '#' || *p == ';')
+      continue;
+
     /* skip until a space is found */
-    opt = input;
-    while (!IsSpace(*p))
-      if (*p++ == '\0')
-        continue;  /* no arguments?.. ignore this line */
+    opt = p;
+    while (!IsSpace(*p) && *p != '\0')
+      p++;
+    if (*p == '\0')
+      continue;  /* no arguments?.. ignore this line */
     /* blow away the space character */
     *p++ = '\0';
 

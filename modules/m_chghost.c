@@ -32,11 +32,9 @@
 #include "monitor.h"
 
 static int me_realhost(struct Client *, struct Client *, int, const char **);
+static int ms_chghost(struct Client *, struct Client *, int, const char **);
 static int me_chghost(struct Client *, struct Client *, int, const char **);
 static int mo_chghost(struct Client *, struct Client *, int, const char **);
-
-static void h_chghost_burst_client(hook_data_client *hdata);
-static void h_chghost_introduce_client(hook_data_client *hdata);
 
 struct Message realhost_msgtab = {
 	"REALHOST", 0, 0, 0, MFLG_SLOW,
@@ -45,18 +43,37 @@ struct Message realhost_msgtab = {
 
 struct Message chghost_msgtab = {
 	"CHGHOST", 0, 0, 0, MFLG_SLOW,
-	{mg_ignore, mg_not_oper, mg_ignore, mg_ignore, {me_chghost, 3}, {mo_chghost, 3}}
+	{mg_ignore, mg_not_oper, {ms_chghost, 3}, {ms_chghost, 3}, {me_chghost, 3}, {mo_chghost, 3}}
 };
 
 mapi_clist_av1 chghost_clist[] = { &chghost_msgtab, &realhost_msgtab, NULL };
 
-mapi_hfn_list_av1 chghost_hfnlist[] = {
-	{ "burst_client",	(hookfn) h_chghost_burst_client },
-	{ "introduce_client",	(hookfn) h_chghost_introduce_client },
-	{ NULL, NULL }
-};
+DECLARE_MODULE_AV1(chghost, NULL, NULL, chghost_clist, NULL, NULL, "$Revision: 1865 $");
 
-DECLARE_MODULE_AV1(chghost, NULL, NULL, chghost_clist, NULL, chghost_hfnlist, "$Revision: 928 $");
+/* clean_host()
+ *
+ * input	- host to check
+ * output	- 0 if erroneous, else 0
+ * side effects -
+ */
+static int
+clean_host(const char *host)
+{
+	int len = 0;
+
+	for(; *host; host++)
+	{
+		len++;
+
+		if(!IsHostChar(*host))
+			return 0;
+	}
+
+	if(len > HOSTLEN)
+		return 0;
+
+	return 1;
+}
 
 /*
  * me_realhost
@@ -85,34 +102,22 @@ me_realhost(struct Client *client_p, struct Client *source_p,
 	return 0;
 }
 
-static void
-h_chghost_burst_client(hook_data_client *hdata)
-{
-	if (!irccmp(hdata->target->host, hdata->target->orighost))
-		return;
-
-	sendto_one(hdata->client, ":%s ENCAP * REALHOST %s",
-			get_id(hdata->target, hdata->client),
-			hdata->target->orighost);
-}
-
-/* Introduce REALHOST on clients that were spoofed pre-registration */
-static void
-h_chghost_introduce_client(hook_data_client *hdata)
-{
-	if (!irccmp(hdata->target->host, hdata->target->orighost))
-		return;
-
-	sendto_server(hdata->client, NULL, CAP_TS6, NOCAPS, ":%s ENCAP * REALHOST %s",
-			hdata->target->id, hdata->target->orighost);
-	sendto_server(hdata->client, NULL, NOCAPS, CAP_TS6, ":%s ENCAP * REALHOST %s",
-			hdata->target->name, hdata->target->orighost);
-}
-
-static void
+static int
 do_chghost(struct Client *source_p, struct Client *target_p,
-		const char *newhost)
+		const char *newhost, int is_encap)
 {
+	if (!clean_host(newhost))
+	{
+		sendto_realops_snomask(SNO_GENERAL, is_encap ? L_ALL : L_NETWIDE, "%s attempted to change hostname for %s to %s (invalid)",
+				IsServer(source_p) ? source_p->name : get_oper_name(source_p),
+				target_p->name, newhost);
+		/* sending this remotely may disclose important
+		 * routing information -- jilles */
+		if (is_encap ? MyClient(target_p) : !ConfigServerHide.flatten_links)
+			sendto_one_notice(target_p, ":*** Notice -- %s attempted to change your hostname to %s (invalid)",
+					source_p->name, newhost);
+		return 0;
+	}
 	change_nick_user_host(target_p, target_p->name, target_p->username, newhost, 0, "Changing host");
 	if (irccmp(target_p->host, target_p->orighost))
 	{
@@ -130,8 +135,40 @@ do_chghost(struct Client *source_p, struct Client *target_p,
 		sendto_one_notice(source_p, ":Changed hostname for %s to %s", target_p->name, target_p->host);
 	if (!IsServer(source_p) && !IsService(source_p))
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s changed hostname for %s to %s", get_oper_name(source_p), target_p->name, target_p->host);
+	return 1;
 }
-  
+
+/*
+ * ms_chghost
+ * parv[0] = origin
+ * parv[1] = target
+ * parv[2] = host
+ */
+static int
+ms_chghost(struct Client *client_p, struct Client *source_p,
+	int parc, const char *parv[])
+{
+	struct Client *target_p;
+
+	if (!(target_p = find_person(parv[1])))
+		return -1;
+
+	if (do_chghost(source_p, target_p, parv[2], 0))
+	{
+		sendto_server(client_p, NULL,
+			CAP_EUID | CAP_TS6, NOCAPS, ":%s CHGHOST %s %s",
+			use_id(source_p), use_id(target_p), parv[2]);
+		sendto_server(client_p, NULL,
+			CAP_TS6, CAP_EUID, ":%s ENCAP * CHGHOST %s :%s",
+			use_id(source_p), use_id(target_p), parv[2]);
+		sendto_server(client_p, NULL,
+			NOCAPS, CAP_TS6, ":%s ENCAP * CHGHOST %s :%s",
+			source_p->name, target_p->name, parv[2]);
+	}
+
+	return 0;
+}
+
 /*
  * me_chghost
  * parv[0] = origin
@@ -147,7 +184,7 @@ me_chghost(struct Client *client_p, struct Client *source_p,
 	if (!(target_p = find_person(parv[1])))
 		return -1;
 
-	do_chghost(source_p, target_p, parv[2]);
+	do_chghost(source_p, target_p, parv[2], 1);
 
 	return 0;
 }
@@ -179,17 +216,26 @@ mo_chghost(struct Client *client_p, struct Client *source_p,
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 				form_str(ERR_NOSUCHNICK), parv[1]);
-		return -1;
+		return 0;
 	}
 
-	do_chghost(source_p, target_p, parv[2]);
+	if (!clean_host(parv[2]))
+	{
+		sendto_one_notice(source_p, ":Hostname %s is invalid", parv[2]);
+		return 0;
+	}
+
+	do_chghost(source_p, target_p, parv[2], 0);
 
 	sendto_server(NULL, NULL,
-		CAP_TS6, NOCAPS, ":%s ENCAP * CHGHOST %s :%s",
+		CAP_EUID | CAP_TS6, NOCAPS, ":%s CHGHOST %s %s",
+		use_id(source_p), use_id(target_p), parv[2]);
+	sendto_server(NULL, NULL,
+		CAP_TS6, CAP_EUID, ":%s ENCAP * CHGHOST %s :%s",
 		use_id(source_p), use_id(target_p), parv[2]);
 	sendto_server(NULL, NULL,
 		NOCAPS, CAP_TS6, ":%s ENCAP * CHGHOST %s :%s",
-		parv[0], target_p->name, parv[2]);
+		source_p->name, target_p->name, parv[2]);
 #else
 	sendto_one_notice(source_p, ":CHGHOST is disabled");
 #endif

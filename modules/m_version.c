@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_version.c 254 2005-09-21 23:35:12Z nenolod $
+ *  $Id: m_version.c 1887 2006-08-29 13:42:56Z jilles $
  */
 
 #include <stdinc.h>
@@ -30,7 +30,7 @@
 #include "numeric.h"
 #include "s_conf.h"
 #include "s_serv.h"
-#include "s_user.h"
+#include "supported.h"
 #include "send.h"
 #include "msg.h"
 #include "parse.h"
@@ -47,7 +47,7 @@ struct Message version_msgtab = {
 };
 
 mapi_clist_av1 version_clist[] = { &version_msgtab, NULL };
-DECLARE_MODULE_AV1(version, NULL, NULL, version_clist, NULL, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV1(version, NULL, NULL, version_clist, NULL, NULL, "$Revision: 1887 $");
 
 /*
  * m_version - VERSION command handler
@@ -139,6 +139,8 @@ confopts(struct Client *source_p)
 	*p++ = 'M';
 	*p++ = 'p';
 
+	if(opers_see_all_users || ConfigFileEntry.operspy_dont_care_user_info)
+		*p++ = 'S';
 #ifdef IGNORE_BOGUS_TS
 	*p++ = 'T';
 #endif

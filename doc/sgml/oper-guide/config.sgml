@@ -194,8 +194,10 @@ class "<replaceable>name</replaceable>" {
         sendq = <replaceable>size</replaceable>;
 };</synopsis>
 	<para>
-	  Class blocks define classes of connections for later use. The class name is used to connect them to
-	  other blocks in the config file.
+	  Class blocks define classes of connections for later use.
+	  The class name is used to connect them to
+	  other blocks in the config file (auth{} and connect{}).
+	  They must be defined before they are used.
 	</para>
 	<para>
 	  Classes are used both for client and server connections,
@@ -555,8 +557,13 @@ connect "<replaceable>name</replaceable>" {
 	    <term>host</term>
 	    <listitem>
 	      <para>The hostname or IP to connect to.</para>
-	      <note><para>If a hostname is used, this must be the primary
-	      hostname for inbound connections to work.</para></note>
+	      <note><para>
+		Charybdis uses solely DNS for all hostname/address lookups
+		(no <filename>/etc/hosts</filename> or anything else).
+		Furthermore, if a hostname is used, it must have an A or AAAA
+		record (no CNAME) and it must be the primary
+		hostname for inbound connections to work.
+	      </para></note>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -580,13 +587,24 @@ connect "<replaceable>name</replaceable>" {
 	  <varlistentry>
 	    <term>hub_mask</term>
 	    <listitem>
-	      <para>An optional domain mask of servers allowed to be introduced by this link. Usually, "*" is fine.</para>
+	      <para>
+		An optional domain mask of servers allowed to be introduced
+		by this link. Usually, "*" is fine. Multiple hub_masks may be
+		specified, and any of them may be introduced.
+		Violation of hub_mask and leaf_mask restrictions will
+		cause the local link to be closed.
+	      </para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
 	    <term>leaf_mask</term>
 	    <listitem>
-	      <para>An optional domain mask of servers not allowed to be introduced by this link.</para>
+	      <para>
+		An optional domain mask of servers not allowed to be
+		introduced by this link. Multiple leaf_masks may be specified,
+		and none of them may be introduced. leaf_mask has priority
+		over hub_mask.
+	      </para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -604,7 +622,7 @@ connect "<replaceable>name</replaceable>" {
 	  <varlistentry>
 	    <term>aftype</term>
 	    <listitem>
-	      <para>The protocol that should be used to connect with, either ipv4 or ipv6.</para>
+	      <para>The protocol that should be used to connect with, either ipv4 or ipv6. This defaults to ipv4 unless host is a numeric IPv6 address.</para>
 	    </listitem>
 	  </varlistentry>
 	</variablelist>
@@ -814,6 +832,9 @@ cluster {
 	  be executed twice on the target servers. This is particularly
 	  undesirable for ban removals.
 	</para>
+	<para>
+	  The letters in parentheses denote the flags in /stats U.
+	</para>
 	<variablelist>
 	  <title>cluster {} variables</title>
 	  <varlistentry>
@@ -835,61 +856,61 @@ cluster {
 	<variablelist>
 	  <title>cluster {} flags</title>
 	  <varlistentry>
-	    <term>kline</term>
+	    <term>kline (K)</term>
 	    <listitem>
 	      <para>Permanent K:lines</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>tkline</term>
+	    <term>tkline (k)</term>
 	    <listitem>
 	      <para>Temporary K:lines</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>unkline</term>
+	    <term>unkline (U)</term>
 	    <listitem>
 	      <para>K:line removals</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>xline</term>
+	    <term>xline (X)</term>
 	    <listitem>
 	      <para>Permanent X:lines</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>txline</term>
+	    <term>txline (x)</term>
 	    <listitem>
 	      <para>Temporary X:lines</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>unxline</term>
+	    <term>unxline (Y)</term>
 	    <listitem>
 	      <para>X:line removals</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>resv</term>
+	    <term>resv (Q)</term>
 	    <listitem>
 	      <para>Permanently reserved nicks/channels</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>tresv</term>
+	    <term>tresv (q)</term>
 	    <listitem>
 	      <para>Temporarily reserved nicks/channels</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>unresv</term>
+	    <term>unresv (R)</term>
 	    <listitem>
 	      <para>RESV removals</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>locops</term>
+	    <term>locops (L)</term>
 	    <listitem>
 	      <para>LOCOPS messages (sharing this with * makes LOCOPS rather
 	      similar to OPERWALL which is not useful)</para>
@@ -917,6 +938,9 @@ shared {
 	  the oper's access.
 	  If access is denied, the command will be silently ignored.
 	</para>
+	<para>
+	  The letters in parentheses denote the flags in /stats U.
+	</para>
 	<variablelist>
 	  <title>shared {} variables</title>
 	  <varlistentry>
@@ -942,55 +966,55 @@ shared {
 	<variablelist>
 	  <title>shared {} flags</title>
 	  <varlistentry>
-	    <term>kline</term>
+	    <term>kline (K)</term>
 	    <listitem>
 	      <para>Permanent and temporary K:lines</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>tkline</term>
+	    <term>tkline (k)</term>
 	    <listitem>
 	      <para>Temporary K:lines</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>unkline</term>
+	    <term>unkline (U)</term>
 	    <listitem>
 	      <para>K:line removals</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>xline</term>
+	    <term>xline (X)</term>
 	    <listitem>
 	      <para>Permanent and temporary X:lines</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>txline</term>
+	    <term>txline (x)</term>
 	    <listitem>
 	      <para>Temporary X:lines</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>unxline</term>
+	    <term>unxline (Y)</term>
 	    <listitem>
 	      <para>X:line removals</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>resv</term>
+	    <term>resv (Q)</term>
 	    <listitem>
 	      <para>Permanently and temporarily reserved nicks/channels</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>tresv</term>
+	    <term>tresv (q)</term>
 	    <listitem>
 	      <para>Temporarily reserved nicks/channels</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>unresv</term>
+	    <term>unresv (R)</term>
 	    <listitem>
 	      <para>RESV removals</para>
 	    </listitem>
@@ -1002,14 +1026,14 @@ shared {
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>locops</term>
+	    <term>locops (L)</term>
 	    <listitem>
 	      <para>LOCOPS messages (accepting this from * makes LOCOPS rather
 	      similar to OPERWALL which is not useful)</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>rehash</term>
+	    <term>rehash (H)</term>
 	    <listitem>
 	      <para>REHASH commands; all options can be used</para>
 	    </listitem>

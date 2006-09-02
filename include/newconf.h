@@ -1,6 +1,6 @@
 /* This code is in the public domain.
  * $Nightmare: nightmare/include/config.h,v 1.32.2.2.2.2 2002/07/02 03:41:28 ejb Exp $
- * $Id: newconf.h 6 2005-09-10 01:02:21Z nenolod $
+ * $Id: newconf.h 1735 2006-07-19 02:35:40Z nenolod $
  */
 
 #ifndef _NEWCONF_H_INCLUDED
@@ -71,6 +71,9 @@ void conf_report_error(const char *, ...);
 void newconf_init(void);
 int add_conf_item(const char *topconf, const char *name, int type, void (*func) (void *));
 int remove_conf_item(const char *topconf, const char *name);
-
+int add_top_conf(const char *name, int (*sfunc) (struct TopConf *), int (*efunc) (struct TopConf *), struct ConfEntry *items);
+int remove_top_conf(char *name);
+struct TopConf *find_top_conf(const char *name);
+struct ConfEntry *find_conf_item(const struct TopConf *top, const char *name);
 
 #endif

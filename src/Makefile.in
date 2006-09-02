@@ -1,7 +1,7 @@
 #
 # Makefile.in for ircd/src
 #
-# $Id: Makefile.in 1413 2006-05-22 17:13:15Z nenolod $
+# $Id: Makefile.in 1887 2006-08-29 13:42:56Z jilles $
 #
 CC		= @CC@
 INSTALL		= @INSTALL@
@@ -96,6 +96,7 @@ BASE_SRCS =                     \
   scache.c                      \
   send.c                        \
   snomask.c			\
+  supported.c			\
   whowas.c			\
   $(FNVHASH_S)
 
