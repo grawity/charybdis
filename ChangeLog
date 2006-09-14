@@ -1,3 +1,21 @@
+jilles      2006/09/14 22:01:16 UTC	(20060914-2057)
+  Log:
+  Rerun autoconf.
+  
+
+  Changes:	Modified:
+  +9 -9		branches/release-2.1/configure (File Modified) 
+
+
+jilles      2006/09/14 22:00:30 UTC	(20060914-2055)
+  Log:
+  Version change 2.1.0rc1 -> 2.1.0 (release).
+  
+
+  Changes:	Modified:
+  +1 -1		branches/release-2.1/configure.ac (File Modified) 
+
+
 jilles      2006/09/02 23:57:18 UTC	(20060902-2031)
   Log:
   Merged revisions 2029 via svnmerge from 
