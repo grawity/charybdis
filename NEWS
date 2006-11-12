@@ -1,5 +1,18 @@
-This is charybdis 2.1.0, Copyright (c) 2005-2006 Charybdis team.
+This is charybdis 2.1.1, Copyright (c) 2005-2006 Charybdis team.
 See LICENSE for licensing details (GPL v2).
+
+-- charybdis-2.1.1
+
+- Search the shortest list (user's/channel's) when looking up channel
+  memberships.
+- Make the SID-collision notice look right under all conditions.
+- Move kills from services from +s to +k snomask.
+- When no_tilde is present on an auth{} block, check the non-tilde version
+  of the user@host against k:lines as well.
+- Put full reason in the SQUIT reason when a server is rejected for
+  insufficient parameters being passed to a command.
+- Don't redirect users to an existing domain, irc.fi.
+- Improve communication of servlink-related error messages.
 
 -- charybdis-2.1.0
 
@@ -309,5 +322,5 @@ modules in case the developers need them.
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 2031 2006-09-02 23:57:18Z jilles $
+$Id: NEWS 2759 2006-11-10 23:02:43Z jilles $
 

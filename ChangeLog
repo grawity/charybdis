@@ -1,3 +1,343 @@
+jilles      2006/11/12 14:21:16 UTC	(20061112-2765)
+  Log:
+  Merged revisions 2761 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2761 | jilles | 2006-11-12 15:02:47 +0100 (Sun, 12 Nov 2006) | 2 lines
+    
+    The testline/no_tilde fixes are in 2.1.1.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -1		branches/release-2.1/doc/sgml/oper-guide/commands.sgml (File Modified) 
+
+
+jilles      2006/11/10 23:02:43 UTC	(20061110-2759)
+  Log:
+  Update NEWS.
+  
+
+  Changes:	Modified:
+  +4 -1		branches/release-2.1/NEWS (File Modified) 
+
+
+jilles      2006/11/10 22:58:15 UTC	(20061110-2757)
+  Log:
+  Merged revisions 2125,2182-2183,2190-2195,2204-2205,2208-2209,2238-2239,2286-2287,2296-2297,2440-2441,2542-2547,2681-2682,2687-2690,2697,2703,2705,2707-2711 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  no_tilde fixes
+  
+  ........
+    r2125 | jilles | 2006-09-26 00:59:18 +0200 (Tue, 26 Sep 2006) | 5 lines
+    
+    If the auth{} block has no_tilde and is not kline exempt,
+    check the username without tilde against klines too.
+    This is consistent with the way klines work on spoofs
+    (klines checked on both raw and appearing-on-IRC version).
+  ........
+    r2697 | jilles | 2006-11-06 11:37:00 +0100 (Mon, 06 Nov 2006) | 4 lines
+    
+    Rework the fix for klines with no_tilde.
+    Add an extra argument to find_address_conf() for the
+    username without tilde, as that may contain one character more.
+  ........
+    r2703 | jilles | 2006-11-06 16:49:44 +0100 (Mon, 06 Nov 2006) | 3 lines
+    
+    Unbreak compile (because of r2697).
+    testline with ~ could be improved some more perhaps, but this should work.
+  ........
+    r2705 | jilles | 2006-11-06 17:42:21 +0100 (Mon, 06 Nov 2006) | 2 lines
+    
+    testline: take no_tilde and username truncation into account
+  ........
+    r2711 | jilles | 2006-11-08 14:05:14 +0100 (Wed, 08 Nov 2006) | 2 lines
+    
+    Add some information on /testline with no_tilde and username truncation.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +5 -0		branches/release-2.1/doc/sgml/oper-guide/commands.sgml (File Modified) 
+  +1 -0		branches/release-2.1/extensions/m_webirc.c (File Modified) 
+  +2 -1		branches/release-2.1/include/hostmask.h (File Modified) 
+  +12 -1	branches/release-2.1/modules/m_testline.c (File Modified) 
+  +16 -2	branches/release-2.1/src/hostmask.c (File Modified) 
+  +2 -2		branches/release-2.1/src/s_conf.c (File Modified) 
+
+
+jilles      2006/11/10 19:08:03 UTC	(20061110-2755)
+  Log:
+  Merged revisions 2149,2151 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2149 | jilles | 2006-09-27 17:32:42 +0200 (Wed, 27 Sep 2006) | 3 lines
+    
+    Move kills from services from +s to +k snomask.
+    Kills from non-service opers remain on +s.
+  ........
+    r2151 | jilles | 2006-09-27 17:41:39 +0200 (Wed, 27 Sep 2006) | 2 lines
+    
+    Update description of +s and +k snomasks.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +2 -1		branches/release-2.1/doc/sgml/oper-guide/umodes.sgml (File Modified) 
+  +1 -1		branches/release-2.1/help/opers/snomask (File Modified) 
+  +1 -1		branches/release-2.1/modules/core/m_kill.c (File Modified) 
+
+
+jilles      2006/11/10 19:05:25 UTC	(20061110-2753)
+  Log:
+  Merged revisions 2685 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2685 | jilles | 2006-11-01 18:44:01 +0100 (Wed, 01 Nov 2006) | 2 lines
+    
+    Mention that exempt{} blocks do not exempt from DNSBL (for completeness).
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +2 -1		branches/release-2.1/doc/sgml/oper-guide/config.sgml (File Modified) 
+
+
+jilles      2006/11/10 15:15:00 UTC	(20061110-2743)
+  Log:
+  Merged revisions 2693 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2693 | jilles | 2006-11-06 02:35:21 +0100 (Mon, 06 Nov 2006) | 6 lines
+    
+    Fix truncation (by one) of unidented usernames
+    if user registration is done because of DNSBL
+    completion (which is the usual case if a valid
+    NICK and USER are sent quickly and any DNSBLs
+    are enabled).
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +2 -2		branches/release-2.1/src/blacklist.c (File Modified) 
+
+
+jilles      2006/11/10 01:26:27 UTC	(20061110-2739)
+  Log:
+  Update NEWS.
+  
+
+  Changes:	Modified:
+  +10 -0	branches/release-2.1/NEWS (File Modified) 
+
+
+jilles      2006/11/10 00:21:56 UTC	(20061110-2737)
+  Log:
+  Rerun autoconf.
+  
+
+  Changes:	Modified:
+  +9 -9		branches/release-2.1/configure (File Modified) 
+
+
+jilles      2006/11/10 00:15:54 UTC	(20061110-2735)
+  Log:
+  Version bump to 2.1.1.
+  
+
+  Changes:	Modified:
+  +1 -1		branches/release-2.1/configure.ac (File Modified) 
+
+
+jilles      2006/11/10 00:04:08 UTC	(20061110-2733)
+  Log:
+  Merged revisions 2186,2188,2190-2196,2204-2205,2208-2209,2224,2238-2239,2286-2287,2296-2297,2440-2441,2542-2547,2681-2682,2687-2690,2699,2701 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2186 | nenolod | 2006-09-28 04:24:41 +0200 (Thu, 28 Sep 2006) | 2 lines
+    
+    - fix a server notice on SID collision where the server name is mentioned twice
+  ........
+    r2188 | nenolod | 2006-09-28 04:30:37 +0200 (Thu, 28 Sep 2006) | 2 lines
+    
+    - get_server_name() is stupid
+  ........
+    r2196 | nenolod | 2006-09-28 05:03:07 +0200 (Thu, 28 Sep 2006) | 2 lines
+    
+    - fix an oops
+  ........
+    r2224 | jilles | 2006-09-28 18:23:53 +0200 (Thu, 28 Sep 2006) | 4 lines
+    
+    Do the Attempt to re-introduce SID server notice somewhat
+    differently, showing a real host again if !HIDE_SERVERS_IPS
+    and still showing the server name exactly once.
+  ........
+    r2699 | jilles | 2006-11-06 11:54:35 +0100 (Mon, 06 Nov 2006) | 2 lines
+    
+    Fix log message for Attempt to re-introduce SID (server notice was ok).
+  ........
+    r2701 | jilles | 2006-11-06 12:05:23 +0100 (Mon, 06 Nov 2006) | 4 lines
+    
+    - replace "No N line" with "no connect block" in a
+      serverlog message
+    - show attempted server name in a few serverlog messages
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +13 -6	branches/release-2.1/modules/core/m_server.c (File Modified) 
+
+
+jilles      2006/11/09 23:53:43 UTC	(20061109-2731)
+  Log:
+  Merged revisions 2218 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2218 | jilles | 2006-09-28 16:06:06 +0200 (Thu, 28 Sep 2006) | 2 lines
+    
+    Fix garbage in /stats y output on 64-bit archs.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -1		branches/release-2.1/src/messages.tab (File Modified) 
+
+
+jilles      2006/11/09 23:52:06 UTC	(20061109-2729)
+  Log:
+  Merged revisions 2438 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2438 | jilles | 2006-10-06 23:51:04 +0200 (Fri, 06 Oct 2006) | 2 lines
+    
+    Enable Revision keyword in addition to Id.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  + -		branches/release-2.1/extensions/m_identify.c  (Property Modified)
+
+
+jilles      2006/11/09 23:48:45 UTC	(20061109-2727)
+  Log:
+  Merged revisions 2679 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2679 | jilles | 2006-10-29 14:24:28 +0100 (Sun, 29 Oct 2006) | 4 lines
+    
+    Port over ratbox 2.2 r23253 (anfl):
+    - remove the cached storage of how many +beI there are, thereby fixing a        
+      case where it can get desynced from reality
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +0 -1		branches/release-2.1/include/channel.h (File Modified) 
+  +1 -8		branches/release-2.1/src/chmode.c (File Modified) 
+
+
+jilles      2006/11/09 23:43:35 UTC	(20061109-2725)
+  Log:
+  Merged revisions 2093,2095 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2093 | nenolod | 2006-09-25 08:01:01 +0200 (Mon, 25 Sep 2006) | 2 lines
+    
+    - change DNSBL licensing to BSD.
+  ........
+    r2095 | nenolod | 2006-09-25 08:04:37 +0200 (Mon, 25 Sep 2006) | 2 lines
+    
+    - change x86-assembly FNV implementation to BSD license
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +27 -16	branches/release-2.1/src/blacklist.c (File Modified) 
+  +27 -16	branches/release-2.1/src/fnvhash.s (File Modified) 
+
+
+jilles      2006/11/09 23:35:48 UTC	(20061109-2723)
+  Log:
+  Merged revisions 2073,2075 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2073 | jilles | 2006-09-24 20:23:35 +0200 (Sun, 24 Sep 2006) | 3 lines
+    
+    Put full information in the squit reason when exiting
+    a server due to a servlink (ziplinks) error.
+  ........
+    r2075 | jilles | 2006-09-24 20:33:12 +0200 (Sun, 24 Sep 2006) | 3 lines
+    
+    Put full information in the squit reason when exiting
+    a server due to not enough arguments for a command.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +7 -5		branches/release-2.1/src/parse.c (File Modified) 
+  +4 -1		branches/release-2.1/src/s_serv.c (File Modified) 
+
+
+jilles      2006/11/09 23:30:38 UTC	(20061109-2721)
+  Log:
+  Merged revisions 2071 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2071 | jilles | 2006-09-24 20:21:57 +0200 (Sun, 24 Sep 2006) | 4 lines
+    
+    Don't redirect users from an existing domain to an
+    existing server in reference.conf.
+    Idea from ratbox.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +2 -2		branches/release-2.1/doc/reference.conf (File Modified) 
+
+
+jilles      2006/09/27 17:19:03 UTC	(20060927-2182)
+  Log:
+  Merged revisions 2053 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2053 | jilles | 2006-09-09 17:30:38 +0200 (Sat, 09 Sep 2006) | 5 lines
+    
+    Make find_channel_membership() choose the shortest list
+    (channel's list or user's list) to search, avoiding excessive
+    CPU usage with services which are in lots of channels.
+    From ratbox 2.2 (anfl/jilles)
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +21 -4	branches/release-2.1/src/channel.c (File Modified) 
+
+
 jilles      2006/09/14 22:01:16 UTC	(20060914-2057)
   Log:
   Rerun autoconf.

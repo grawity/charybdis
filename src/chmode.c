@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: chmode.c 1391 2006-05-20 19:24:11Z jilles $
+ *  $Id: chmode.c 2727 2006-11-09 23:48:45Z jilles $
  */
 
 #include "stdinc.h"
@@ -101,7 +101,7 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
 	 */
 	if(MyClient(source_p))
 	{
-		if(chptr->num_mask >= (chptr->mode.mode & MODE_EXLIMIT ? ConfigChannel.max_bans_large : ConfigChannel.max_bans))
+		if((dlink_list_length(&chptr->banlist) + dlink_list_length(&chptr->exceptlist) + dlink_list_length(&chptr->invexlist) + dlink_list_length(&chptr->quietlist)) >= (chptr->mode.mode & MODE_EXLIMIT ? ConfigChannel.max_bans_large : ConfigChannel.max_bans))
 		{
 			sendto_one(source_p, form_str(ERR_BANLISTFULL),
 				   me.name, source_p->name, chptr->chname, realban);
@@ -138,7 +138,6 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
 	actualBan->when = CurrentTime;
 
 	dlinkAdd(actualBan, &actualBan->node, list);
-	chptr->num_mask++;
 
 	/* invalidate the can_send() cache */
 	if(mode_type == CHFL_BAN || mode_type == CHFL_QUIET || mode_type == CHFL_EXCEPTION)
@@ -170,12 +169,6 @@ del_id(struct Channel *chptr, const char *banid, dlink_list * list, long mode_ty
 		{
 			dlinkDelete(&banptr->node, list);
 			free_ban(banptr);
-
-			/* num_mask should never be < 0 */
-			if(chptr->num_mask > 0)
-				chptr->num_mask--;
-			else
-				chptr->num_mask = 0;
 
 			/* invalidate the can_send() cache */
 			if(mode_type == CHFL_BAN || mode_type == CHFL_QUIET || mode_type == CHFL_EXCEPTION)

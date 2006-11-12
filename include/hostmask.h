@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: hostmask.h 553 2006-01-23 15:01:41Z nenolod $
+ *  $Id: hostmask.h 2757 2006-11-10 22:58:15Z jilles $
  */
 
 #ifndef INCLUDE_hostmask_h
@@ -46,7 +46,8 @@ void clear_out_address_conf(void);
 void clear_out_address_conf_bans(void);
 void init_host_hash(void);
 struct ConfItem *find_address_conf(const char *host, const char *sockhost, 
-				const char *, struct sockaddr *, int);
+				const char *, const char *, struct sockaddr *,
+				int);
 
 struct ConfItem *find_dline(struct sockaddr *, int);
 

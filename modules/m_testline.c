@@ -27,7 +27,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_testline.c 254 2005-09-21 23:35:12Z nenolod $
+ * $Id: m_testline.c 2757 2006-11-10 22:58:15Z jilles $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -54,7 +54,7 @@ struct Message testgecos_msgtab = {
 };
 
 mapi_clist_av1 testline_clist[] = { &testline_msgtab, &testgecos_msgtab, NULL };
-DECLARE_MODULE_AV1(testline, NULL, NULL, testline_clist, NULL, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV1(testline, NULL, NULL, testline_clist, NULL, NULL, "$Revision: 2757 $");
 
 static int
 mo_testline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
@@ -62,6 +62,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 	struct ConfItem *aconf;
 	struct ConfItem *resv_p;
 	struct irc_sockaddr_storage ip;
+	char user_trunc[USERLEN + 1], notildeuser_trunc[USERLEN + 1];
 	const char *name = NULL;
 	const char *username = NULL;
 	const char *host = NULL;
@@ -117,8 +118,18 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 		}
 	}
 
+	if (username != NULL)
+	{
+		strlcpy(user_trunc, username, sizeof user_trunc);
+		strlcpy(notildeuser_trunc, *username == '~' ? username + 1 : username, sizeof notildeuser_trunc);
+	}
+	else
+	{
+		strlcpy(user_trunc, "dummy", sizeof user_trunc);
+		strlcpy(notildeuser_trunc, "dummy", sizeof notildeuser_trunc);
+	}
 	/* now look for a matching I/K/G */
-	if((aconf = find_address_conf(host, NULL, username ? username : "dummy",
+	if((aconf = find_address_conf(host, NULL, user_trunc, notildeuser_trunc,
 				(type != HM_HOST) ? (struct sockaddr *)&ip : NULL,
 				(type != HM_HOST) ? (
 #ifdef IPV6

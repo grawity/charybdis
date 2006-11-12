@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c 1863 2006-08-27 13:40:37Z jilles $
+ *  $Id: s_serv.c 2723 2006-11-09 23:35:48Z jilles $
  */
 
 #include "stdinc.h"
@@ -117,13 +117,16 @@ static CNCB serv_connect_callback;
 void
 slink_error(unsigned int rpl, unsigned int len, unsigned char *data, struct Client *server_p)
 {
+	char squitreason[256];
+
 	s_assert(rpl == SLINKRPL_ERROR);
 
 	s_assert(len < 256);
 	data[len - 1] = '\0';
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "SlinkError for %s: %s", server_p->name, data);
-	exit_client(server_p, server_p, &me, "servlink error -- terminating link");
+	snprintf(squitreason, sizeof squitreason, "servlink error: %s", data);
+	exit_client(server_p, server_p, &me, squitreason);
 }
 
 void

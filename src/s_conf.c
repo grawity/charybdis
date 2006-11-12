@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c 1853 2006-08-24 18:30:52Z jilles $
+ *  $Id: s_conf.c 2757 2006-11-10 22:58:15Z jilles $
  */
 
 #include "stdinc.h"
@@ -309,7 +309,7 @@ verify_access(struct Client *client_p, const char *username)
 	if(IsGotId(client_p))
 	{
 		aconf = find_address_conf(client_p->host, client_p->sockhost, 
-					client_p->username,
+					client_p->username, client_p->username,
 					(struct sockaddr *) &client_p->localClient->ip,
 					client_p->localClient->ip.ss_family);
 	}
@@ -318,7 +318,7 @@ verify_access(struct Client *client_p, const char *username)
 		strlcpy(non_ident, "~", sizeof(non_ident));
 		strlcat(non_ident, username, sizeof(non_ident));
 		aconf = find_address_conf(client_p->host, client_p->sockhost,
-					non_ident, 
+					non_ident, client_p->username,
 					(struct sockaddr *) &client_p->localClient->ip,
 					client_p->localClient->ip.ss_family);
 	}

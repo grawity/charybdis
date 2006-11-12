@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: parse.c 1599 2006-06-04 01:55:34Z jilles $
+ *  $Id: parse.c 2723 2006-11-09 23:35:48Z jilles $
  */
 
 #include "stdinc.h"
@@ -321,6 +321,7 @@ handle_command(struct Message *mptr, struct Client *client_p,
 {
 	struct MessageEntry ehandler;
 	MessageHandler handler = 0;
+	char squitreason[80];
 
 	if(IsAnyDead(client_p))
 		return -1;
@@ -367,11 +368,12 @@ handle_command(struct Message *mptr, struct Client *client_p,
 				     " with only %d arguments (expecting %d).",
 				     client_p->name, mptr->cmd, i, ehandler.min_para);
 		ilog(L_SERVER,
-		     "Insufficient parameters (%d) for command '%s' from %s.",
-		     i, mptr->cmd, client_p->name);
-
-		exit_client(client_p, client_p, client_p,
-			    "Not enough arguments to server command.");
+		     "Insufficient parameters (%d < %d) for command '%s' from %s.",
+		     i, ehandler.min_para, mptr->cmd, client_p->name);
+		snprintf(squitreason, sizeof squitreason,
+				"Insufficient parameters (%d < %d) for command '%s'",
+				i, ehandler.min_para, mptr->cmd);
+		exit_client(client_p, client_p, client_p, squitreason);
 		return (-1);
 	}
 

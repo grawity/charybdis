@@ -521,6 +521,11 @@
 	  This command will not perform DNS lookups; for best
 	  results you must testline a host and its IP form.
         </para>
+	<para>
+	  The given username should begin with a tilde (~) if identd is not
+	  in use. As of charybdis 2.1.1, no_tilde and username truncation will
+	  be taken into account like in the normal client access check.
+	</para>
       </sect2>
       <sect2>
 	<title>TESTMASK</title>

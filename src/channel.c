@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c 1861 2006-08-26 23:21:42Z jilles $
+ *  $Id: channel.c 2182 2006-09-27 17:19:03Z jilles $
  */
 
 #include "stdinc.h"
@@ -139,11 +139,28 @@ find_channel_membership(struct Channel *chptr, struct Client *client_p)
 	if(!IsClient(client_p))
 		return NULL;
 
-	DLINK_FOREACH(ptr, client_p->user->channel.head)
+	/* Pick the most efficient list to use to be nice to things like
+	 * CHANSERV which could be in a large number of channels
+	 */
+	if(dlink_list_length(&chptr->members) < dlink_list_length(&client_p->user->channel))
 	{
-		msptr = ptr->data;
-		if(msptr->chptr == chptr)
-			return msptr;
+		DLINK_FOREACH(ptr, chptr->members.head)
+		{
+			msptr = ptr->data;
+
+			if(msptr->client_p == client_p)
+				return msptr;
+		}
+	}
+	else
+	{
+		DLINK_FOREACH(ptr, client_p->user->channel.head)
+		{
+			msptr = ptr->data;
+
+			if(msptr->chptr == chptr)
+				return msptr;
+		}
 	}
 
 	return NULL;

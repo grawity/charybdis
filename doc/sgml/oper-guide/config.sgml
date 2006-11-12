@@ -438,7 +438,8 @@ exempt {
 	<para>
 	  An exempt block specifies IP addresses which are exempt from D:lines.
 	  Multiple addresses can be specified in one block.
-	  Clients coming from these addresses can still be K/G/X:lined unless
+	  Clients coming from these addresses can still be K/G/X:lined or
+	  banned by a DNS blacklist unless
 	  they also have appropriate flags in their auth{} block.
 	</para>
 	<variablelist>

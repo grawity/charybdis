@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_webirc.c 1983 2006-09-01 19:42:07Z jilles $
+ *  $Id: m_webirc.c 2757 2006-11-10 22:58:15Z jilles $
  */
 /* Usage:
  * auth {
@@ -86,6 +86,7 @@ mr_webirc(struct Client *client_p, struct Client *source_p, int parc, const char
 	}
 
 	aconf = find_address_conf(client_p->host, client_p->sockhost, 
+				IsGotId(client_p) ? client_p->username : "webirc",
 				IsGotId(client_p) ? client_p->username : "webirc",
 				(struct sockaddr *) &client_p->localClient->ip,
 				client_p->localClient->ip.ss_family);

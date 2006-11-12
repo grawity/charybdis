@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.h 1363 2006-05-18 17:59:35Z jilles $
+ *  $Id: channel.h 2727 2006-11-09 23:48:45Z jilles $
  */
 
 #ifndef INCLUDED_channel_h
@@ -75,7 +75,6 @@ struct Channel
 	unsigned int join_count;  /* joins within delta */
 	unsigned int join_delta;  /* last ts of join */
 
-	int num_mask;		/* number of bans+exceptions+invite exceptions */
 	unsigned long bants;
 	time_t channelts;
 	char *chname;
