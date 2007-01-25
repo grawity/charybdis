@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c 2757 2006-11-10 22:58:15Z jilles $
+ *  $Id: s_conf.c 3131 2007-01-21 15:36:31Z jilles $
  */
 
 #include "stdinc.h"
@@ -817,6 +817,7 @@ set_default_conf(void)
 	ConfigChannel.use_except = YES;
 	ConfigChannel.use_invex = YES;
 	ConfigChannel.use_knock = YES;
+	ConfigChannel.use_forward = YES;
 	ConfigChannel.knock_delay = 300;
 	ConfigChannel.knock_delay_channel = 60;
 	ConfigChannel.max_chans_per_user = 15;
@@ -1308,44 +1309,6 @@ write_confitem(KlineType type, struct Client *source_p, char *user,
 
 	filename = get_conf_name(type);
 
-
-	if((out = fopen(filename, "a")) == NULL)
-	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "*** Problem opening %s ", filename);
-		return;
-	}
-
-	if(oper_reason == NULL)
-		oper_reason = "";
-
-	if(type == KLINE_TYPE)
-	{
-		ircsnprintf(buffer, sizeof(buffer),
-			   "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%ld\n",
-			   user, host, reason, oper_reason, current_date,
-			   get_oper_name(source_p), CurrentTime);
-	}
-	else if(type == DLINE_TYPE)
-	{
-		ircsnprintf(buffer, sizeof(buffer),
-			   "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%ld\n", host,
-			   reason, oper_reason, current_date, get_oper_name(source_p), CurrentTime);
-	}
-	else if(type == RESV_TYPE)
-	{
-		ircsnprintf(buffer, sizeof(buffer), "\"%s\",\"%s\",\"%s\",%ld\n",
-			   host, reason, get_oper_name(source_p), CurrentTime);
-	}
-
-	if(fputs(buffer, out) == -1)
-	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "*** Problem writing to %s", filename);
-		fclose(out);
-		return;
-	}
-
-	fclose(out);
-
 	if(type == KLINE_TYPE)
 	{
 		if(EmptyString(oper_reason))
@@ -1407,6 +1370,50 @@ write_confitem(KlineType type, struct Client *source_p, char *user,
 
 		sendto_one_notice(source_p, ":Added RESV for [%s] [%s]",
 				  host, reason);
+	}
+
+	if((out = fopen(filename, "a")) == NULL)
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "*** Problem opening %s ", filename);
+		sendto_one_notice(source_p, ":*** Problem opening file, added temporarily only");
+		return;
+	}
+
+	if(oper_reason == NULL)
+		oper_reason = "";
+
+	if(type == KLINE_TYPE)
+	{
+		ircsnprintf(buffer, sizeof(buffer),
+			   "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%ld\n",
+			   user, host, reason, oper_reason, current_date,
+			   get_oper_name(source_p), CurrentTime);
+	}
+	else if(type == DLINE_TYPE)
+	{
+		ircsnprintf(buffer, sizeof(buffer),
+			   "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%ld\n", host,
+			   reason, oper_reason, current_date, get_oper_name(source_p), CurrentTime);
+	}
+	else if(type == RESV_TYPE)
+	{
+		ircsnprintf(buffer, sizeof(buffer), "\"%s\",\"%s\",\"%s\",%ld\n",
+			   host, reason, get_oper_name(source_p), CurrentTime);
+	}
+
+	if(fputs(buffer, out) == -1)
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "*** Problem writing to %s", filename);
+		sendto_one_notice(source_p, ":*** Problem writing to file, added temporarily only");
+		fclose(out);
+		return;
+	}
+
+	if (fclose(out))
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "*** Problem writing to %s", filename);
+		sendto_one_notice(source_p, ":*** Problem writing to file, added temporarily only");
+		return;
 	}
 }
 

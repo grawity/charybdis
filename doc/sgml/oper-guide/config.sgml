@@ -1030,7 +1030,9 @@ shared {
 	    <term>locops (L)</term>
 	    <listitem>
 	      <para>LOCOPS messages (accepting this from * makes LOCOPS rather
-	      similar to OPERWALL which is not useful)</para>
+	      similar to OPERWALL which is not useful); unlike the other flags,
+	      this can only be accepted from *@* although it can be
+	      restricted based on source server.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>

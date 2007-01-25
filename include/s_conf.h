@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h 1853 2006-08-24 18:30:52Z jilles $
+ *  $Id: s_conf.h 3131 2007-01-21 15:36:31Z jilles $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -257,6 +257,7 @@ struct config_channel_entry
 	int use_except;
 	int use_invex;
 	int use_knock;
+	int use_forward;
 	int knock_delay;
 	int knock_delay_channel;
 	int max_bans;

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 2023 2006-09-02 23:47:27Z jilles $
+ *  $Id: s_user.c 3131 2007-01-21 15:36:31Z jilles $
  */
 
 #include "stdinc.h"
@@ -1062,6 +1062,11 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 			}
 			/* FALLTHROUGH */
 		default:
+			if (MyConnect(source_p) && *pm == 'Q' && !ConfigChannel.use_forward) {
+				badflag = YES;
+				break;
+			}
+
 			if((flag = user_modes[(unsigned char) *pm]))
 			{
 				if(MyConnect(source_p)

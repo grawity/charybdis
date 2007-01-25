@@ -28,7 +28,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: supported.c 1887 2006-08-29 13:42:56Z jilles $
+ *  $Id: supported.c 3131 2007-01-21 15:36:31Z jilles $
  */
 
 /* From the old supported.h which is
@@ -211,9 +211,11 @@ isupport_chanmodes(void *ptr)
 {
 	static char result[80];
 
-	ircsnprintf(result, sizeof result, "%s%sbq,k,flj,imnpstrcgzLPQF",
+	ircsnprintf(result, sizeof result, "%s%sbq,k,%slj,imnpstrcgzLP%s",
 			ConfigChannel.use_except ? "e" : "",
-			ConfigChannel.use_invex ? "I" : "");
+			ConfigChannel.use_invex ? "I" : "",
+			ConfigChannel.use_forward ? "f" : "",
+			ConfigChannel.use_forward ? "QF" : "");
 	return result;
 }
 

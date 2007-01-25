@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c 2182 2006-09-27 17:19:03Z jilles $
+ *  $Id: channel.c 3131 2007-01-21 15:36:31Z jilles $
  */
 
 #include "stdinc.h"
@@ -567,7 +567,7 @@ is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
 			   match(actualExcept->banstr, s2) ||
 			   match_cidr(actualExcept->banstr, s2) ||
 			   match_extban(actualExcept->banstr, who, chptr, CHFL_EXCEPTION) ||
-			   (s3 != NULL && match(actualBan->banstr, s3)))
+			   (s3 != NULL && match(actualExcept->banstr, s3)))
 			{
 				/* cache the fact theyre not banned */
 				if(msptr != NULL)
@@ -673,7 +673,7 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 			   match(actualExcept->banstr, s2) ||
 			   match_cidr(actualExcept->banstr, s2) ||
 			   match_extban(actualExcept->banstr, who, chptr, CHFL_EXCEPTION) ||
-			   (s3 != NULL && match(actualBan->banstr, s3)))
+			   (s3 != NULL && match(actualExcept->banstr, s3)))
 			{
 				/* cache the fact theyre not banned */
 				if(msptr != NULL)
@@ -1147,7 +1147,7 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 					   chptr->mode.join_time);
 	}
 
-	if(*chptr->mode.forward)
+	if(*chptr->mode.forward && (ConfigChannel.use_forward || IsServer(client_p) || IsMe(client_p)))
 	{
 		*mbuf++ = 'f';
 

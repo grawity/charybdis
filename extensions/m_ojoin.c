@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_ojoin.c 1116 2006-03-30 10:11:21Z jilles $
+ *   $Id: m_ojoin.c 3121 2007-01-02 13:23:04Z jilles $
  */
 
 #include "stdinc.h"
@@ -28,6 +28,7 @@
 #include "numeric.h"
 #include "s_log.h"
 #include "s_serv.h"
+#include "s_conf.h"
 #include "s_newconf.h"
 #include "send.h"
 #include "whowas.h"
@@ -48,7 +49,7 @@ struct Message ojoin_msgtab = {
 
 mapi_clist_av1 ojoin_clist[] = { &ojoin_msgtab, NULL };
 
-DECLARE_MODULE_AV1(ojoin, NULL, NULL, ojoin_clist, NULL, NULL, "$Revision: 1116 $");
+DECLARE_MODULE_AV1(ojoin, NULL, NULL, ojoin_clist, NULL, NULL, "$Revision: 3121 $");
 
 /*
 ** mo_ojoin
@@ -94,8 +95,8 @@ mo_ojoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	sendto_wallops_flags(UMODE_WALLOP, &me,
 			     "OJOIN called for %s by %s!%s@%s",
 			     parv[1], source_p->name, source_p->username, source_p->host);
-	ilog(L_MAIN, "OJOIN called for %s by %s!%s@%s",
-	     parv[1], source_p->name, source_p->username, source_p->host);
+	ilog(L_MAIN, "OJOIN called for %s by %s",
+	     parv[1], get_oper_name(source_p));
 	/* only sends stuff for #channels remotely */
 	sendto_server(NULL, chptr, NOCAPS, NOCAPS,
 			":%s WALLOPS :OJOIN called for %s by %s!%s@%s",
