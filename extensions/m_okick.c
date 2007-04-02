@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_okick.c 6 2005-09-10 01:02:21Z nenolod $
+ *  $Id: m_okick.c 3117 2007-01-02 13:11:04Z jilles $
  */
 
 #include "stdinc.h"
@@ -36,6 +36,7 @@
 #include "parse.h"
 #include "hash.h"
 #include "packet.h"
+#include "s_conf.h"
 #include "s_serv.h"
 
 static int mo_okick(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
@@ -48,7 +49,7 @@ struct Message okick_msgtab = {
 
 mapi_clist_av1 okick_clist[] = { &okick_msgtab, NULL };
 
-DECLARE_MODULE_AV1(okick, NULL, NULL, okick_clist, NULL, NULL, "$Revision: 6 $");
+DECLARE_MODULE_AV1(okick, NULL, NULL, okick_clist, NULL, NULL, "$Revision: 3117 $");
 
 /*
 ** m_okick
@@ -118,6 +119,19 @@ mo_okick(struct Client *client_p, struct Client *source_p, int parc, const char 
 			   me.name, parv[0], parv[1], parv[2]);
 		return 0;
 	}
+
+	sendto_wallops_flags(UMODE_WALLOP, &me,
+			     "OKICK called for %s %s by %s!%s@%s",
+			     chptr->chname, target_p->name,
+			     source_p->name, source_p->username, source_p->host);
+	ilog(L_MAIN, "OKICK called for %s %s by %s",
+	     chptr->chname, target_p->name,
+	     get_oper_name(source_p));
+	/* only sends stuff for #channels remotely */
+	sendto_server(NULL, chptr, NOCAPS, NOCAPS,
+			":%s WALLOPS :OKICK called for %s %s by %s!%s@%s",
+			me.name, chptr->chname, target_p->name,
+			source_p->name, source_p->username, source_p->host);
 
 	sendto_channel_local(ALL_MEMBERS, chptr, ":%s KICK %s %s :%s",
 			     me.name, chptr->chname, who->name, comment);

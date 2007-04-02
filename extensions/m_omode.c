@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_omode.c 1421 2006-05-23 16:06:01Z jilles $
+ *  $Id: m_omode.c 3121 2007-01-02 13:23:04Z jilles $
  */
 
 #include "stdinc.h"
@@ -52,7 +52,7 @@ struct Message omode_msgtab = {
 
 mapi_clist_av1 omode_clist[] = { &omode_msgtab, NULL };
 
-DECLARE_MODULE_AV1(omode, NULL, NULL, omode_clist, NULL, NULL, "$Revision: 1421 $");
+DECLARE_MODULE_AV1(omode, NULL, NULL, omode_clist, NULL, NULL, "$Revision: 3121 $");
 
 /*
  * mo_omode - MODE command handler
@@ -113,8 +113,8 @@ mo_omode(struct Client *client_p, struct Client *source_p, int parc, const char 
 	sendto_wallops_flags(UMODE_WALLOP, &me, 
 			     "OMODE called for [%s] [%s] by %s!%s@%s",
 			     parv[1], params, source_p->name, source_p->username, source_p->host);
-	ilog(L_MAIN, "OMODE called for [%s] [%s] by %s!%s@%s",
-	     parv[1], params, source_p->name, source_p->username, source_p->host);
+	ilog(L_MAIN, "OMODE called for [%s] [%s] by %s",
+	     parv[1], params, get_oper_name(source_p));
 
 	if(*chptr->chname != '&')
 		sendto_server(NULL, NULL, NOCAPS, NOCAPS, 

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 2023 2006-09-02 23:47:27Z jilles $
+ *  $Id: s_user.c 3309 2007-03-28 15:53:49Z jilles $
  */
 
 #include "stdinc.h"
@@ -56,6 +56,7 @@
 #include "monitor.h"
 #include "snomask.h"
 #include "blacklist.h"
+#include "substitution.h"
 
 static void report_and_set_user_flags(struct Client *, struct ConfItem *);
 void user_welcome(struct Client *source_p);
@@ -419,21 +420,6 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		return (CLIENT_EXITED);
 	}
 
-	/* valid user name check */
-
-	if(!valid_username(source_p->username))
-	{
-		sendto_realops_snomask(SNO_REJ, L_ALL,
-				     "Invalid username: %s (%s@%s)",
-				     source_p->name, source_p->username, source_p->host);
-		ServerStats->is_ref++;
-		ircsprintf(tmpstr2, "Invalid username [%s]", source_p->username);
-		exit_client(client_p, source_p, &me, tmpstr2);
-		return (CLIENT_EXITED);
-	}
-
-	/* end of valid user name check */
-
 	/* kline exemption extends to xline too */
 	if(!IsExemptKline(source_p) &&
 	   find_xline(source_p->info, 1) != NULL)
@@ -452,10 +438,22 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 					source_p->sockhost, source_p->preClient->dnsbl_listed->host);
 		else
 		{
+			dlink_list varlist = { NULL, NULL, 0 };
+
+			substitution_append_var(&varlist, "nick", source_p->name);
+			substitution_append_var(&varlist, "ip", source_p->sockhost);
+			substitution_append_var(&varlist, "host", source_p->host);
+			substitution_append_var(&varlist, "dnsbl-host", source_p->preClient->dnsbl_listed->host);
+			substitution_append_var(&varlist, "network-name", ServerInfo.network_name);
+
 			ServerStats->is_ref++;
+
 			sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
 					me.name, source_p->name,
-					source_p->preClient->dnsbl_listed->reject_reason);
+					substitution_parse(source_p->preClient->dnsbl_listed->reject_reason, &varlist));
+
+			substitution_free(&varlist);
+
 			sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s",
 					source_p->sockhost, source_p->preClient->dnsbl_listed->host);
 			source_p->preClient->dnsbl_listed->hits++;
@@ -464,6 +462,21 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 			return CLIENT_EXITED;
 		}
 	}
+
+	/* valid user name check */
+
+	if(!valid_username(source_p->username))
+	{
+		sendto_realops_snomask(SNO_REJ, L_ALL,
+				     "Invalid username: %s (%s@%s)",
+				     source_p->name, source_p->username, source_p->host);
+		ServerStats->is_ref++;
+		ircsprintf(tmpstr2, "Invalid username [%s]", source_p->username);
+		exit_client(client_p, source_p, &me, tmpstr2);
+		return (CLIENT_EXITED);
+	}
+
+	/* end of valid user name check */
 
 	/* Store original hostname -- jilles */
 	strlcpy(source_p->orighost, source_p->host, HOSTLEN + 1);
@@ -1062,6 +1075,11 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 			}
 			/* FALLTHROUGH */
 		default:
+			if (MyConnect(source_p) && *pm == 'Q' && !ConfigChannel.use_forward) {
+				badflag = YES;
+				break;
+			}
+
 			if((flag = user_modes[(unsigned char) *pm]))
 			{
 				if(MyConnect(source_p)
@@ -1323,6 +1341,10 @@ oper_up(struct Client *source_p, struct oper_conf *oper_p)
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s (%s@%s) is now an operator", source_p->name,
 			     source_p->username, source_p->host);
+	if(!(old & UMODE_INVISIBLE) && IsInvisible(source_p))
+		++Count.invisi;
+	if((old & UMODE_INVISIBLE) && !IsInvisible(source_p))
+		--Count.invisi;
 	send_umode_out(source_p, source_p, old);
 	sendto_one(source_p, form_str(RPL_SNOMASK), me.name, source_p->name,
 		   construct_snobuf(source_p->snomask));
@@ -1424,8 +1446,8 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 				target_p->host, nick);
 	}
 
-	strlcpy(target_p->username, user, USERLEN);
-	strlcpy(target_p->host, host, HOSTLEN);
+	strlcpy(target_p->username, user, sizeof target_p->username);
+	strlcpy(target_p->host, host, sizeof target_p->host);
 
 	if (changed)
 		add_history(target_p, 1);

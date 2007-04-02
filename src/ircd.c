@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c 1903 2006-08-29 14:46:33Z jilles $
+ *  $Id: ircd.c 3047 2006-12-26 23:18:05Z jilles $
  */
 
 #include "stdinc.h"
@@ -242,9 +242,9 @@ struct lgetopt myopts[] = {
 	{"configfile", &ConfigFileEntry.configfile,
 	 STRING, "File to use for ircd.conf"},
 	{"klinefile", &ConfigFileEntry.klinefile,
-	 STRING, "File to use for klines.conf"},
+	 STRING, "File to use for kline.conf"},
 	{"xlinefile", &ConfigFileEntry.xlinefile,
-	 STRING, "File to use for xlines.conf"},
+	 STRING, "File to use for xline.conf"},
 	{"resvfile", &ConfigFileEntry.resvfile,
 	 STRING, "File to use for resv.conf"},
 	{"logfile", &logFileName,

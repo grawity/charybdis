@@ -26,7 +26,7 @@
  *  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_force.c 1425 2006-05-23 16:41:33Z jilles $
+ * $Id: m_force.c 3311 2007-03-28 15:57:43Z jilles $
  */
 
 #include "stdinc.h"
@@ -70,7 +70,7 @@ struct Message forcepart_msgtab = {
 
 mapi_clist_av1 force_clist[] = { &forcejoin_msgtab, &forcepart_msgtab, NULL };
 
-DECLARE_MODULE_AV1(force, NULL, NULL, force_clist, NULL, NULL, "$Revision: 1425 $");
+DECLARE_MODULE_AV1(force, NULL, NULL, force_clist, NULL, NULL, "$Revision: 3311 $");
 
 /*
  * m_forcejoin
@@ -90,7 +90,7 @@ mo_forcejoin(struct Client *client_p, struct Client *source_p, int parc, const c
 
 	if(!IsOperAdmin(source_p))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "forcejoin");
+		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "admin");
 		return 0;
 	}
 
@@ -243,7 +243,7 @@ mo_forcepart(struct Client *client_p, struct Client *source_p, int parc, const c
 
 	if(!IsOperAdmin(source_p))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "forcepart");
+		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "admin");
 		return 0;
 	}
 

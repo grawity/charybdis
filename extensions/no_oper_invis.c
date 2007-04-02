@@ -3,7 +3,7 @@
  * hidden_oper privilege).
  * -- jilles
  *
- * $Id: no_oper_invis.c 1086 2006-03-17 23:20:30Z jilles $
+ * $Id: no_oper_invis.c 3221 2007-02-24 19:42:19Z jilles $
  */
 
 #include "stdinc.h"
@@ -22,7 +22,7 @@ mapi_hfn_list_av1 noi_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(no_oper_invis, NULL, NULL, NULL, NULL, noi_hfnlist, "$Revision: 1086 $");
+DECLARE_MODULE_AV1(no_oper_invis, NULL, NULL, NULL, NULL, noi_hfnlist, "$Revision: 3221 $");
 
 static void
 h_noi_umode_changed(hook_data_umode_changed *hdata)

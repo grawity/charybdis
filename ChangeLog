@@ -1,3 +1,888 @@
+jilles      2007/04/02 11:06:46 UTC	(20070402-3348)
+  Log:
+  Tag charybdis 2.1.3.
+  
+
+  Changes:	Modified:
+  + -		tags/charybdis-2.1.3/ (File Added) 
+
+
+jilles      2007/04/01 22:46:02 UTC	(20070401-3346)
+  Log:
+  Merged revisions 3344 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3344 | jilles | 2007-04-02 00:20:00 +0200 (Mon, 02 Apr 2007) | 2 lines
+    
+    Update bug report and IRC channel information.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +2 -1		branches/release-2.1/BUGS (File Modified) 
+  +2 -1		branches/release-2.1/NEWS (File Modified) 
+
+
+jilles      2007/04/01 21:57:20 UTC	(20070401-3339)
+  Log:
+  Fix some copyright years and a version number.
+  
+
+  Changes:	Modified:
+  +1 -1		branches/release-2.1/NEWS (File Modified) 
+  +2 -2		branches/release-2.1/src/version.c.SH (File Modified) 
+
+
+jilles      2007/04/01 21:26:15 UTC	(20070401-3335)
+  Log:
+  Rerun autoconf.
+  
+
+  Changes:	Modified:
+  +9 -9		branches/release-2.1/configure (File Modified) 
+
+
+jilles      2007/04/01 21:23:29 UTC	(20070401-3333)
+  Log:
+  Version bump to 2.1.3.
+  
+
+  Changes:	Modified:
+  +1 -1		branches/release-2.1/configure.ac (File Modified) 
+
+
+jilles      2007/04/01 13:15:30 UTC	(20070401-3331)
+  Log:
+  Update NEWS.
+  
+
+  Changes:	Modified:
+  +6 -0		branches/release-2.1/NEWS (File Modified) 
+
+
+jilles      2007/03/31 21:34:49 UTC	(20070331-3329)
+  Log:
+  Rerun autoconf.
+  
+
+  Changes:	Modified:
+  +104 -0	branches/release-2.1/configure (File Modified) 
+
+
+jilles      2007/03/31 21:34:15 UTC	(20070331-3327)
+  Log:
+  Merged revisions 3323 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3323 | jilles | 2007-03-31 01:33:43 +0200 (Sat, 31 Mar 2007) | 3 lines
+    
+    Need to check for various flavours of epoll,
+    even if --enable-epoll is forced.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -0		branches/release-2.1/configure.ac (File Modified) 
+
+
+jilles      2007/03/28 16:05:42 UTC	(20070328-3315)
+  Log:
+  Merged revisions 3307 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3307 | jilles | 2007-03-28 17:40:24 +0200 (Wed, 28 Mar 2007) | 5 lines
+    
+    Merge old trunk r2081:
+    Don't say that services cannot be killed in
+    ERR_ISCHANSERVICE message (given when trying
+    to kick or deop them), as that's not the case.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -1		branches/release-2.1/src/messages.tab (File Modified) 
+
+
+jilles      2007/03/28 16:00:16 UTC	(20070328-3313)
+  Log:
+  Merged revisions 3305 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3305 | jilles | 2007-03-28 17:30:56 +0200 (Wed, 28 Mar 2007) | 4 lines
+    
+    Merge old trunk r2059
+    Clarifications to the descriptions of umode +Q and cmode +F,
+    suggested by Ariadne@SorceryNet.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +6 -0		branches/release-2.1/doc/sgml/oper-guide/cmodes.sgml (File Modified) 
+  +4 -3		branches/release-2.1/doc/sgml/oper-guide/umodes.sgml (File Modified) 
+
+
+jilles      2007/03/28 15:57:43 UTC	(20070328-3311)
+  Log:
+  Merged revisions 3297 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3297 | jilles | 2007-03-28 16:49:48 +0200 (Wed, 28 Mar 2007) | 3 lines
+    
+    Merge old trunk r2779,r2785:
+    Show correct privilege name in a few ERR_NOPRIVS numerics.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -1		branches/release-2.1/extensions/m_ojoin.c (File Modified) 
+  +1 -1		branches/release-2.1/extensions/m_opme.c (File Modified) 
+  +2 -2		branches/release-2.1/unsupported/m_force.c (File Modified) 
+
+
+jilles      2007/03/28 15:53:49 UTC	(20070328-3309)
+  Log:
+  Merged revisions 3293 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3293 | jilles | 2007-03-28 16:33:50 +0200 (Wed, 28 Mar 2007) | 3 lines
+    
+    Merge old trunk r2294:
+    Zero out the varlist passed to substitution_* when rejecting DNSBL clients.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -1		branches/release-2.1/src/s_user.c (File Modified) 
+
+
+jilles      2007/03/28 13:13:29 UTC	(20070328-3285)
+  Log:
+  Merged revisions 3283 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3283 | jilles | 2007-03-28 15:11:30 +0200 (Wed, 28 Mar 2007) | 2 lines
+    
+    Fix /who on channels with ** in their name.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +2 -2		branches/release-2.1/modules/m_who.c (File Modified) 
+
+
+jilles      2007/03/22 23:05:10 UTC	(20070322-3279)
+  Log:
+  Update NEWS.
+  
+
+  Changes:	Modified:
+  +11 -0	branches/release-2.1/NEWS (File Modified) 
+
+
+jilles      2007/03/22 22:55:43 UTC	(20070322-3277)
+  Log:
+  Merged revisions 3275 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3275 | jilles | 2007-03-18 17:29:31 +0100 (Sun, 18 Mar 2007) | 2 lines
+    
+    Fix documentation of HIDE_SERVERS_IPS define.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +2 -2		branches/release-2.1/include/config.h.dist (File Modified) 
+
+
+jilles      2007/03/18 14:45:34 UTC	(20070318-3273)
+  Log:
+  Merged revisions 3271 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3271 | jilles | 2007-03-18 15:44:24 +0100 (Sun, 18 Mar 2007) | 2 lines
+    
+    Don't leak auth{} spoofed ip for I-line is full notice either.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -1		branches/release-2.1/src/s_conf.c (File Modified) 
+
+
+jilles      2007/03/18 14:42:02 UTC	(20070318-3269)
+  Log:
+  Merged revisions 3209 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3209 | jilles | 2007-02-11 17:54:43 +0100 (Sun, 11 Feb 2007) | 2 lines
+    
+    Make -logfile work again.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +2 -2		branches/release-2.1/src/s_log.c (File Modified) 
+
+
+jilles      2007/03/18 00:21:08 UTC	(20070318-3267)
+  Log:
+  Merged revisions 3211 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3211 | jilles | 2007-02-20 01:34:28 +0100 (Tue, 20 Feb 2007) | 17 lines
+    
+    Port over ratbox 2.2 r23507, r23624, r23626 (jilles/anfl):
+    Change TS6 JOIN processing
+    - don't send out simple modes in TS6 JOIN and TS5 SJOIN when
+      a local user joins an existing channel
+    - don't send out simple modes in TS6 JOIN and TS5 SJOIN when
+      propagating a TS6 JOIN
+    - don't interpret simple modes in an incoming TS6 JOIN
+    
+    This is to avoid desyncs when certain mode changes (e.g. -im)
+    cross with joins. A downside is that simple modes will be
+    more desynched when a JOIN creates a channel or lowers TS,
+    but that's less important.
+    
+    Update the TS6 specification to include this, and clarify
+    that TMODE can come from a server and that MODE must be
+    translated into TMODE from other servers too.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +69 -39	branches/release-2.1/doc/technical/ts6.txt (File Modified) 
+  +19 -127	branches/release-2.1/modules/core/m_join.c (File Modified) 
+
+
+jilles      2007/03/17 23:29:31 UTC	(20070317-3263)
+  Log:
+  Merged revisions 3255 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3255 | jilles | 2007-03-06 15:07:11 +0100 (Tue, 06 Mar 2007) | 4 lines
+    
+    Move username check after xline and dnsbl checks, so it
+    will not complain to opers about clients who are xlined
+    or blacklisted anyway (both of which silently reject).
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +15 -15	branches/release-2.1/src/s_user.c (File Modified) 
+
+
+jilles      2007/03/17 23:27:48 UTC	(20070317-3261)
+  Log:
+  Merged revisions 3223 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3223 | jilles | 2007-03-02 18:45:47 +0100 (Fri, 02 Mar 2007) | 3 lines
+    
+    Don't leak auth{} spoofed IP addresses in +f notices.
+    from ratbox (androsyn)
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +10 -3	branches/release-2.1/src/s_conf.c (File Modified) 
+
+
+jilles      2007/03/05 17:25:57 UTC	(20070305-3231)
+  Log:
+  Merged revisions 3227 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3227 | jilles | 2007-03-05 02:14:46 +0100 (Mon, 05 Mar 2007) | 3 lines
+    
+    Fix some cases where the size argument to strlcpy()
+    for usernames and hostnames is 1 too small.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -1		branches/release-2.1/modules/m_chghost.c (File Modified) 
+  +2 -2		branches/release-2.1/src/res.c (File Modified) 
+  +2 -2		branches/release-2.1/src/s_user.c (File Modified) 
+
+
+jilles      2007/02/24 19:42:19 UTC	(20070224-3221)
+  Log:
+  Merged revisions 3219 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3219 | jilles | 2007-02-24 20:34:28 +0100 (Sat, 24 Feb 2007) | 4 lines
+    
+    Make oper_up() take +i/-i during opering up into account
+    (e.g. no_oper_invis extension, +i in operator::umodes).
+    Remove the hack from no_oper_invis.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +0 -2		branches/release-2.1/extensions/no_oper_invis.c (File Modified) 
+  +4 -0		branches/release-2.1/src/s_user.c (File Modified) 
+
+
+jilles      2007/02/24 18:42:38 UTC	(20070224-3217)
+  Log:
+  Merged revisions 3215 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3215 | jilles | 2007-02-24 19:35:58 +0100 (Sat, 24 Feb 2007) | 4 lines
+    
+    no_oper_invis: decrement invisible count when clearing
+    invisible on a local client who has just opered up
+    oper_up() should really do this
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +2 -0		branches/release-2.1/extensions/no_oper_invis.c (File Modified) 
+
+
+jilles      2007/02/10 00:34:18 UTC	(20070210-3207)
+  Log:
+  Merged revisions 3205 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3205 | nenolod | 2007-02-09 23:18:23 +0100 (Fri, 09 Feb 2007) | 2 lines
+    
+    - fix off-by-one memory overflow error.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -5		branches/release-2.1/libcharybdis/kqueue.c (File Modified) 
+
+
+jilles      2007/02/01 01:56:17 UTC	(20070201-3199)
+  Log:
+  Update NEWS for 2.1.3.
+  
+
+  Changes:	Modified:
+  +15 -0	branches/release-2.1/NEWS (File Modified) 
+
+
+jilles      2007/02/01 01:46:08 UTC	(20070201-3197)
+  Log:
+  Merged revisions 3195 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3195 | jilles | 2007-02-01 02:44:31 +0100 (Thu, 01 Feb 2007) | 2 lines
+    
+    DNSBL keyword substitution is available as of 2.1.3.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -1		branches/release-2.1/doc/example.conf (File Modified) 
+
+
+jilles      2007/02/01 01:42:44 UTC	(20070201-3193)
+  Log:
+  Merged revisions 3173 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3173 | jilles | 2007-02-01 00:57:18 +0100 (Thu, 01 Feb 2007) | 2 lines
+    
+    Change spambot, flooder and jupe joiner notices from host to orighost.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -1		branches/release-2.1/modules/core/m_join.c (File Modified) 
+  +2 -2		branches/release-2.1/modules/core/m_message.c (File Modified) 
+  +2 -2		branches/release-2.1/src/channel.c (File Modified) 
+
+
+jilles      2007/02/01 01:35:53 UTC	(20070201-3191)
+  Log:
+  Merged revisions 3169 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3169 | jilles | 2007-01-28 23:13:18 +0100 (Sun, 28 Jan 2007) | 2 lines
+    
+    Add documentation for SASL client protocol, same as atheme doc/SASL.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  + -		branches/release-2.1/doc/sasl.txt (File Added) 
+
+
+jilles      2007/02/01 01:31:00 UTC	(20070201-3189)
+  Log:
+  Merged revisions 3167 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3167 | jilles | 2007-01-26 19:52:11 +0100 (Fri, 26 Jan 2007) | 4 lines
+    
+    Include real hostname in Closing Link message for unknown
+    connections that have sent USER. This is helpful for
+    k-lined users while not breaking server IP hiding.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +3 -1		branches/release-2.1/src/client.c (File Modified) 
+
+
+jilles      2007/02/01 01:23:02 UTC	(20070201-3187)
+  Log:
+  Initialized merge tracking via "svnmerge" with revisions "1-3160" from 
+  http://svn.atheme.org/charybdis/trunk
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+
+
+jilles      2007/02/01 01:20:05 UTC	(20070201-3185)
+  Log:
+  Removed merge tracking for "svnmerge" for 
+  http://svn.atheme.org/charybdis/trunk
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+
+
+jilles      2007/01/31 23:37:30 UTC	(20070131-3171)
+  Log:
+  Merged revisions 2097,2099,2101,2103,2105,2107,2109,2111,2113,2117,2119,2121,2182-2183,2190-2195,2204-2205,2208-2209,2238-2239,2286-2287,2296 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2097 | nenolod | 2006-09-25 09:04:23 +0200 (Mon, 25 Sep 2006) | 3 lines
+    
+    - markup engine, parses strings like "your $ip is banned from $blacklist to remove go to $removal-url"
+      incomplete (I will likely modify it to use $(ip) $(blacklist), etc)
+  ........
+    r2099 | nenolod | 2006-09-25 09:07:43 +0200 (Mon, 25 Sep 2006) | 2 lines
+    
+    - use strlcpy here, it's much safer ;)
+  ........
+    r2101 | nenolod | 2006-09-25 09:11:08 +0200 (Mon, 25 Sep 2006) | 2 lines
+    
+    - markup syntax is now "foo ${bar} baz", which means, "foo <REPLACE THIS WITH WHATEVER BAR IS MAPPED TO> baz"
+  ........
+    r2103 | nenolod | 2006-09-25 09:21:15 +0200 (Mon, 25 Sep 2006) | 2 lines
+    
+    - fix compiler warnings
+  ........
+    r2105 | nenolod | 2006-09-25 09:35:31 +0200 (Mon, 25 Sep 2006) | 2 lines
+    
+    - the markup parser now parses stuff with flying colours
+  ........
+    r2107 | nenolod | 2006-09-25 09:40:49 +0200 (Mon, 25 Sep 2006) | 2 lines
+    
+    - allow markup-based substitution on DNSBL rejection notices
+  ........
+    r2109 | nenolod | 2006-09-25 09:49:53 +0200 (Mon, 25 Sep 2006) | 12 lines
+    
+    - allow keyword substitution on DNSBL rejections, from the charybdis config file:
+    
+     * As of charybdis 3.x, you can do some keyword substitution on the rejection
+     * reason. The available keyword substitutions are:   
+     *
+     *   ${ip}           - the user's IP
+     *   ${host}         - the user's canonical hostname
+     *   ${dnsbl-host}   - the dnsbl hostname the lookup was done against
+     *   ${nick}         - the user's nickname
+     *   ${network-name} - the name of the network
+  ........
+    r2111 | nenolod | 2006-09-25 10:17:49 +0200 (Mon, 25 Sep 2006) | 2 lines
+    
+    - add m_markupfun.c, allows user to experiment with the keyword substitution engine
+  ........
+    r2113 | nenolod | 2006-09-25 13:31:40 +0200 (Mon, 25 Sep 2006) | 2 lines
+    
+    - make strlcpy more useful
+  ........
+    r2117 | nenolod | 2006-09-25 23:58:00 +0200 (Mon, 25 Sep 2006) | 2 lines
+    
+    - rename markup.[ch] to substitution.[ch]
+  ........
+    r2119 | nenolod | 2006-09-26 00:00:10 +0200 (Tue, 26 Sep 2006) | 2 lines
+    
+    markup_* -> substitution_*
+  ........
+    r2121 | nenolod | 2006-09-26 00:00:52 +0200 (Tue, 26 Sep 2006) | 2 lines
+    
+    - better describe what this does
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +12 -3	branches/release-2.1/doc/example.conf (File Modified) 
+  +183 -3	branches/release-2.1/doc/reference.conf (File Modified) 
+  + -		branches/release-2.1/extensions/m_markupfun.c (File Added) 
+  + -		branches/release-2.1/include/markup.h (File Added) 
+  + -		branches/release-2.1/include/substitution.h (File Added) 
+  +1 -0		branches/release-2.1/src/Makefile.in (File Modified) 
+  +164 -1	branches/release-2.1/src/s_user.c (File Modified) 
+  + -		branches/release-2.1/src/substitution.c (File Added) 
+
+
+jilles      2007/01/23 23:48:50 UTC	(20070123-3139)
+  Log:
+  Merged revisions 3135,3137 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3135 | jilles | 2007-01-23 22:19:14 +0100 (Tue, 23 Jan 2007) | 3 lines
+    
+    - Expand TRACE description
+    - Mention expiry time in TESTLINE
+  ........
+    r3137 | jilles | 2007-01-23 22:20:30 +0100 (Tue, 23 Jan 2007) | 2 lines
+    
+    Update copyright year for sgml docs to 2007.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -1		branches/release-2.1/doc/sgml/oper-guide/charybdis-oper-guide.sgml (File Modified) 
+  +77 -3	branches/release-2.1/doc/sgml/oper-guide/commands.sgml (File Modified) 
+
+
+jilles      2007/01/21 15:38:16 UTC	(20070121-3133)
+  Log:
+  Merged revisions 1999 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  Add river to CREDITS
+  
+  ........
+    r1999 | river | 2006-09-02 05:15:18 +0200 (Sat, 02 Sep 2006) | 2 lines
+    
+    vanity
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -0		branches/release-2.1/CREDITS (File Modified) 
+
+
+jilles      2007/01/21 15:36:31 UTC	(20070121-3131)
+  Log:
+  Merged revisions 1995,1997,2019-2020,2023-2028,2031-2032,2055-2058,2061,2063 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r1995 | river | 2006-09-02 05:06:52 +0200 (Sat, 02 Sep 2006) | 3 lines
+    
+    add "use_forward" option from +malfunc, lets admins disable chanmode +QFf
+  ........
+    r1997 | river | 2006-09-02 05:09:57 +0200 (Sat, 02 Sep 2006) | 3 lines
+    
+    - add use_forward to /info
+  ........
+    r2061 | jilles | 2006-09-23 13:51:11 +0200 (Sat, 23 Sep 2006) | 5 lines
+    
+    Call channel_modes() with &me instead of source_p when
+    sending out a JOIN and SJOIN for a local user. This
+    saves checking whether they are on the channel they
+    have just joined.
+  ........
+    r2063 | jilles | 2006-09-23 14:17:00 +0200 (Sat, 23 Sep 2006) | 6 lines
+    
+    If use_forward is disabled:
+    - hide +fFQ in 005
+    - hide +f in /mode #channel (/mode #channel f still shows it)
+    - do not send any mode changes adding +f to local clients
+      (-f ones are still sent)
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -0		branches/release-2.1/doc/example.conf (File Modified) 
+  +5 -0		branches/release-2.1/doc/reference.conf (File Modified) 
+  +1 -0		branches/release-2.1/include/s_conf.h (File Modified) 
+  +4 -3		branches/release-2.1/modules/core/m_join.c (File Modified) 
+  +1 -1		branches/release-2.1/modules/core/m_sjoin.c (File Modified) 
+  +6 -0		branches/release-2.1/modules/m_info.c (File Modified) 
+  +1 -1		branches/release-2.1/src/channel.c (File Modified) 
+  +11 -1	branches/release-2.1/src/chmode.c (File Modified) 
+  +1 -0		branches/release-2.1/src/newconf.c (File Modified) 
+  +1 -0		branches/release-2.1/src/s_conf.c (File Modified) 
+  +5 -0		branches/release-2.1/src/s_user.c (File Modified) 
+  +4 -2		branches/release-2.1/src/supported.c (File Modified) 
+
+
+jilles      2007/01/02 13:23:04 UTC	(20070102-3121)
+  Log:
+  OPME/OMODE/OJOIN: Use get_oper_name() in log message.
+  
+
+  Changes:	Modified:
+  +3 -2		branches/release-2.1/extensions/m_ojoin.c (File Modified) 
+  +2 -2		branches/release-2.1/extensions/m_omode.c (File Modified) 
+  +3 -2		branches/release-2.1/extensions/m_opme.c (File Modified) 
+
+
+jilles      2007/01/02 13:11:04 UTC	(20070102-3117)
+  Log:
+  Add accountability (wallops, log) to OKICK.
+  
+
+  Changes:	Modified:
+  +14 -0	branches/release-2.1/extensions/m_okick.c (File Modified) 
+
+
+jilles      2006/12/27 00:47:45 UTC	(20061227-3063)
+  Log:
+  Allow kline ipv6:address, unkline some.host and unkline ipv6:address without *@.
+  Similar to branches/release-2.2 r3061.
+  
+
+  Changes:	Modified:
+  +2 -2		branches/release-2.1/modules/m_kline.c (File Modified) 
+
+
+jilles      2006/12/27 00:36:54 UTC	(20061227-3059)
+  Log:
+  - Write xline to file after instead of before notifying opers and source
+  - Also notify source of failure to add xline
+  Similar to branches/release-2.2 r3057.
+  
+
+  Changes:	Modified:
+  +4 -2		branches/release-2.1/modules/m_xline.c (File Modified) 
+
+
+jilles      2006/12/27 00:25:50 UTC	(20061227-3055)
+  Log:
+  If a dline/kline/resv cannot be added to the file, send
+  the regular notices to local opers and source anyway,
+  and also warn the source (local opers were already warned).
+  Similar to branches/release-2.2 r3053.
+  
+
+  Changes:	Modified:
+  +44 -42	branches/release-2.1/src/s_conf.c (File Modified) 
+
+
+jilles      2006/12/27 00:02:32 UTC	(20061227-3051)
+  Log:
+  Port over fixes from unkline/unxline/unresv to undline.
+  Similar to branches/release-2.2 r3049.
+  
+
+  Changes:	Modified:
+  +7 -2		branches/release-2.1/modules/m_dline.c (File Modified) 
+
+
+jilles      2006/12/26 23:18:05 UTC	(20061226-3047)
+  Log:
+  Merged revisions 2915 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2915 | jilles | 2006-12-17 01:40:54 +0100 (Sun, 17 Dec 2006) | 3 lines
+    
+    In usage message, show kline.conf and xline.conf instead
+    of klines.conf and xlines.conf.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +2 -2		branches/release-2.1/src/ircd.c (File Modified) 
+
+
+jilles      2006/12/26 23:16:57 UTC	(20061226-3045)
+  Log:
+  Merged revisions 2831,2833,2853 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2831 | jilles | 2006-12-14 00:19:51 +0100 (Thu, 14 Dec 2006) | 5 lines
+    
+    unkline/unxline/unresv:
+    - if fclose on the output returns an error, treat this as a
+      write error too
+    - check if the rename from the temp file to the ban conf failed
+  ........
+    r2833 | jilles | 2006-12-14 00:39:25 +0100 (Thu, 14 Dec 2006) | 3 lines
+    
+    When adding a permanent dline/kline/xline/resv, check
+    the return value of fclose().
+  ........
+    r2853 | jilles | 2006-12-16 00:24:32 +0100 (Sat, 16 Dec 2006) | 3 lines
+    
+    Do not free xline aconf if it could not be written out.
+    It will be added to the list in memory anyway.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +7 -2		branches/release-2.1/modules/m_kline.c (File Modified) 
+  +7 -2		branches/release-2.1/modules/m_resv.c (File Modified) 
+  +12 -5	branches/release-2.1/modules/m_xline.c (File Modified) 
+  +5 -1		branches/release-2.1/src/s_conf.c (File Modified) 
+
+
+jilles      2006/12/05 13:24:19 UTC	(20061205-2813)
+  Log:
+  NEWS: Clarify effects of ip_cloaking changes a little.
+  
+
+  Changes:	Modified:
+  +2 -0		branches/release-2.1/NEWS (File Modified) 
+
+
+jilles      2006/12/05 13:18:39 UTC	(20061205-2811)
+  Log:
+  Rerun autoconf.
+  
+
+  Changes:	Modified:
+  +9 -9		branches/release-2.1/configure (File Modified) 
+
+
+jilles      2006/12/05 13:18:19 UTC	(20061205-2809)
+  Log:
+  Version bump on 2.1 branch to 2.1.2.
+  
+
+  Changes:	Modified:
+  +1 -1		branches/release-2.1/configure.ac (File Modified) 
+
+
+jilles      2006/12/05 12:47:23 UTC	(20061205-2807)
+  Log:
+  Mention r2801/r2805.
+  
+
+  Changes:	Modified:
+  +1 -0		branches/release-2.1/NEWS (File Modified) 
+
+
+jilles      2006/12/05 12:45:43 UTC	(20061205-2805)
+  Log:
+  Merged revisions 2801 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2801 | jilles | 2006-12-03 20:18:59 +0100 (Sun, 03 Dec 2006) | 3 lines
+    
+    ip_cloaking: try to avoid truncation by removing more
+    components of the hostname (except the TLD).
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +14 -2	branches/release-2.1/extensions/ip_cloaking.c (File Modified) 
+
+
+jilles      2006/12/02 20:40:54 UTC	(20061202-2793)
+  Log:
+  Update NEWS.
+  
+
+  Changes:	Modified:
+  +8 -1		branches/release-2.1/NEWS (File Modified) 
+
+
+jilles      2006/12/02 20:32:39 UTC	(20061202-2791)
+  Log:
+  Merged revisions 2781 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2781 | jilles | 2006-12-02 01:50:29 +0100 (Sat, 02 Dec 2006) | 5 lines
+    
+    Fix stupid bug: checked a hostmask against the found
+    ban instead of all exceptions, causing all host mangled
+    clients to be exempted if there was a single ban
+    exception in many cases.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +2 -2		branches/release-2.1/src/channel.c (File Modified) 
+
+
+jilles      2006/12/02 20:00:18 UTC	(20061202-2789)
+  Log:
+  Merged revisions 2773 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2773 | jilles | 2006-11-24 20:45:29 +0100 (Fri, 24 Nov 2006) | 3 lines
+    
+    user@host must be *@* for a shared{} block with flags=locops
+    (server should not be *).
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +3 -1		branches/release-2.1/doc/sgml/oper-guide/config.sgml (File Modified) 
+
+
+jilles      2006/11/27 11:45:31 UTC	(20061127-2775)
+  Log:
+  Tweak \s code a little.
+  
+
+  Changes:	Modified:
+  +1 -1		branches/release-2.1/modules/m_etrace.c (File Modified) 
+  +1 -1		branches/release-2.1/modules/m_testmask.c (File Modified) 
+  +1 -1		branches/release-2.1/modules/m_xline.c (File Modified) 
+
+
 jilles      2006/11/12 14:21:16 UTC	(20061112-2765)
   Log:
   Merged revisions 2761 via svnmerge from 

@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_opme.c 6 2005-09-10 01:02:21Z nenolod $
+ *   $Id: m_opme.c 3311 2007-03-28 15:57:43Z jilles $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -34,6 +34,7 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
+#include "s_conf.h"
 #include "s_newconf.h"
 
 static int mo_opme(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
@@ -45,7 +46,7 @@ struct Message opme_msgtab = {
 
 mapi_clist_av1 opme_clist[] = { &opme_msgtab, NULL };
 
-DECLARE_MODULE_AV1(opme, NULL, NULL, opme_clist, NULL, NULL, "$Revision: 6 $");
+DECLARE_MODULE_AV1(opme, NULL, NULL, opme_clist, NULL, NULL, "$Revision: 3311 $");
 
 
 /*
@@ -63,7 +64,7 @@ mo_opme(struct Client *client_p, struct Client *source_p, int parc, const char *
 	/* admins only */
 	if(!IsOperAdmin(source_p))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "opme");
+		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "admin");
 		return 0;
 	}
 
@@ -96,8 +97,8 @@ mo_opme(struct Client *client_p, struct Client *source_p, int parc, const char *
 	sendto_wallops_flags(UMODE_WALLOP, &me,
 			     "OPME called for [%s] by %s!%s@%s",
 			     parv[1], source_p->name, source_p->username, source_p->host);
-	ilog(L_MAIN, "OPME called for [%s] by %s!%s@%s",
-	     parv[1], source_p->name, source_p->username, source_p->host);
+	ilog(L_MAIN, "OPME called for [%s] by %s",
+	     parv[1], get_oper_name(source_p));
 
 	/* dont send stuff for local channels remotely. */
 	if(*chptr->chname != '&')

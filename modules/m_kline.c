@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kline.c 555 2006-01-23 15:11:11Z nenolod $
+ *  $Id: m_kline.c 3063 2006-12-27 00:47:45Z jilles $
  */
 
 #include "stdinc.h"
@@ -65,7 +65,7 @@ struct Message unkline_msgtab = {
 };
 
 mapi_clist_av1 kline_clist[] = { &kline_msgtab, &unkline_msgtab, NULL };
-DECLARE_MODULE_AV1(kline, NULL, NULL, kline_clist, NULL, NULL, "$Revision: 555 $");
+DECLARE_MODULE_AV1(kline, NULL, NULL, kline_clist, NULL, NULL, "$Revision: 3063 $");
 
 /* Local function prototypes */
 static int find_user_host(struct Client *source_p, const char *userhost, char *user, char *host);
@@ -361,7 +361,7 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 		return 0;
 	}
 
-	if((host = strchr(h, '@')) || *h == '*')
+	if((host = strchr(h, '@')) || *h == '*' || strchr(h, '.') || strchr(h, ':'))
 	{
 		/* Explicit user@host mask given */
 
@@ -574,7 +574,7 @@ find_user_host(struct Client *source_p, const char *userhost, char *luser, char 
 		/* no '@', no '.', so its not a user@host or host, therefore
 		 * its a nick, which support was removed for.
 		 */
-		if(strchr(userhost, '.') == NULL)
+		if(strchr(userhost, '.') == NULL && strchr(userhost, ':') == NULL)
 			return 0;
 
 		luser[0] = '*';	/* no @ found, assume its *@somehost */
@@ -792,7 +792,8 @@ remove_permkline_match(struct Client *source_p, const char *host, const char *us
 	}
 
 	fclose(in);
-	fclose(out);
+	if (fclose(out))
+		error_on_write = YES;
 
 	/* The result of the rename should be checked too... oh well */
 	/* If there was an error on a write above, then its been reported
@@ -814,7 +815,11 @@ remove_permkline_match(struct Client *source_p, const char *host, const char *us
 		return;
 	}
 		
-	(void) rename(temppath, filename);
+	if (rename(temppath, filename))
+	{
+		sendto_one_notice(source_p, ":Couldn't rename temp file, aborted");
+		return;
+	}
 	rehash_bans(0);
 
 	sendto_one_notice(source_p, ":K-Line for [%s@%s] is removed",

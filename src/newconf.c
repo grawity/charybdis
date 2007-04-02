@@ -1,5 +1,5 @@
 /* This code is in the public domain.
- * $Id: newconf.c 1853 2006-08-24 18:30:52Z jilles $
+ * $Id: newconf.c 3131 2007-01-21 15:36:31Z jilles $
  */
 
 #include "stdinc.h"
@@ -2095,6 +2095,7 @@ static struct ConfEntry conf_channel_table[] =
 	{ "use_except",		CF_YESNO, NULL, 0, &ConfigChannel.use_except		},
 	{ "use_invex",		CF_YESNO, NULL, 0, &ConfigChannel.use_invex		},
 	{ "use_knock",		CF_YESNO, NULL, 0, &ConfigChannel.use_knock		},
+	{ "use_forward",	CF_YESNO, NULL, 0, &ConfigChannel.use_forward		},
 	{ "\0", 		0, 	  NULL, 0, NULL }
 };
 
