@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c 3047 2006-12-26 23:18:05Z jilles $
+ *  $Id: ircd.c 3382 2007-04-03 22:37:30Z jilles $
  */
 
 #include "stdinc.h"
@@ -168,10 +168,10 @@ ircd_die_cb(const char *str)
 static void
 init_sys(void)
 {
-#if defined(RLIMIT_FD_MAX) && defined(HAVE_SYS_RLIMIT_H)
+#if defined(RLIMIT_NOFILE) && defined(HAVE_SYS_RESOURCE_H)
 	struct rlimit limit;
 
-	if(!getrlimit(RLIMIT_FD_MAX, &limit))
+	if(!getrlimit(RLIMIT_NOFILE, &limit))
 	{
 
 		if(limit.rlim_max < MAXCONNECTIONS)
@@ -184,13 +184,13 @@ init_sys(void)
 		}
 
 		limit.rlim_cur = limit.rlim_max;	/* make soft limit the max */
-		if(setrlimit(RLIMIT_FD_MAX, &limit) == -1)
+		if(setrlimit(RLIMIT_NOFILE, &limit) == -1)
 		{
 			fprintf(stderr, "error setting max fd's to %ld\n", (long) limit.rlim_cur);
 			exit(EXIT_FAILURE);
 		}
 	}
-#endif /* RLIMIT_FD_MAX */
+#endif /* RLIMIT_NOFILE */
 }
 
 static int

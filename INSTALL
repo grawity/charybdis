@@ -1,6 +1,6 @@
                             Hybrid INSTALL Document
 
-   $Id: INSTALL 1837 2006-08-22 14:05:58Z nenolod $
+   $Id: INSTALL 3386 2007-04-03 22:50:55Z jilles $
 
    Copyright (c) 2001 by ircd-hybrid team
    Copyright (c) 2002-2004 ircd-ratbox development team
@@ -108,13 +108,13 @@
           * 
 
             --with-maxclients - Sets the maximum number of clients support by
-            the server. Note that this also twiddles the HARD_FDLIMIT_ define
-            so it is no longer necessary to modify include/config.h for this.
-            If HARD_FDLIMIT_ ends up being larger that FD_SETSIZE when using
-            select() for your I/O loop, s_bsd_select.c will refuse to compile
-            (and tell you to use poll instead). Take this error's advice and
-            use --enable-poll or something a bit more efficient. You'll be
-            happier at the end of the day for it.
+            the server. The number of file descriptors available (rlimit) must
+            exceed this by at least 70 (for log files, ident, etc); if you
+            must tweak this 70 change MAX_BUFFER in config.h.
+            If FD_SETSIZE is exceeded when using select() for your I/O loop,
+            select.c will refuse to compile (and tell you to use poll instead).
+            Take this error's advice and use --enable-poll or something a bit
+            more efficient. You'll be happier at the end of the day for it.
 
    3. 
 
