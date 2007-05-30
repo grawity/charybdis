@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h 1853 2006-08-24 18:30:52Z jilles $
+ *  $Id: s_conf.h 3460 2007-05-18 20:31:33Z jilles $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -250,6 +250,7 @@ struct config_file_entry
 	int default_umodes;
 	int global_snotices;
 	int operspy_dont_care_user_info;
+	int max_unknown_ip;
 };
 
 struct config_channel_entry
@@ -257,6 +258,7 @@ struct config_channel_entry
 	int use_except;
 	int use_invex;
 	int use_knock;
+	int use_forward;
 	int knock_delay;
 	int knock_delay_channel;
 	int max_bans;
@@ -267,7 +269,6 @@ struct config_channel_entry
 	int default_split_server_count;
 	int default_split_user_count;
 	int burst_topicwho;
-	int invite_ops_only;
 	int kick_on_split_riding;
 };
 
@@ -297,6 +298,8 @@ struct server_info
 #ifdef IPV6
 	int specific_ipv6_vhost;
 #endif
+
+	int max_clients;
 };
 
 struct admin_info
@@ -349,8 +352,6 @@ extern int attach_conf(struct Client *, struct ConfItem *);
 extern int check_client(struct Client *client_p, struct Client *source_p, const char *);
 
 extern int detach_conf(struct Client *);
-
-extern struct ConfItem *conf_connect_allowed(struct sockaddr *addr, int);
 
 extern struct ConfItem *find_tkline(const char *, const char *, struct sockaddr *);
 extern char *show_iline_prefix(struct Client *, struct ConfItem *, char *);

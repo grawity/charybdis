@@ -29,7 +29,7 @@
  *  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: m_etrace.c 1889 2006-08-29 13:49:29Z jilles $
+ *  $Id: m_etrace.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -70,7 +70,7 @@ struct Message masktrace_msgtab = {
 };
 
 mapi_clist_av1 etrace_clist[] = { &etrace_msgtab, &chantrace_msgtab, &masktrace_msgtab, NULL };
-DECLARE_MODULE_AV1(etrace, NULL, NULL, etrace_clist, NULL, NULL, "$Revision: 1889 $");
+DECLARE_MODULE_AV1(etrace, NULL, NULL, etrace_clist, NULL, NULL, "$Revision: 3161 $");
 
 static void do_etrace(struct Client *source_p, int ipv4, int ipv6);
 static void do_etrace_full(struct Client *source_p);
@@ -301,7 +301,7 @@ match_masktrace(struct Client *source_p, dlink_list *list,
 			char *new = tmp;
 	                while(*orig)
         	        {
-                	        if(*orig == '\\')
+				if(*orig == '\\' && *(orig + 1) != '\0')
                        		{
 	                                if(*(orig + 1) == 's')
 	                                {
@@ -393,7 +393,7 @@ mo_masktrace(struct Client *client_p, struct Client *source_p, int parc,
 
 	if((hostname = strchr(name, '@')) == NULL)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Invalid parameters", me.name, source_p->name);
+		sendto_one_notice(source_p, ":Invalid parameters");
 		return 0;
 	}
 
@@ -408,7 +408,7 @@ mo_masktrace(struct Client *client_p, struct Client *source_p, int parc,
 
 	if(EmptyString(username) || EmptyString(hostname))
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Invalid parameters", me.name, source_p->name);
+		sendto_one_notice(source_p, ":Invalid parameters");
 		return 0;
 	}
 			

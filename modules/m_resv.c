@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_resv.c 494 2006-01-15 16:08:28Z jilles $
+ *  $Id: m_resv.c 3045 2006-12-26 23:16:57Z jilles $
  */
 
 #include "stdinc.h"
@@ -56,7 +56,7 @@ struct Message unresv_msgtab = {
 };
 
 mapi_clist_av1 resv_clist[] = {	&resv_msgtab, &unresv_msgtab, NULL };
-DECLARE_MODULE_AV1(resv, NULL, NULL, resv_clist, NULL, NULL, "$Revision: 494 $");
+DECLARE_MODULE_AV1(resv, NULL, NULL, resv_clist, NULL, NULL, "$Revision: 3045 $");
 
 static void parse_resv(struct Client *source_p, const char *name,
 			const char *reason, int temp_time);
@@ -579,7 +579,8 @@ remove_resv(struct Client *source_p, const char *name)
 	}
 
 	fclose(in);
-	fclose(out);
+	if (fclose(out))
+		error_on_write = YES;
 
 	if(error_on_write)
 	{
@@ -596,7 +597,11 @@ remove_resv(struct Client *source_p, const char *name)
 		return;
 	}
 
-	(void) rename(temppath, filename);
+	if (rename(temppath, filename))
+	{
+		sendto_one_notice(source_p, ":Couldn't rename temp file, aborted");
+		return;
+	}
 	rehash_bans(0);
 
 	sendto_one_notice(source_p, ":RESV for [%s] is removed", name);

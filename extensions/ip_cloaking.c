@@ -1,4 +1,4 @@
-/* $Id: ip_cloaking.c 1871 2006-08-27 15:36:00Z jilles $ */
+/* $Id: ip_cloaking.c 2805 2006-12-05 12:45:43Z jilles $ */
 
 #include "stdinc.h"
 #include "modules.h"
@@ -42,7 +42,7 @@ mapi_hfn_list_av1 ip_cloaking_hfnlist[] = {
 };
 
 DECLARE_MODULE_AV1(ip_cloaking, _modinit, _moddeinit, NULL, NULL,
-			ip_cloaking_hfnlist, "$Revision: 1871 $");
+			ip_cloaking_hfnlist, "$Revision: 2805 $");
 
 static void
 distribute_hostchange(struct Client *client)
@@ -75,6 +75,8 @@ do_host_cloak(const char *inbuf, char *outbuf, int ipmask)
 	int cyc;
 	unsigned int hosthash = 1, hosthash2 = 1;
 	unsigned int maxcycle = strlen(inbuf); 	
+	int len1;
+	const char *rest, *next;
 
 	for (cyc = 0; cyc < maxcycle - 2; cyc += 2)
 		hosthash *= (unsigned int) inbuf[cyc];
@@ -91,8 +93,18 @@ do_host_cloak(const char *inbuf, char *outbuf, int ipmask)
 	hosthash2 += (hosthash / KEY);
 
 	if (ipmask == 0)
-		ircsnprintf(outbuf, HOSTLEN, "%s-%X%X%s",
-			ServerInfo.network_name, hosthash2, hosthash, strchr(inbuf, '.'));
+	{
+		ircsnprintf(outbuf, HOSTLEN, "%s-%X%X",
+			ServerInfo.network_name, hosthash2, hosthash);
+		len1 = strlen(outbuf);
+		rest = strchr(inbuf, '.');
+		if (rest == NULL)
+			rest = ".";
+		/* try to avoid truncation -- jilles */
+		while (len1 + strlen(rest) >= HOSTLEN && (next = strchr(rest + 1, '.')) != NULL)
+			rest = next;
+		strlcat(outbuf, rest, HOSTLEN);
+	}
 	else
 		ircsnprintf(outbuf, HOSTLEN, "%X%X.%s",
 			hosthash2, hosthash, ServerInfo.network_name);

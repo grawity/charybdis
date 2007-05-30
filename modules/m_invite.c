@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_invite.c 718 2006-02-08 20:26:58Z jilles $
+ *  $Id: m_invite.c 3438 2007-05-06 14:46:45Z jilles $
  */
 
 #include "stdinc.h"
@@ -48,7 +48,7 @@ struct Message invite_msgtab = {
 	{mg_unreg, {m_invite, 3}, {m_invite, 3}, mg_ignore, mg_ignore, {m_invite, 3}}
 };
 mapi_clist_av1 invite_clist[] = { &invite_msgtab, NULL };
-DECLARE_MODULE_AV1(invite, NULL, NULL, invite_clist, NULL, NULL, "$Revision: 718 $");
+DECLARE_MODULE_AV1(invite, NULL, NULL, invite_clist, NULL, NULL, "$Revision: 3438 $");
 
 static void add_invite(struct Channel *, struct Client *);
 
@@ -70,9 +70,14 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	if((target_p = find_person(parv[1])) == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHNICK, 
-				   form_str(ERR_NOSUCHNICK), 
-				   IsDigit(parv[1][0]) ? "*" : parv[1]);
+		if(!MyClient(source_p) && IsDigit(parv[1][0]))
+			sendto_one_numeric(source_p, ERR_NOSUCHNICK, 
+					   "* :Target left IRC. Failed to invite to %s", 
+					   parv[2]);
+		else
+			sendto_one_numeric(source_p, ERR_NOSUCHNICK, 
+					   form_str(ERR_NOSUCHNICK), 
+					   parv[1]);
 		return 0;
 	}
 
@@ -125,23 +130,23 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 		return 0;
 	}
 
-	/* only store invites for +i channels */
-	/* if the invite could allow someone to join who otherwise could not,
-	 * unconditionally require ops, unless the channel is +g */
-	if(ConfigChannel.invite_ops_only || (chptr->mode.mode & MODE_INVITEONLY))
+	/* unconditionally require ops, unless the channel is +g */
+	/* treat remote clients as chanops */
+	if(MyClient(source_p) && !is_chanop(msptr) &&
+			!(chptr->mode.mode & MODE_FREEINVITE))
 	{
-		/* treat remote clients as chanops */
-		if(MyClient(source_p) && !is_chanop(msptr) &&
-				!(chptr->mode.mode & MODE_FREEINVITE))
-		{
-			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-				   me.name, source_p->name, parv[2]);
-			return 0;
-		}
-
-		if(chptr->mode.mode & MODE_INVITEONLY)
-			store_invite = 1;
+		sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
+			   me.name, source_p->name, parv[2]);
+		return 0;
 	}
+
+	/* store invites when they could affect the ability to join
+	 * for +l/+j just check if the mode is set, this varies over time
+	 */
+	if(chptr->mode.mode & MODE_INVITEONLY ||
+			(chptr->mode.mode & MODE_REGONLY && EmptyString(target_p->user->suser)) ||
+			chptr->mode.limit || chptr->mode.join_num)
+		store_invite = 1;
 
 	if(MyConnect(source_p))
 	{

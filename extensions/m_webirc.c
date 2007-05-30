@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_webirc.c 2757 2006-11-10 22:58:15Z jilles $
+ *  $Id: m_webirc.c 3458 2007-05-18 19:51:22Z jilles $
  */
 /* Usage:
  * auth {
@@ -54,12 +54,13 @@
 #include "s_serv.h"
 #include "hash.h"
 #include "s_conf.h"
+#include "reject.h"
 
 static int mr_webirc(struct Client *, struct Client *, int, const char **);
 
 struct Message webirc_msgtab = {
 	"WEBIRC", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
-	{{mr_webirc, 4}, mg_reg, mg_ignore, mg_ignore, mg_ignore, mg_reg}
+	{{mr_webirc, 5}, mg_reg, mg_ignore, mg_ignore, mg_ignore, mg_reg}
 };
 
 mapi_clist_av1 webirc_clist[] = { &webirc_msgtab, NULL };
@@ -125,6 +126,7 @@ mr_webirc(struct Client *client_p, struct Client *source_p, int parc, const char
 	else
 		strlcpy(source_p->host, source_p->sockhost, sizeof(source_p->host));
 	
+	del_unknown_ip(source_p);
 	inetpton_sock(parv[4], (struct sockaddr *)&source_p->localClient->ip);
 
 	/* Check dlines now, k/glines will be checked on registration */

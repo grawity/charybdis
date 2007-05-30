@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 2023 2006-09-02 23:47:27Z jilles $
+ *  $Id: s_user.c 3446 2007-05-14 22:21:16Z jilles $
  */
 
 #include "stdinc.h"
@@ -56,6 +56,7 @@
 #include "monitor.h"
 #include "snomask.h"
 #include "blacklist.h"
+#include "substitution.h"
 
 static void report_and_set_user_flags(struct Client *, struct ConfItem *);
 void user_welcome(struct Client *source_p);
@@ -64,6 +65,7 @@ extern char *crypt();
 
 char umodebuf[128];
 
+static int orphaned_umodes = 0;
 int user_modes[256] = {
 	/* 0x00 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x0F */
 	/* 0x10 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x1F */
@@ -299,9 +301,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 
 	if(!valid_hostname(source_p->host))
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** Notice -- You have an illegal character in your hostname",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** Notice -- You have an illegal character in your hostname");
 
 		strlcpy(source_p->host, source_p->sockhost, sizeof(source_p->host));
 
@@ -328,9 +328,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		if(IsNeedIdentd(aconf))
 		{
 			ServerStats->is_ref++;
-			sendto_one(source_p,
-				   ":%s NOTICE %s :*** Notice -- You need to install identd to use this server",
-				   me.name, client_p->name);
+			sendto_one_notice(source_p, ":*** Notice -- You need to install identd to use this server");
 			exit_client(client_p, source_p, &me, "Install identd");
 			return (CLIENT_EXITED);
 		}
@@ -357,9 +355,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	if(IsNeedSasl(aconf) && !*user->suser)
 	{
 		ServerStats->is_ref++;
-		sendto_one(source_p,
-				":%s NOTICE %s :*** Notice -- You need to identify via SASL to use this server",
-				me.name, client_p->name);
+		sendto_one_notice(source_p, ":*** Notice -- You need to identify via SASL to use this server");
 		exit_client(client_p, source_p, &me, "SASL access only");
 		return (CLIENT_EXITED);
 	}
@@ -406,10 +402,8 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	 *   -Taner
 	 */
 	/* Except "F:" clients */
-	if(((dlink_list_length(&lclient_list) + 1) >= 
-	   ((unsigned long)GlobalSetOptions.maxclients + MAX_BUFFER) ||
-           (dlink_list_length(&lclient_list) + 1) >= 
-	    ((unsigned long)GlobalSetOptions.maxclients - 5)) && !(IsExemptLimits(source_p)))
+	if(dlink_list_length(&lclient_list) >=
+	    (unsigned long)GlobalSetOptions.maxclients && !IsExemptLimits(source_p))
 	{
 		sendto_realops_snomask(SNO_FULL, L_ALL,
 				     "Too many clients, rejecting %s[%s].", source_p->name, source_p->host);
@@ -418,21 +412,6 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		exit_client(client_p, source_p, &me, "Sorry, server is full - try later");
 		return (CLIENT_EXITED);
 	}
-
-	/* valid user name check */
-
-	if(!valid_username(source_p->username))
-	{
-		sendto_realops_snomask(SNO_REJ, L_ALL,
-				     "Invalid username: %s (%s@%s)",
-				     source_p->name, source_p->username, source_p->host);
-		ServerStats->is_ref++;
-		ircsprintf(tmpstr2, "Invalid username [%s]", source_p->username);
-		exit_client(client_p, source_p, &me, tmpstr2);
-		return (CLIENT_EXITED);
-	}
-
-	/* end of valid user name check */
 
 	/* kline exemption extends to xline too */
 	if(!IsExemptKline(source_p) &&
@@ -452,10 +431,22 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 					source_p->sockhost, source_p->preClient->dnsbl_listed->host);
 		else
 		{
+			dlink_list varlist = { NULL, NULL, 0 };
+
+			substitution_append_var(&varlist, "nick", source_p->name);
+			substitution_append_var(&varlist, "ip", source_p->sockhost);
+			substitution_append_var(&varlist, "host", source_p->host);
+			substitution_append_var(&varlist, "dnsbl-host", source_p->preClient->dnsbl_listed->host);
+			substitution_append_var(&varlist, "network-name", ServerInfo.network_name);
+
 			ServerStats->is_ref++;
+
 			sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
 					me.name, source_p->name,
-					source_p->preClient->dnsbl_listed->reject_reason);
+					substitution_parse(source_p->preClient->dnsbl_listed->reject_reason, &varlist));
+
+			substitution_free(&varlist);
+
 			sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s",
 					source_p->sockhost, source_p->preClient->dnsbl_listed->host);
 			source_p->preClient->dnsbl_listed->hits++;
@@ -464,6 +455,21 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 			return CLIENT_EXITED;
 		}
 	}
+
+	/* valid user name check */
+
+	if(!valid_username(source_p->username))
+	{
+		sendto_realops_snomask(SNO_REJ, L_ALL,
+				     "Invalid username: %s (%s@%s)",
+				     source_p->name, source_p->username, source_p->host);
+		ServerStats->is_ref++;
+		ircsprintf(tmpstr2, "Invalid username [%s]", source_p->username);
+		exit_client(client_p, source_p, &me, tmpstr2);
+		return (CLIENT_EXITED);
+	}
+
+	/* end of valid user name check */
 
 	/* Store original hostname -- jilles */
 	strlcpy(source_p->orighost, source_p->host, HOSTLEN + 1);
@@ -478,9 +484,18 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 			SetDynSpoof(source_p);
 	}
 
-	if(IsAnyDead(client_p))
+	source_p->umodes |= ConfigFileEntry.default_umodes & ~ConfigFileEntry.oper_only_umodes & ~orphaned_umodes;
+
+	call_hook(h_new_local_user, source_p);
+
+	/* If they have died in send_* or were thrown out by the
+	 * new_local_user hook don't do anything. */
+	if(IsAnyDead(source_p))
 		return CLIENT_EXITED;
 
+	/* To avoid inconsistencies, do not abort the registration
+	 * starting from this point -- jilles
+	 */
 	inetntop_sock((struct sockaddr *)&source_p->localClient->ip, ipaddr, sizeof(ipaddr));
 
 	sendto_realops_snomask(SNO_CCONN, L_ALL,
@@ -498,10 +513,6 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 			show_ip(NULL, source_p) ? source_p->localClient->fullcaps : "<hidden> <hidden>",
 			source_p->info);
 
-	/* If they have died in send_* don't do anything. */
-	if(IsAnyDead(source_p))
-		return CLIENT_EXITED;
-
 	add_to_hostname_hash(source_p->orighost, source_p);
 
 	/* Allocate a UID if it was not previously allocated.
@@ -513,12 +524,11 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		add_to_id_hash(source_p->id, source_p);
 	}
 
-	source_p->umodes |= ConfigFileEntry.default_umodes & ~ConfigFileEntry.oper_only_umodes;
-
 	if (source_p->umodes & UMODE_INVISIBLE)
 		Count.invisi++;
 
 	s_assert(!IsClient(source_p));
+	del_unknown_ip(source_p);
 	dlinkMoveNode(&source_p->localClient->tnode, &unknown_list, &lclient_list);
 	SetClient(source_p);
 
@@ -545,8 +555,6 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	/* they get a reduced limit */
 	if(find_tgchange(source_p->sockhost))
 		USED_TARGETS(source_p) = 6;
-
-	call_hook(h_new_local_user, source_p);
 
 	monitor_signon(source_p);
 	user_welcome(source_p);
@@ -798,18 +806,14 @@ report_and_set_user_flags(struct Client *source_p, struct ConfItem *aconf)
 	/* If this user is being spoofed, tell them so */
 	if(IsConfDoSpoofIp(aconf))
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** Spoofing your IP. congrats.",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** Spoofing your IP. congrats.");
 	}
 
 	/* If this user is in the exception class, Set it "E lined" */
 	if(IsConfExemptKline(aconf))
 	{
 		SetExemptKline(source_p);
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You are exempt from K/D/G/X lines. congrats.",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** You are exempt from K/D/G/X lines. congrats.");
 	}
 
 	if(IsConfExemptGline(aconf))
@@ -818,74 +822,56 @@ report_and_set_user_flags(struct Client *source_p, struct ConfItem *aconf)
 
 		/* dont send both a kline and gline exempt notice */
 		if(!IsConfExemptKline(aconf))
-			sendto_one(source_p,
-				   ":%s NOTICE %s :*** You are exempt from G lines.",
-				   me.name, source_p->name);
+			sendto_one_notice(source_p, ":*** You are exempt from G lines.");
 	}
 
 	if(IsConfExemptDNSBL(aconf))
 		/* kline exempt implies this, don't send both */
 		if(!IsConfExemptKline(aconf))
-			sendto_one(source_p,
-				   ":%s NOTICE %s :*** You are exempt from DNS blacklists.",
-				   me.name, source_p->name);
+			sendto_one_notice(source_p, ":*** You are exempt from DNS blacklists.");
 
 	/* If this user is exempt from user limits set it F lined" */
 	if(IsConfExemptLimits(aconf))
 	{
 		SetExemptLimits(source_p);
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You are exempt from user limits. congrats.",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, "*** You are exempt from user limits. congrats.");
 	}
 
 	/* If this user is exempt from idle time outs */
 	if(IsConfIdlelined(aconf))
 	{
 		SetIdlelined(source_p);
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You are exempt from idle limits. congrats.",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** You are exempt from idle limits. congrats.");
 	}
 
 	if(IsConfExemptFlood(aconf))
 	{
 		SetExemptFlood(source_p);
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You are exempt from flood limits.",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** You are exempt from flood limits.");
 	}
 
 	if(IsConfExemptSpambot(aconf))
 	{
 		SetExemptSpambot(source_p);
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You are exempt from spambot checks.",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** You are exempt from spambot checks.");
 	}
 
 	if(IsConfExemptJupe(aconf))
 	{
 		SetExemptJupe(source_p);
-		sendto_one(source_p,
-				":%s NOTICE %s :*** You are exempt from juped channel warnings.",
-				me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** You are exempt from juped channel warnings.");
 	}
 
 	if(IsConfExemptResv(aconf))
 	{
 		SetExemptResv(source_p);
-		sendto_one(source_p,
-				":%s NOTICE %s :*** You are exempt from resvs.",
-				me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** You are exempt from resvs.");
 	}
 
 	if(IsConfExemptShide(aconf))
 	{
 		SetExemptShide(source_p);
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You are exempt from serverhiding.",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** You are exempt from serverhiding.");
 	}
 }
 
@@ -955,10 +941,12 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 				*m++ = (char) i;
 
 		*m = '\0';
-		sendto_one(source_p, form_str(RPL_UMODEIS), me.name, source_p->name, buf);
+		sendto_one_numeric(source_p, RPL_UMODEIS, form_str(RPL_UMODEIS), buf);
+
 		if (source_p->snomask != 0)
-			sendto_one(source_p, form_str(RPL_SNOMASK), me.name, source_p->name,
+			sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),
 				construct_snobuf(source_p->snomask));
+
 		return 0;
 	}
 
@@ -1062,11 +1050,17 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 			}
 			/* FALLTHROUGH */
 		default:
+			if (MyConnect(source_p) && *pm == 'Q' && !ConfigChannel.use_forward) {
+				badflag = YES;
+				break;
+			}
+
 			if((flag = user_modes[(unsigned char) *pm]))
 			{
 				if(MyConnect(source_p)
-				   && !IsOper(source_p)
-				   && (ConfigFileEntry.oper_only_umodes & flag))
+						&& ((!IsOper(source_p)
+							&& (ConfigFileEntry.oper_only_umodes & flag))
+						|| (orphaned_umodes & flag)))
 				{
 					if (what == MODE_ADD || source_p->umodes & flag)
 						badflag = YES;
@@ -1092,23 +1086,20 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 
 	if(MyClient(source_p) && (source_p->snomask & SNO_NCHANGE) && !IsOperN(source_p))
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You need oper and N flag for +s +n", me.name, parv[0]);
+		sendto_one_notice(source_p, ":*** You need oper and N flag for +s +n");
 		source_p->snomask &= ~SNO_NCHANGE;	/* only tcm's really need this */
 	}
 
 	if(MyClient(source_p) && (source_p->umodes & UMODE_OPERWALL) && !IsOperOperwall(source_p))
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You need oper and operwall flag for +z", me.name, parv[0]);
+		sendto_one_notice(source_p, ":*** You need oper and operwall flag for +z");
 		source_p->umodes &= ~UMODE_OPERWALL;
 	}
 
 	if(MyConnect(source_p) && (source_p->umodes & UMODE_ADMIN) &&
 	   (!IsOperAdmin(source_p) || IsOperHiddenAdmin(source_p)))
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You need oper and A flag for +a", me.name, parv[0]);
+		sendto_one_notice(source_p, ":*** You need oper and A flag for +a");
 		source_p->umodes &= ~UMODE_ADMIN;
 	}
 
@@ -1128,7 +1119,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 	 */
 	send_umode_out(client_p, source_p, setflags);
 	if (showsnomask && MyConnect(source_p))
-		sendto_one(source_p, form_str(RPL_SNOMASK), me.name, source_p->name,
+		sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),
 			construct_snobuf(source_p->snomask));
 
 	return (0);
@@ -1228,14 +1219,11 @@ send_umode_out(struct Client *client_p, struct Client *source_p, int old)
 void
 user_welcome(struct Client *source_p)
 {
-	sendto_one(source_p, form_str(RPL_WELCOME), me.name, source_p->name,
-		   ServerInfo.network_name, source_p->name);
-	sendto_one(source_p, form_str(RPL_YOURHOST), me.name,
-		   source_p->name,
+	sendto_one_numeric(source_p, RPL_WELCOME, form_str(RPL_WELCOME), ServerInfo.network_name, source_p->name);
+	sendto_one_numeric(source_p, RPL_YOURHOST, form_str(RPL_YOURHOST),
 		   get_listener_name(source_p->localClient->listener), ircd_version);
-
-	sendto_one(source_p, form_str(RPL_CREATED), me.name, source_p->name, creation);
-	sendto_one(source_p, form_str(RPL_MYINFO), me.name, source_p->name, me.name, ircd_version, umodebuf);
+	sendto_one_numeric(source_p, RPL_CREATED, form_str(RPL_CREATED), creation);
+	sendto_one_numeric(source_p, RPL_MYINFO, form_str(RPL_MYINFO), me.name, ircd_version, umodebuf);
 
 	show_isupport(source_p);
 
@@ -1243,13 +1231,8 @@ user_welcome(struct Client *source_p)
 
 	if(ConfigFileEntry.short_motd)
 	{
-		sendto_one(source_p,
-			   "NOTICE %s :*** Notice -- motd was last changed at %s",
-			   source_p->name, user_motd_changed);
-
-		sendto_one(source_p,
-			   "NOTICE %s :*** Notice -- Please read the motd if you haven't read it",
-			   source_p->name);
+		sendto_one_notice(source_p, ":*** Notice -- motd was last changed at %s", user_motd_changed);
+		sendto_one_notice(source_p, ":*** Notice -- Please read the motd if you haven't read it");
 
 		sendto_one(source_p, form_str(RPL_MOTDSTART), 
 			   me.name, source_p->name, me.name);
@@ -1323,15 +1306,40 @@ oper_up(struct Client *source_p, struct oper_conf *oper_p)
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s (%s@%s) is now an operator", source_p->name,
 			     source_p->username, source_p->host);
+	if(!(old & UMODE_INVISIBLE) && IsInvisible(source_p))
+		++Count.invisi;
+	if((old & UMODE_INVISIBLE) && !IsInvisible(source_p))
+		--Count.invisi;
 	send_umode_out(source_p, source_p, old);
-	sendto_one(source_p, form_str(RPL_SNOMASK), me.name, source_p->name,
+	sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),
 		   construct_snobuf(source_p->snomask));
 	sendto_one(source_p, form_str(RPL_YOUREOPER), me.name, source_p->name);
-	sendto_one(source_p, ":%s NOTICE %s :*** Oper privs are %s", me.name,
-		   source_p->name, get_oper_privs(oper_p->flags));
+	sendto_one_notice(source_p, ":*** Oper privs are %s", get_oper_privs(oper_p->flags));
 	send_oper_motd(source_p);
 
 	return (1);
+}
+
+/*
+ * find_umode_slot
+ *
+ * inputs       - NONE
+ * outputs      - an available umode bitmask or
+ *                0 if no umodes are available
+ * side effects - NONE
+ */
+unsigned int
+find_umode_slot(void)
+{
+	unsigned int all_umodes = 0, my_umode = 0, i;
+
+	for (i = 0; i < 128; i++)
+		all_umodes |= user_modes[i];
+
+	for (my_umode = 1; my_umode && (all_umodes & my_umode);
+		my_umode <<= 1);
+
+	return my_umode;
 }
 
 void
@@ -1339,12 +1347,31 @@ construct_umodebuf(void)
 {
 	int i;
 	char *ptr = umodebuf;
+	static int prev_user_modes[128];
 
 	*ptr = '\0';
 
 	for (i = 0; i < 128; i++)
+	{
+		if (prev_user_modes[i] != 0 && prev_user_modes[i] != user_modes[i])
+		{
+			if (user_modes[i] == 0)
+			{
+				orphaned_umodes |= prev_user_modes[i];
+				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Umode +%c is now orphaned", i);
+			}
+			else
+			{
+				orphaned_umodes &= ~prev_user_modes[i];
+				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Orphaned umode +%c is picked up by module", i);
+			}
+			user_modes[i] = prev_user_modes[i];
+		}
+		else
+			prev_user_modes[i] = user_modes[i];
 		if (user_modes[i])
 			*ptr++ = (char) i;
+	}
 
 	*ptr++ = '\0';
 }
@@ -1424,8 +1451,8 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 				target_p->host, nick);
 	}
 
-	strlcpy(target_p->username, user, USERLEN);
-	strlcpy(target_p->host, host, HOSTLEN);
+	strlcpy(target_p->username, user, sizeof target_p->username);
+	strlcpy(target_p->host, host, sizeof target_p->host);
 
 	if (changed)
 		add_history(target_p, 1);

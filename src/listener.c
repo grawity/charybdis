@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: listener.c 1675 2006-06-15 22:32:23Z jilles $
+ *  $Id: listener.c 3460 2007-05-18 20:31:33Z jilles $
  */
 
 #include "stdinc.h"
@@ -41,6 +41,8 @@
 #include "memory.h"
 #include "s_auth.h"
 #include "reject.h"
+#include "s_conf.h"
+#include "hostmask.h"
 
 #ifndef INADDR_NONE
 #define INADDR_NONE ((unsigned int) 0xffffffff)
@@ -194,7 +196,11 @@ inetport(listener_t *listener)
 		}	
 	}
 
-
+	/*
+	 * At one point, we enforced a strange arbitrary limit here.
+	 * We no longer do this, and just check if the fd is valid or not.
+	 *    -nenolod
+	 */
 	if(fd == -1)
 	{
 		report_error("opening listener socket %s:%s",
@@ -202,14 +208,7 @@ inetport(listener_t *listener)
 			     get_listener_name(listener), errno);
 		return 0;
 	}
-	else if((HARD_FDLIMIT - 10) < fd)
-	{
-		report_error("no more connections left for listener %s:%s",
-			     get_listener_name(listener), 
-			     get_listener_name(listener), errno);
-		comm_close(fd);
-		return 0;
-	}
+
 	/*
 	 * XXX - we don't want to do all this crap for a listener
 	 * set_sock_opts(listener);
@@ -443,7 +442,7 @@ close_listeners()
  * any client list yet.
  */
 static void
-add_connection(listener_t *listener, int fd, struct sockaddr *sai)
+add_connection(listener_t *listener, int fd, struct sockaddr *sai, int exempt)
 {
 	struct Client *new_client;
 	s_assert(NULL != listener);
@@ -478,8 +477,14 @@ add_connection(listener_t *listener, int fd, struct sockaddr *sai)
 	new_client->localClient->listener = listener;
 	++listener->ref_count;
 
-	if(check_reject(new_client))
-		return; 
+	if(!exempt)
+	{
+		if(check_reject(new_client))
+			return; 
+		if(add_unknown_ip(new_client))
+			return;
+	}
+
 	start_auth(new_client);
 }
 
@@ -488,14 +493,13 @@ static void
 accept_connection(int pfd, void *data)
 {
 	static time_t last_oper_notice = 0;
-
 	struct irc_sockaddr_storage sai;
 	socklen_t addrlen = sizeof(sai);
 	int fd;
 	listener_t *listener = data;
-    struct ConfItem *aconf;
-    char buf[BUFSIZE];
-    
+	struct ConfItem *aconf;
+	char buf[BUFSIZE];
+
 	s_assert(listener != NULL);
 	if(listener == NULL)
 		return;
@@ -525,8 +529,9 @@ accept_connection(int pfd, void *data)
 
 	/*
 	 * check for connection limit
+	 * TBD: this is stupid... either we have a socket or we don't. -nenolod
 	 */
-	if((MAXCONNECTIONS - 10) < fd)
+	if((comm_get_maxconnections() - 10) < fd)
 	{
 		++ServerStats->is_ref;
 		/*
@@ -550,23 +555,25 @@ accept_connection(int pfd, void *data)
 
 	/* Do an initial check we aren't connecting too fast or with too many
 	 * from this IP... */
-	if((aconf = conf_connect_allowed((struct sockaddr *)&sai, sai.ss_family)) != NULL)
+	aconf = find_dline((struct sockaddr *) &sai, sai.ss_family);
+	/* check it wasn't an exempt */
+	if (aconf != NULL && (aconf->status & CONF_EXEMPTDLINE) == 0)
 	{
 		ServerStats->is_ref++;
 
-        if(ConfigFileEntry.dline_with_reason)
-        {
-            if (ircsnprintf(buf, sizeof(buf), "ERROR :*** Banned: %s\r\n", aconf->passwd) >= (sizeof(buf)-1))
-            {
-                buf[sizeof(buf) - 3] = '\r';
-                buf[sizeof(buf) - 2] = '\n';
-                buf[sizeof(buf) - 1] = '\0';
-            }
-        }
-        else
-           ircsprintf(buf, "ERROR :You have been D-lined.\r\n");
+		if(ConfigFileEntry.dline_with_reason)
+		{
+			if (ircsnprintf(buf, sizeof(buf), "ERROR :*** Banned: %s\r\n", aconf->passwd) >= (sizeof(buf)-1))
+			{
+				buf[sizeof(buf) - 3] = '\r';
+				buf[sizeof(buf) - 2] = '\n';
+				buf[sizeof(buf) - 1] = '\0';
+			}
+		}
+		else
+			ircsprintf(buf, "ERROR :You have been D-lined.\r\n");
         
-        write(fd, buf, strlen(buf));
+		write(fd, buf, strlen(buf));
 		comm_close(fd);
 
 		/* Re-register a new IO request for the next accept .. */
@@ -576,7 +583,7 @@ accept_connection(int pfd, void *data)
 	}
 
 	ServerStats->is_ac++;
-	add_connection(listener, fd, (struct sockaddr *)&sai);
+	add_connection(listener, fd, (struct sockaddr *)&sai, aconf ? 1 : 0);
 
 	/* Re-register a new IO request for the next accept .. */
 	comm_setselect(listener->fd, FDLIST_SERVICE, COMM_SELECT_READ,

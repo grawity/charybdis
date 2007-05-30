@@ -27,7 +27,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_xline.c 494 2006-01-15 16:08:28Z jilles $
+ * $Id: m_xline.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -70,7 +70,7 @@ struct Message unxline_msgtab = {
 };
 
 mapi_clist_av1 xline_clist[] =  { &xline_msgtab, &unxline_msgtab, NULL };
-DECLARE_MODULE_AV1(xline, NULL, NULL, xline_clist, NULL, NULL, "$Revision: 494 $");
+DECLARE_MODULE_AV1(xline, NULL, NULL, xline_clist, NULL, NULL, "$Revision: 3161 $");
 
 static int valid_xline(struct Client *, const char *, const char *);
 static void apply_xline(struct Client *client_p, const char *name, 
@@ -222,9 +222,7 @@ handle_remote_xline(struct Client *source_p, int temp_time,
 	/* already xlined */
 	if((aconf = find_xline(name, 0)) != NULL)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :[%s] already X-Lined by [%s] - %s",
-				me.name, source_p->name, name, 
-				aconf->name, aconf->passwd);
+		sendto_one_notice(source_p, ":[%s] already X-Lined by [%s] - %s", name, aconf->name, aconf->passwd);
 		return;
 	}
 
@@ -292,7 +290,7 @@ apply_xline(struct Client *source_p, const char *name, const char *reason,
 
 		while(*orig)
 		{
-			if(*orig == '\\')
+			if(*orig == '\\' && *(orig + 1) != '\0')
 			{
 				if(*(orig + 1) == 's')
 				{
@@ -338,13 +336,12 @@ apply_xline(struct Client *source_p, const char *name, const char *reason,
 	}
 	else
 	{
-		write_xline(source_p, aconf);
-
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s added X-Line for [%s] [%s]",
 				get_oper_name(source_p), 
 				aconf->name, aconf->passwd);
 		sendto_one_notice(source_p, ":Added X-Line for [%s] [%s]",
 					aconf->name, aconf->passwd);
+		write_xline(source_p, aconf);
 		ilog(L_KLINE, "X %s 0 %s %s",
 			get_oper_name(source_p), name, reason);
 	}
@@ -371,7 +368,7 @@ write_xline(struct Client *source_p, struct ConfItem *aconf)
 	if((out = fopen(filename, "a")) == NULL)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "*** Problem opening %s ", filename);
-		free_conf(aconf);
+		sendto_one_notice(source_p, ":*** Problem opening file, xline added temporarily only");
 		return;
 	}
 
@@ -382,12 +379,17 @@ write_xline(struct Client *source_p, struct ConfItem *aconf)
 	if(fputs(buffer, out) == -1)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "*** Problem writing to %s", filename);
-		free_conf(aconf);
+		sendto_one_notice(source_p, ":*** Problem writing to file, xline added temporarily only");
 		fclose(out);
 		return;
 	}
 
-	fclose(out);
+	if(fclose(out))
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "*** Problem writing to %s", filename);
+		sendto_one_notice(source_p, ":*** Problem writing to file, xline added temporarily only");
+		return;
+	}
 }
 
 static void 
@@ -644,7 +646,8 @@ remove_xline(struct Client *source_p, const char *huntgecos)
 	}
 
 	fclose(in);
-	fclose(out);
+	if (fclose(out))
+		error_on_write = YES;
 
 	if(error_on_write)
 	{
@@ -661,7 +664,11 @@ remove_xline(struct Client *source_p, const char *huntgecos)
 		return;
 	}
 
-	(void) rename(temppath, filename);
+	if (rename(temppath, filename))
+	{
+		sendto_one_notice(source_p, ":Couldn't rename temp file, aborted");
+		return;
+	}
 	rehash_bans(0);
 
 	sendto_one_notice(source_p, ":X-Line for [%s] is removed", huntgecos);

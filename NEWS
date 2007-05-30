@@ -1,5 +1,57 @@
-This is charybdis 2.1.1, Copyright (c) 2005-2006 Charybdis team.
+This is charybdis 2.2.0, Copyright (c) 2005-2007 Charybdis team.
 See LICENSE for licensing details (GPL v2).
+
+-- charybdis-2.2.0
+
+- The I/O code has been reworked, file descriptor metadata is stored in a
+  hashtable and the maximum number of clients can now be set in ircd.conf.
+- Improve error checking and error messages for kline/dline/xline/resv files.
+- Allow kline ipv6:address, unkline some.host and unkline ipv6:address
+  without *@.
+- Add accountability (wallops, log) to OKICK extension.
+- Add opernick to OPME/OMODE/OJOIN log messages.
+- Add use_forward option, allows disabling cmode +fFQ and umode +Q.
+- Add keyword substitution to DNSBL reasons, making it possible to show
+  things like the user's IP address in the reason.
+- Use sendto_one_notice() more.
+- Server notices about kills now include the victim's nick!user@host instead
+  of just nick.
+- Include real hostname in Closing Link message for unknown connections
+  that have sent USER, in particular banned users.
+- Add some documentation about the SASL client protocol.
+- Change spambot, flooder and jupe joiner notices from host to orighost.
+- Remove the last remains of server hostmasking (this made it possible to
+  have multiple servers with similar names appear as a single server).
+- Keep bitmasks of modularized umodes reserved forever to the letter,
+  avoiding problems when reloading umode modules in a different order.
+- Fix -logfile.
+- Update to the new revision (v8) of the TS6 spec, this fixes problems with
+  joins reversing certain mode changes crossing them. This interoperates
+  with older versions.
+- Put "End of Channel Quiet List" at the end of +q lists.
+- Fix invisible count getting desynched from reality if the act of opering
+  up sets -i or +i.
+- Don't leak auth{} spoofed IP addresses in +f notices.
+- Shorten quit/part/kick reasons to avoid quit reasons overflowing the
+  client exiting server notice (from TOPICLEN to 260).
+- Fix some cases where 10 char usernames lose their final character.
+- Move username check after xline and dnsbl checks, so it will not complain
+  to opers about clients who are xlined or blacklisted anyway (both of
+  which silently reject).
+- Remove invite_ops_only config option, forcing it to YES.
+- Allow /invite (but not invex) to override +r, +l, +j in addition to +i.
+- Add several new extensions, such as createoperonly.
+- Merge whois notice extensions into one and move it from snomask +y to +W.
+
+-- charybdis-2.1.2
+
+- Fix bug that could cause all hostmangled users to be exempted when a
+  single ban exception existed on a channel.
+- Tweak \s code a little.
+- Add a minor clarification to the SGML docs.
+- Avoid truncation in ip_cloaking (by removing components on the other side).
+  Note that this may cause channel +bqeI modes set on such very long hosts
+  to no longer match.
 
 -- charybdis-2.1.1
 
@@ -314,7 +366,8 @@ See LICENSE for licensing details (GPL v2).
 BUGS: Major bugs in this release are listed in BUGS
 
 BUG REPORTS: If you run this code and encounter problems, you must report
-via IRC to irc.atheme.net, #athemenet-dev.
+via IRC to irc.atheme.org, #charybdis. For specific bugs you can use
+http://bugs-meta.atheme.org/ (Charybdis project).
 
 Please include a gdb backtrace and keep the core file, binaries and 
 modules in case the developers need them.
@@ -322,5 +375,5 @@ modules in case the developers need them.
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 2759 2006-11-10 23:02:43Z jilles $
+$Id: NEWS 3506 2007-05-30 10:36:51Z nenolod $
 

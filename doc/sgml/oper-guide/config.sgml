@@ -436,7 +436,8 @@ exempt {
 	ip = "<replaceable>ip</replaceable>";
 };</synopsis>
 	<para>
-	  An exempt block specifies IP addresses which are exempt from D:lines.
+	  An exempt block specifies IP addresses which are exempt from D:lines
+	  and throttling.
 	  Multiple addresses can be specified in one block.
 	  Clients coming from these addresses can still be K/G/X:lined or
 	  banned by a DNS blacklist unless
@@ -1030,7 +1031,9 @@ shared {
 	    <term>locops (L)</term>
 	    <listitem>
 	      <para>LOCOPS messages (accepting this from * makes LOCOPS rather
-	      similar to OPERWALL which is not useful)</para>
+	      similar to OPERWALL which is not useful); unlike the other flags,
+	      this can only be accepted from *@* although it can be
+	      restricted based on source server.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>

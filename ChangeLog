@@ -1,3 +1,1902 @@
+nenolod     2007/05/30 10:36:51 UTC	(20070530-3506)
+  Log:
+  - svnmerge has broken, manually merge needed 2.2.0 changes
+  
+
+  Changes:	Modified:
+  +3 -6		branches/release-2.2/NEWS (File Modified) 
+  +2 -2		branches/release-2.2/extensions/sno_whois.c (File Modified) 
+
+
+nenolod     2007/05/30 10:33:35 UTC	(20070530-3504)
+  Log:
+  Initialized merge tracking via "svnmerge" with revisions "1-3503" from 
+  svn+ssh://svn.atheme.org/svnroot/charybdis/trunk
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.2/  (Property Modified)
+
+
+nenolod     2007/05/30 10:32:48 UTC	(20070530-3502)
+  Log:
+  Initialized merge tracking via "svnmerge" with revisions "1-3491" from 
+  svn+ssh://svn.atheme.org/svnroot/charybdis/branches/old-2.2/trunk
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.2/  (Property Modified)
+
+
+nenolod     2007/05/30 10:29:48 UTC	(20070530-3500)
+  Log:
+  Initialized merge tracking via "svnmerge" with revisions "1-3491" from 
+  svn+ssh://svn.atheme.org/svnroot/charybdis/branches/old-2.2/trunk
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.2/  (Property Modified)
+
+
+nenolod     2007/05/27 05:35:06 UTC	(20070527-3482)
+  Log:
+  - blacklist{}: add notes about DroneBL and enable it by default. AHBL is still not enabled by default due 
+    to their policies indicating that they wish to be contacted before their services are used.
+  
+
+  Changes:	Modified:
+  +6 -3		trunk/doc/example.conf (File Modified) 
+  +6 -3		trunk/doc/reference.conf (File Modified) 
+
+
+nenolod     2007/05/27 05:30:41 UTC	(20070527-3480)
+  Log:
+  - update NEWS in preparation of upcoming 2.2 release this week
+  
+
+  Changes:	Modified:
+  +3 -0		trunk/NEWS (File Modified) 
+
+
+jilles      2007/05/24 15:10:06 UTC	(20070524-3478)
+  Log:
+  Move sno_channeljoin to unsupported, due to the privacy
+  issue and the fact that any oper with admin or hidden_admin
+  can load extensions.
+  
+
+  Changes:	Modified:
+  +0 -1		trunk/doc/example.conf (File Modified) 
+  +0 -2		trunk/doc/reference.conf (File Modified) 
+  +0 -46	trunk/extensions/Makefile.in (File Modified) 
+  + -		trunk/extensions/sno_channeljoin.c (File Deleted) 
+  +47 -1	trunk/unsupported/Makefile.in (File Modified) 
+  + -		trunk/unsupported/sno_channeljoin.c (File Added) 
+
+
+nenolod     2007/05/24 04:28:36 UTC	(20070524-3476)
+  Log:
+  - createoperonly: like createauthonly, but checks opered status instead of authed status
+  
+
+  Changes:	Modified:
+  +41 -0	trunk/extensions/Makefile.in (File Modified) 
+  + -		trunk/extensions/createoperonly.c (File Added) 
+
+
+nenolod     2007/05/24 04:16:02 UTC	(20070524-3474)
+  Log:
+  - sno_channeljoin: implements snomask +j and sends channel join notices there from local users
+  
+
+  Changes:	Modified:
+  +1 -0		trunk/doc/example.conf (File Modified) 
+  +3 -1		trunk/doc/reference.conf (File Modified) 
+  +46 -0	trunk/extensions/Makefile.in (File Modified) 
+  + -		trunk/extensions/sno_channeljoin.c (File Added) 
+
+
+nenolod     2007/05/24 04:02:33 UTC	(20070524-3472)
+  Log:
+  - update config files
+  
+
+  Changes:	Modified:
+  +1 -0		trunk/doc/example.conf (File Modified) 
+  +2 -0		trunk/doc/reference.conf (File Modified) 
+
+
+nenolod     2007/05/24 04:01:12 UTC	(20070524-3470)
+  Log:
+  - fold in whois_notice_global functionality.
+  
+
+  Changes:	Modified:
+  +0 -1		trunk/extensions/Makefile.in (File Modified) 
+  +1 -56	trunk/extensions/sno_whois.c (File Modified) 
+  + -		trunk/extensions/spy_whois_notice_global.c (File Deleted) 
+
+
+nenolod     2007/05/24 03:58:27 UTC	(20070524-3468)
+  Log:
+  - rework spy_whois_notice as a snomask-implementing module, snomask +W.
+  
+
+  Changes:	Modified:
+  +64 -57	trunk/extensions/Makefile.in (File Modified) 
+  + -		trunk/extensions/sno_whois.c (File Added) 
+  + -		trunk/extensions/spy_whois_notice.c (File Deleted) 
+
+
+jilles      2007/05/19 23:36:51 UTC	(20070519-3466)
+  Log:
+  Prevent too wide klines with CIDR masks.
+  
+
+  Changes:	Modified:
+  +17 -5	trunk/modules/m_kline.c (File Modified) 
+
+
+jilles      2007/05/19 22:21:10 UTC	(20070519-3464)
+  Log:
+  Exempt klines with a fixed user@ (no */?) from min_nonwildcard checks.
+  
+
+  Changes:	Modified:
+  +4 -0		trunk/modules/m_kline.c (File Modified) 
+
+
+jilles      2007/05/18 20:31:33 UTC	(20070518-3460)
+  Log:
+  - fold conf_connect_allowed() into accept_connection()
+  - extend add_connection() so that exempt{}s apply to max unregistered
+    connections per ip
+  from ratbox
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/doc/example.conf (File Modified) 
+  +1 -1		trunk/doc/reference.conf (File Modified) 
+  +2 -1		trunk/doc/sgml/oper-guide/config.sgml (File Modified) 
+  +0 -2		trunk/include/s_conf.h (File Modified) 
+  +14 -7	trunk/src/listener.c (File Modified) 
+
+
+jilles      2007/05/18 19:51:22 UTC	(20070518-3458)
+  Log:
+  m_webirc: call del_unknown_ip() otherwise the unknown will
+  never be subtracted from the cgiirc ip
+  
+
+  Changes:	Modified:
+  +2 -0		trunk/extensions/m_webirc.c (File Modified) 
+
+
+jilles      2007/05/18 19:14:18 UTC	(20070518-3456)
+  Log:
+  Remove s_assert in del_unknown_ip() supposedly if the ip
+  cannot be found, it is not feasible to avoid that case
+  entirely with m_webirc.c.
+  
+
+  Changes:	Modified:
+  +1 -2		trunk/src/reject.c (File Modified) 
+
+
+jilles      2007/05/14 22:21:16 UTC	(20070514-3446)
+  Log:
+  Apply ratbox flood fix.
+  
+
+  Changes:	Modified:
+  +1 -0		trunk/doc/example.conf (File Modified) 
+  +5 -0		trunk/doc/reference.conf (File Modified) 
+  +3 -0		trunk/include/client.h (File Modified) 
+  +4 -0		trunk/include/reject.h (File Modified) 
+  +1 -0		trunk/include/s_conf.h (File Modified) 
+  +2 -0		trunk/src/client.c (File Modified) 
+  +3 -0		trunk/src/listener.c (File Modified) 
+  +1 -0		trunk/src/newconf.c (File Modified) 
+  +8 -5		trunk/src/packet.c (File Modified) 
+  +59 -2	trunk/src/reject.c (File Modified) 
+  +1 -0		trunk/src/s_conf.c (File Modified) 
+  +2 -0		trunk/src/s_serv.c (File Modified) 
+  +1 -0		trunk/src/s_user.c (File Modified) 
+
+
+nenolod     2007/05/09 00:32:08 UTC	(20070509-3444)
+  Log:
+  - fix a bug here
+  
+
+  Changes:	Modified:
+  +5 -1		trunk/libcharybdis/epoll.c (File Modified) 
+
+
+nenolod     2007/05/07 02:57:50 UTC	(20070507-3442)
+  Log:
+  - regen configure
+  
+
+  Changes:	Modified:
+  +114 -1	trunk/configure (File Modified) 
+
+
+nenolod     2007/05/07 02:53:54 UTC	(20070507-3440)
+  Log:
+  - remove "ASM hashing code" from the configure overview
+  
+
+  Changes:	Modified:
+  +0 -1		trunk/configure.ac (File Modified) 
+
+
+jilles      2007/05/06 14:46:45 UTC	(20070506-3438)
+  Log:
+  Target left IRC (more friendly error message if a UID
+  cannot be found) for /invite.
+  
+
+  Changes:	Modified:
+  +8 -3		trunk/modules/m_invite.c (File Modified) 
+
+
+jilles      2007/05/02 19:56:40 UTC	(20070502-3436)
+  Log:
+  Remove emptyline craq because it leaks memory on /rehash motd etc.
+  from ratbox 2.2 (anfl/Androsyn)
+  
+
+  Changes:	Modified:
+  +6 -14	trunk/src/cache.c (File Modified) 
+
+
+jilles      2007/04/28 23:47:25 UTC	(20070428-3434)
+  Log:
+  Merge old trunk r2767:
+  Copy channel name from command on lowerTS JOIN/SJOIN,
+  this makes the capitalization of the channel name
+  timestamped like modes are.
+  
+
+  Changes:	Modified:
+  +3 -0		trunk/modules/core/m_join.c (File Modified) 
+  +3 -0		trunk/modules/core/m_sjoin.c (File Modified) 
+
+
+jilles      2007/04/26 23:01:16 UTC	(20070426-3432)
+  Log:
+  Merge old trunk r2065,r2067:
+  channel_modes(): get rid of the trailing space
+  also make the *pbuf check work like it should
+  (don't call IsMember another time if we already
+  gave one parameter)
+  simplify a bit more, update comments
+  
+
+  Changes:	Modified:
+  +13 -13	trunk/src/channel.c (File Modified) 
+
+
+jilles      2007/04/25 15:22:28 UTC	(20070425-3426)
+  Log:
+  webirc bugfix
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/extensions/m_webirc.c (File Modified) 
+
+
+jilles      2007/04/25 15:21:34 UTC	(20070425-3424)
+  Log:
+  chghost: refuse spoofs which are empty or start with a colon
+  (would break the protocol)
+  
+
+  Changes:	Modified:
+  +3 -0		trunk/modules/m_chghost.c (File Modified) 
+
+
+jilles      2007/04/22 14:35:28 UTC	(20070422-3422)
+  Log:
+  Fix description of 043 numeric.
+  
+
+  Changes:	Modified:
+  +2 -1		trunk/doc/collision_fnc.txt (File Modified) 
+
+
+jilles      2007/04/22 14:02:54 UTC	(20070422-3420)
+  Log:
+  SAVE: make the nickTS of the UID nick equal to 100, so it
+  is always in sync on the network.
+  
+
+  Changes:	Modified:
+  +5 -0		trunk/doc/collision_fnc.txt (File Modified) 
+  +15 -11	trunk/modules/core/m_nick.c (File Modified) 
+
+
+jilles      2007/04/22 11:22:10 UTC	(20070422-3418)
+  Log:
+  Force nickTS to increase when a local user changes their nick.
+  
+
+  Changes:	Modified:
+  +5 -1		trunk/modules/core/m_nick.c (File Modified) 
+
+
+jilles      2007/04/15 20:18:54 UTC	(20070415-3416)
+  Log:
+  Remove #define UFLAGS. We haven't allowed this
+  undocumented extension to the IRC protocol for
+  years (allowing an initial umode in USER).
+  
+
+  Changes:	Modified:
+  +0 -2		trunk/modules/m_user.c (File Modified) 
+
+
+jilles      2007/04/15 16:54:50 UTC	(20070415-3414)
+  Log:
+  Move new_local_user hook, so it is possible to call
+  exit_client() from it, refusing the connection.
+  
+
+  Changes:	Modified:
+  +3 -1		trunk/doc/hooks.txt (File Modified) 
+  +10 -9	trunk/src/s_user.c (File Modified) 
+
+
+jilles      2007/04/15 16:49:56 UTC	(20070415-3412)
+  Log:
+  Only free PreClient struct when the rest of the Client
+  is freed, not immediately upon exit_client(). Doing this
+  would cause problems with sasl's new_local_user hook
+  vs hooks that exit the client there.
+  
+
+  Changes:	Modified:
+  +0 -1		trunk/src/client.c (File Modified) 
+
+
+jilles      2007/04/14 21:53:28 UTC	(20070414-3410)
+  Log:
+  Use TS6 prefix for server-server JOIN 0.
+  
+
+  Changes:	Modified:
+  +2 -1		trunk/modules/core/m_join.c (File Modified) 
+
+
+jilles      2007/04/14 20:58:56 UTC	(20070414-3408)
+  Log:
+  Use orighost in kill server notices.
+  
+
+  Changes:	Modified:
+  +3 -3		trunk/modules/core/m_kill.c (File Modified) 
+
+
+jilles      2007/04/13 19:06:53 UTC	(20070413-3406)
+  Log:
+  set: Use sendto_one_notice() for MAXCLIENTS too high notice.
+  
+
+  Changes:	Modified:
+  +3 -3		trunk/modules/m_set.c (File Modified) 
+
+
+nenolod     2007/04/06 21:25:37 UTC	(20070406-3404)
+  Log:
+  - 2.2 operline
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/src/messages.tab (File Modified) 
+
+
+jilles      2007/04/05 00:38:52 UTC	(20070405-3396)
+  Log:
+  Show max_clients in /info.
+  
+
+  Changes:	Modified:
+  +6 -0		trunk/modules/m_info.c (File Modified) 
+
+
+jilles      2007/04/05 00:33:52 UTC	(20070405-3394)
+  Log:
+  Don't allow /quote set max higher than the
+  serverinfo::max_clients ircd.conf value.
+  
+
+  Changes:	Modified:
+  +8 -0		trunk/modules/m_set.c (File Modified) 
+
+
+jilles      2007/04/05 00:24:47 UTC	(20070405-3392)
+  Log:
+  Change code that checks maxclients limit: allow exactly
+  the configured amount of non-exceed_limit clients.
+  Code that appeared to limit exceed_limit clients too
+  but less heavily removed (it was not effective because
+  the parentheses were wrong).
+  
+
+  Changes:	Modified:
+  +2 -4		trunk/src/s_user.c (File Modified) 
+
+
+jilles      2007/04/05 00:12:55 UTC	(20070405-3390)
+  Log:
+  By default, leave MAX_BUFFER fds free for log files,
+  server connections, ident lookups, exceed_limit clients,
+  etc. Mention this in example.conf and reference.conf.
+  
+
+  Changes:	Modified:
+  +4 -2		trunk/doc/example.conf (File Modified) 
+  +3 -1		trunk/doc/reference.conf (File Modified) 
+  +1 -1		trunk/src/s_conf.c (File Modified) 
+
+
+jilles      2007/04/03 22:45:04 UTC	(20070403-3384)
+  Log:
+  --with-maxclients configure option is gone
+  
+
+  Changes:	Modified:
+  +0 -11	trunk/INSTALL (File Modified) 
+
+
+jilles      2007/04/03 22:25:11 UTC	(20070403-3380)
+  Log:
+  Make the code that raises fd rlimit to hard limit work.
+  
+
+  Changes:	Modified:
+  +5 -5		trunk/src/ircd.c (File Modified) 
+
+
+nenolod     2007/04/03 11:45:22 UTC	(20070403-3378)
+  Log:
+  - note the I/O reworking
+  
+
+  Changes:	Modified:
+  +2 -0		trunk/NEWS (File Modified) 
+
+
+nenolod     2007/04/03 11:37:39 UTC	(20070403-3376)
+  Log:
+  - use mkdir -p
+  
+
+  Changes:	Modified:
+  +4 -4		trunk/doc/Makefile.in (File Modified) 
+
+
+nenolod     2007/04/03 10:49:11 UTC	(20070403-3374)
+  Log:
+  - enforce proper conditions for EPOLL_CTL_DEL.
+  - remove possibly problematic "performance" check
+  
+
+  Changes:	Modified:
+  +1 -5		trunk/libcharybdis/epoll.c (File Modified) 
+
+
+nenolod     2007/04/03 10:18:07 UTC	(20070403-3372)
+  Log:
+  - rename m_list_safelist to m_list and remove ratbox implementation
+  
+
+  Changes:	Modified:
+  +393 -664	trunk/modules/Makefile.in (File Modified) 
+  + -		trunk/modules/m_list.c (File Added) 
+  + -		trunk/modules/m_list_ratbox.c (File Deleted) 
+  + -		trunk/modules/m_list_safelist.c (File Deleted) 
+
+
+nenolod     2007/04/03 10:15:39 UTC	(20070403-3370)
+  Log:
+  - some more transit to sendto_one_numeric().
+  
+
+  Changes:	Modified:
+  +2 -3		trunk/modules/m_away.c (File Modified) 
+  +3 -3		trunk/src/messages.tab (File Modified) 
+  +1 -1		trunk/src/s_user.c (File Modified) 
+
+
+nenolod     2007/04/03 10:11:06 UTC	(20070403-3368)
+  Log:
+  - change some sendto_one() to sendto_one_numeric().
+  
+
+  Changes:	Modified:
+  +4 -10	trunk/modules/m_admin.c (File Modified) 
+  +3 -3		trunk/modules/m_map.c (File Modified) 
+  +12 -12	trunk/src/messages.tab (File Modified) 
+  +1 -2		trunk/src/s_conf.c (File Modified) 
+  +9 -10	trunk/src/s_user.c (File Modified) 
+
+
+nenolod     2007/04/03 09:57:53 UTC	(20070403-3366)
+  Log:
+  - river's ports.c from old charybdis trunk
+  
+
+  Changes:	Modified:
+  +195 -0	trunk/configure.ac (File Modified) 
+  + -		trunk/libcharybdis/ports.c (File Added) 
+
+
+nenolod     2007/04/03 09:50:56 UTC	(20070403-3364)
+  Log:
+  - remove broken ports stuff and devpoll stuff.
+  
+
+  Changes:	Modified:
+  +0 -307	trunk/configure (File Modified) 
+  +0 -21	trunk/configure.ac (File Modified) 
+  +0 -474	trunk/include/setup.h.in (File Modified) 
+  + -		trunk/libcharybdis/devpoll.c (File Deleted) 
+  + -		trunk/libcharybdis/ports.c (File Deleted) 
+
+
+nenolod     2007/04/03 09:49:11 UTC	(20070403-3362)
+  Log:
+  - regenerate files
+  
+
+  Changes:	Modified:
+  +1 -25	trunk/configure (File Modified) 
+  +0 -3		trunk/include/setup.h.in (File Modified) 
+
+
+nenolod     2007/04/03 09:37:03 UTC	(20070403-3360)
+  Log:
+  - remove x86-optimized hash code.
+  
+
+  Changes:	Modified:
+  +0 -13	trunk/configure.ac (File Modified) 
+  +2 -187	trunk/src/Makefile.in (File Modified) 
+  + -		trunk/src/fnvhash.s (File Deleted) 
+
+
+nenolod     2007/04/03 09:34:38 UTC	(20070403-3358)
+  Log:
+  - apparently setting KE_LENGTH to 128 is fine.
+  
+
+  Changes:	Modified:
+  +3 -5		trunk/libcharybdis/kqueue.c (File Modified) 
+
+
+nenolod     2007/04/03 09:31:11 UTC	(20070403-3356)
+  Log:
+  - remove the rest of the MAX_CLIENTS stuff. change kqueue implementation accordingly. (needs testing)
+  
+
+  Changes:	Modified:
+  +5627 -5747	trunk/configure (File Modified) 
+  +0 -15	trunk/configure.ac (File Modified) 
+  +0 -2		trunk/include/m_info.h (File Modified) 
+  +6 -9		trunk/include/setup.h.in (File Modified) 
+  +5 -3		trunk/libcharybdis/kqueue.c (File Modified) 
+
+
+nenolod     2007/04/03 09:21:31 UTC	(20070403-3354)
+  Log:
+  - remove ALL braindead 2.8 I/O artifacts: MASTER_MAX, HARD_FDLIMIT, HARD_FDLIMIT_, MAXCONNECTIONS, MAX_CLIENTS, etc.
+    they are ALL gone. all of this stuff is now determined at runtime via getrlimit(2).
+  - due to this, devpoll is broken. i'm not motivated to fix it at the moment.
+  
+
+  Changes:	Modified:
+  +0 -5		trunk/include/config.h (File Modified) 
+  +0 -5		trunk/include/config.h.dist (File Modified) 
+  +0 -6		trunk/include/defaults.h (File Modified) 
+  +0 -3		trunk/include/m_info.h (File Modified) 
+  +21 -7	trunk/libcharybdis/commio.c (File Modified) 
+  +2 -0		trunk/libcharybdis/commio.h (File Modified) 
+  +1 -2		trunk/libcharybdis/devpoll.c (File Modified) 
+  +4 -3		trunk/libcharybdis/poll.c (File Modified) 
+  +0 -3		trunk/libcharybdis/select.c (File Modified) 
+  +0 -9		trunk/src/ircd.c (File Modified) 
+  +23 -26	trunk/src/listener.c (File Modified) 
+  +2 -1		trunk/src/restart.c (File Modified) 
+  +5 -1		trunk/src/s_auth.c (File Modified) 
+  +1 -1		trunk/src/s_conf.c (File Modified) 
+  +3 -1		trunk/src/s_serv.c (File Modified) 
+
+
+jilles      2007/04/02 22:03:08 UTC	(20070402-3350)
+  Log:
+  Repair operspy who !#channel, broken by me in r3283.
+  
+
+  Changes:	Modified:
+  +2 -2		trunk/modules/m_who.c (File Modified) 
+
+
+jilles      2007/04/01 22:20:00 UTC	(20070401-3344)
+  Log:
+  Update bug report and IRC channel information.
+  
+
+  Changes:	Modified:
+  +2 -1		trunk/BUGS (File Modified) 
+  +2 -1		trunk/NEWS (File Modified) 
+
+
+jilles      2007/04/01 22:10:05 UTC	(20070401-3342)
+  Log:
+  Change copyright years in version.c.SH as in release-2.1 r3339.
+  
+
+  Changes:	Modified:
+  +2 -2		trunk/src/version.c.SH (File Modified) 
+
+
+jilles      2007/03/30 23:34:11 UTC	(20070330-3325)
+  Log:
+  Rerun autoconf.
+  
+
+  Changes:	Modified:
+  +104 -0	trunk/configure (File Modified) 
+
+
+jilles      2007/03/30 23:33:43 UTC	(20070330-3323)
+  Log:
+  Need to check for various flavours of epoll,
+  even if --enable-epoll is forced.
+  
+
+  Changes:	Modified:
+  +1 -0		trunk/configure.ac (File Modified) 
+
+
+jilles      2007/03/30 23:32:43 UTC	(20070330-3321)
+  Log:
+  Hack to allow some more warnings, already present in configure (?).
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/aclocal.m4 (File Modified) 
+
+
+jilles      2007/03/29 20:03:06 UTC	(20070329-3319)
+  Log:
+  Merge old trunk r2077,r2079:
+  - Move closing of servlink control fd to close_connection()
+    instead of doing it in exit_local_server(), and make sure
+    we first close the data fd and then the control fd.
+  - Have servlink process ready fds in order net, data, ctrl
+    instead of ctrl, data, net.  This seems to fix the problem
+    that squit reasons do not show up on the other side of a
+    ziplink (by making it send any final SQUIT and/or ERROR
+    before noticing the closed control fd).
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/servlink/io.c (File Modified) 
+  +3 -12	trunk/src/client.c (File Modified) 
+
+
+jilles      2007/03/28 23:17:06 UTC	(20070328-3317)
+  Log:
+  Don't show the UID if a TS6 server sends a kick with
+  an empty or no comment. Note that charybdis never sends
+  such kicks.
+  
+
+  Changes:	Modified:
+  +4 -4		trunk/modules/core/m_kick.c (File Modified) 
+
+
+jilles      2007/03/28 15:40:24 UTC	(20070328-3307)
+  Log:
+  Merge old trunk r2081:
+  Don't say that services cannot be killed in
+  ERR_ISCHANSERVICE message (given when trying
+  to kick or deop them), as that's not the case.
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/src/messages.tab (File Modified) 
+
+
+jilles      2007/03/28 15:30:56 UTC	(20070328-3305)
+  Log:
+  Merge old trunk r2059
+  Clarifications to the descriptions of umode +Q and cmode +F,
+  suggested by Ariadne@SorceryNet.
+  
+
+  Changes:	Modified:
+  +6 -0		trunk/doc/sgml/oper-guide/cmodes.sgml (File Modified) 
+  +4 -3		trunk/doc/sgml/oper-guide/umodes.sgml (File Modified) 
+
+
+jilles      2007/03/28 15:22:49 UTC	(20070328-3303)
+  Log:
+  Merge old trunk r2907,r2991:
+  Allow TESTLINE on channel names.
+  
+
+  Changes:	Modified:
+  +4 -0		trunk/doc/sgml/oper-guide/commands.sgml (File Modified) 
+  +4 -0		trunk/help/opers/testline (File Modified) 
+  +22 -0	trunk/modules/m_testline.c (File Modified) 
+
+
+jilles      2007/03/28 15:04:06 UTC	(20070328-3301)
+  Log:
+  Merge old trunk r2835:
+  resolver: if sendto(2) fails, try sending to the next nameserver
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/src/res.c (File Modified) 
+
+
+jilles      2007/03/28 14:54:10 UTC	(20070328-3299)
+  Log:
+  Merge old trunk r2817:
+  WHOIS: Show the given nick in ERR_NOSUCHNICK even if it
+  starts with a digit. This is safe because the last
+  parameter is a nick and never a UID. (The first parameter
+  in a server-server two-param whois is a UID/SID.)
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/modules/m_whois.c (File Modified) 
+
+
+jilles      2007/03/28 14:49:48 UTC	(20070328-3297)
+  Log:
+  Merge old trunk r2779,r2785:
+  Show correct privilege name in a few ERR_NOPRIVS numerics.
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/extensions/m_ojoin.c (File Modified) 
+  +1 -1		trunk/extensions/m_opme.c (File Modified) 
+  +2 -2		trunk/unsupported/m_force.c (File Modified) 
+
+
+jilles      2007/03/28 14:45:46 UTC	(20070328-3295)
+  Log:
+  Merge old trunk r2695:
+  Send an SQUIT instead of an ERROR to announce /die to connected servers.
+  This will generate better server notices.
+  
+
+  Changes:	Modified:
+  +3 -2		trunk/modules/core/m_die.c (File Modified) 
+
+
+jilles      2007/03/28 14:33:50 UTC	(20070328-3293)
+  Log:
+  Merge old trunk r2294:
+  Zero out the varlist passed to substitution_* when rejecting DNSBL clients.
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/src/s_user.c (File Modified) 
+
+
+jilles      2007/03/28 14:30:10 UTC	(20070328-3291)
+  Log:
+  Merge old trunk r2226:
+  If we are connecting outward to a server, check if the
+  server name they sent is the same as what we tried to
+  connect to. Previously such a connection could succeed
+  if there existed connect blocks with the same IP and
+  passwords for the other server name.
+  
+
+  Changes:	Modified:
+  +11 -0	trunk/modules/core/m_server.c (File Modified) 
+
+
+jilles      2007/03/28 14:21:37 UTC	(20070328-3289)
+  Log:
+  Merge old trunk r2212:
+  Another handling of SJOINs without nicks:
+  Propagate them if the channel is +P or the channel
+  already existed, otherwise remove the channel again
+  and do not propagate the SJOIN.
+  
+
+  Changes:	Modified:
+  +2 -3		trunk/modules/core/m_sjoin.c (File Modified) 
+
+
+jilles      2007/03/28 13:49:57 UTC	(20070328-3287)
+  Log:
+  Remove channels entirely from /whois on services.
+  This cannot be overridden with operspy.
+  
+
+  Changes:	Modified:
+  +20 -17	trunk/modules/m_whois.c (File Modified) 
+
+
+jilles      2007/03/28 13:11:30 UTC	(20070328-3283)
+  Log:
+  Fix /who on channels with ** in their name.
+  
+
+  Changes:	Modified:
+  +2 -2		trunk/modules/m_who.c (File Modified) 
+
+
+jilles      2007/03/25 17:59:50 UTC	(20070325-3281)
+  Log:
+  NEWS: As in 2.1.3, mention that the TS6 revision will
+  interoperate with older versions
+  
+
+  Changes:	Modified:
+  +2 -1		trunk/NEWS (File Modified) 
+
+
+jilles      2007/03/18 16:29:31 UTC	(20070318-3275)
+  Log:
+  Fix documentation of HIDE_SERVERS_IPS define.
+  
+
+  Changes:	Modified:
+  +2 -2		trunk/include/config.h.dist (File Modified) 
+
+
+jilles      2007/03/18 14:44:24 UTC	(20070318-3271)
+  Log:
+  Don't leak auth{} spoofed ip for I-line is full notice either.
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/src/s_conf.c (File Modified) 
+
+
+jilles      2007/03/17 23:50:25 UTC	(20070317-3265)
+  Log:
+  Update NEWS.
+  
+
+  Changes:	Modified:
+  +37 -0	trunk/NEWS (File Modified) 
+
+
+jilles      2007/03/15 18:09:08 UTC	(20070315-3259)
+  Log:
+  Allow /invite (but not invex) to override +r, +l, +j in
+  addition to +i. As before, a restrictive mode must be in
+  place at /invite time for the invite to have an effect;
+  +r does not count as a restrictive mode if the user is
+  logged in; +l and +j always count as restrictive modes to
+  allow for cases where they would allow join at /invite
+  time but not when the user tries to join.
+  
+
+  Changes:	Modified:
+  +6 -2		trunk/modules/m_invite.c (File Modified) 
+  +21 -10	trunk/src/channel.c (File Modified) 
+
+
+jilles      2007/03/13 16:09:28 UTC	(20070313-3257)
+  Log:
+  Remove invite_ops_only, forcing it to YES.
+  
+
+  Changes:	Modified:
+  +0 -1		trunk/doc/example.conf (File Modified) 
+  +0 -5		trunk/doc/reference.conf (File Modified) 
+  +1 -3		trunk/doc/sgml/oper-guide/cmodes.sgml (File Modified) 
+  +0 -1		trunk/include/s_conf.h (File Modified) 
+  +0 -6		trunk/modules/m_info.c (File Modified) 
+  +10 -14	trunk/modules/m_invite.c (File Modified) 
+  +0 -1		trunk/src/newconf.c (File Modified) 
+  +0 -1		trunk/src/s_conf.c (File Modified) 
+
+
+jilles      2007/03/06 14:07:11 UTC	(20070306-3255)
+  Log:
+  Move username check after xline and dnsbl checks, so it
+  will not complain to opers about clients who are xlined
+  or blacklisted anyway (both of which silently reject).
+  
+
+  Changes:	Modified:
+  +15 -15	trunk/src/s_user.c (File Modified) 
+
+
+nenolod     2007/03/05 19:01:05 UTC	(20070305-3253)
+  Log:
+  - MASTER_MAX is no longer relevant
+  
+
+  Changes:	Modified:
+  +0 -7		trunk/modules/m_set.c (File Modified) 
+
+
+nenolod     2007/03/05 18:58:38 UTC	(20070305-3251)
+  Log:
+  - add config option for setting max_clients.
+  
+
+  Changes:	Modified:
+  +5 -0		trunk/doc/example.conf (File Modified) 
+  +5 -0		trunk/doc/reference.conf (File Modified) 
+  +2 -0		trunk/include/s_conf.h (File Modified) 
+  +1 -1		trunk/src/ircd.c (File Modified) 
+  +2 -0		trunk/src/newconf.c (File Modified) 
+  +2 -1		trunk/src/s_conf.c (File Modified) 
+
+
+nenolod     2007/03/05 18:51:17 UTC	(20070305-3249)
+  Log:
+  - remove get_maxrss() and all of that insecure and unsafe nonsense
+  
+
+  Changes:	Modified:
+  +3 -38	trunk/src/ircd.c (File Modified) 
+  +1 -1		trunk/src/restart.c (File Modified) 
+  +0 -4		trunk/src/s_stats.c (File Modified) 
+
+
+nenolod     2007/03/05 18:42:24 UTC	(20070305-3247)
+  Log:
+  - avoid some potential NULL dereferencing
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/libcharybdis/commio.c (File Modified) 
+
+
+nenolod     2007/03/05 18:41:14 UTC	(20070305-3245)
+  Log:
+  - fix a typo
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/libcharybdis/poll.c (File Modified) 
+
+
+nenolod     2007/03/05 18:40:39 UTC	(20070305-3243)
+  Log:
+  - rework poll a bit for the MAXCONNECTIONS changes.
+  
+
+  Changes:	Modified:
+  +46 -23	trunk/libcharybdis/poll.c (File Modified) 
+
+
+jilles      2007/03/05 17:52:28 UTC	(20070305-3241)
+  Log:
+  Our way of using kqueue may cause it to report fds we
+  don't know about anymore, cope.
+  
+
+  Changes:	Modified:
+  +7 -0		trunk/libcharybdis/kqueue.c (File Modified) 
+
+
+jilles      2007/03/05 17:41:40 UTC	(20070305-3239)
+  Log:
+  Don't reference freed memory (fde_t) in comm_close().
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/libcharybdis/commio.c (File Modified) 
+
+
+nenolod     2007/03/05 17:35:17 UTC	(20070305-3237)
+  Log:
+  - fix for 100% cpu use
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/libcharybdis/commio.c (File Modified) 
+
+
+nenolod     2007/03/05 17:31:35 UTC	(20070305-3235)
+  Log:
+  - rework comm_checktimeouts() to use the hashtable in an efficient manner.
+  
+
+  Changes:	Modified:
+  +37 -25	trunk/libcharybdis/commio.c (File Modified) 
+
+
+nenolod     2007/03/05 17:28:27 UTC	(20070305-3233)
+  Log:
+  - clear up use of fd_table in ircd.
+  
+
+  Changes:	Modified:
+  +3 -2		trunk/src/s_serv.c (File Modified) 
+
+
+nenolod     2007/03/05 17:23:07 UTC	(20070305-3229)
+  Log:
+  - use a hashtable for fdlist storage. first step to making the amount of allowed clients dynamic and removing MAXCONNECTIONS.
+  
+
+  Changes:	Modified:
+  +97 -26	trunk/libcharybdis/commio.c (File Modified) 
+  +3 -2		trunk/libcharybdis/commio.h (File Modified) 
+  +8 -6		trunk/libcharybdis/devpoll.c (File Modified) 
+  +1 -1		trunk/libcharybdis/epoll.c (File Modified) 
+  +2 -2		trunk/libcharybdis/kqueue.c (File Modified) 
+  +3 -3		trunk/libcharybdis/poll.c (File Modified) 
+  +2 -2		trunk/libcharybdis/ports.c (File Modified) 
+  +2 -2		trunk/libcharybdis/select.c (File Modified) 
+
+
+jilles      2007/03/05 01:14:46 UTC	(20070305-3227)
+  Log:
+  Fix some cases where the size argument to strlcpy()
+  for usernames and hostnames is 1 too small.
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/modules/m_chghost.c (File Modified) 
+  +2 -2		trunk/src/res.c (File Modified) 
+  +2 -2		trunk/src/s_user.c (File Modified) 
+
+
+jilles      2007/03/04 23:42:55 UTC	(20070304-3225)
+  Log:
+  Cut down quit/part/kick reasons to avoid quit reasons
+  overflowing the client exiting server notice (from
+  TOPICLEN to 260). kill reasons become shorter accordingly.
+  kline/dline/gline reasons become 390.
+  away messages stay at TOPICLEN for now.
+  
+
+  Changes:	Modified:
+  +8 -3		trunk/include/ircd_defs.h (File Modified) 
+  +2 -2		trunk/modules/m_dline.c (File Modified) 
+  +4 -4		trunk/modules/m_gline.c (File Modified) 
+  +2 -2		trunk/modules/m_kline.c (File Modified) 
+
+
+jilles      2007/03/02 17:45:47 UTC	(20070302-3223)
+  Log:
+  Don't leak auth{} spoofed IP addresses in +f notices.
+  from ratbox (androsyn)
+  
+
+  Changes:	Modified:
+  +10 -3	trunk/src/s_conf.c (File Modified) 
+
+
+jilles      2007/02/24 19:34:28 UTC	(20070224-3219)
+  Log:
+  Make oper_up() take +i/-i during opering up into account
+  (e.g. no_oper_invis extension, +i in operator::umodes).
+  Remove the hack from no_oper_invis.
+  
+
+  Changes:	Modified:
+  +0 -2		trunk/extensions/no_oper_invis.c (File Modified) 
+  +4 -0		trunk/src/s_user.c (File Modified) 
+
+
+jilles      2007/02/24 18:35:58 UTC	(20070224-3215)
+  Log:
+  no_oper_invis: decrement invisible count when clearing
+  invisible on a local client who has just opered up
+  oper_up() should really do this
+  
+
+  Changes:	Modified:
+  +2 -0		trunk/extensions/no_oper_invis.c (File Modified) 
+
+
+jilles      2007/02/21 19:52:51 UTC	(20070221-3213)
+  Log:
+  Put "End of Channel Quiet List" instead of
+  "End of Channel Ban List" for a +q list.
+  Due to client restrictions the numerics for
+  quiet lists must be the same as for ban lists.
+  
+
+  Changes:	Modified:
+  +4 -1		trunk/src/chmode.c (File Modified) 
+
+
+jilles      2007/02/20 00:34:28 UTC	(20070220-3211)
+  Log:
+  Port over ratbox 2.2 r23507, r23624, r23626 (jilles/anfl):
+  Change TS6 JOIN processing
+  - don't send out simple modes in TS6 JOIN and TS5 SJOIN when
+    a local user joins an existing channel
+  - don't send out simple modes in TS6 JOIN and TS5 SJOIN when
+    propagating a TS6 JOIN
+  - don't interpret simple modes in an incoming TS6 JOIN
+  
+  This is to avoid desyncs when certain mode changes (e.g. -im)
+  cross with joins. A downside is that simple modes will be
+  more desynched when a JOIN creates a channel or lowers TS,
+  but that's less important.
+  
+  Update the TS6 specification to include this, and clarify
+  that TMODE can come from a server and that MODE must be
+  translated into TMODE from other servers too.
+  
+
+  Changes:	Modified:
+  +69 -39	trunk/doc/technical/ts6.txt (File Modified) 
+  +19 -127	trunk/modules/core/m_join.c (File Modified) 
+
+
+jilles      2007/02/11 16:54:43 UTC	(20070211-3209)
+  Log:
+  Make -logfile work again.
+  
+
+  Changes:	Modified:
+  +2 -2		trunk/src/s_log.c (File Modified) 
+
+
+nenolod     2007/02/09 22:18:23 UTC	(20070209-3205)
+  Log:
+  - fix off-by-one memory overflow error.
+  
+
+  Changes:	Modified:
+  +1 -5		trunk/libcharybdis/kqueue.c (File Modified) 
+
+
+jilles      2007/02/04 15:08:04 UTC	(20070204-3203)
+  Log:
+  Change handling of modularized umodes:
+  - keep the bitmask reserved forever to the letter, fixing
+    the problems when loading multiple umode modules,
+    unloading them and then loading them in a different order
+  - don't allow local users to change umodes which have
+    been unloaded and don't set them on new users via
+    default_umodes
+  
+
+  Changes:	Modified:
+  +24 -3	trunk/src/s_user.c (File Modified) 
+
+
+jilles      2007/02/04 01:59:38 UTC	(20070204-3201)
+  Log:
+  Move find_umode_slot() from libcharybdis/tools.c to src/s_user.c.
+  
+
+  Changes:	Modified:
+  +1 -0		trunk/include/s_user.h (File Modified) 
+  +0 -22	trunk/libcharybdis/tools.c (File Modified) 
+  +0 -1		trunk/libcharybdis/tools.h (File Modified) 
+  +22 -0	trunk/src/s_user.c (File Modified) 
+
+
+jilles      2007/02/01 01:44:31 UTC	(20070201-3195)
+  Log:
+  DNSBL keyword substitution is available as of 2.1.3.
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/doc/example.conf (File Modified) 
+
+
+jilles      2007/02/01 01:07:42 UTC	(20070201-3183)
+  Log:
+  Change two occurances like match(userinput, target_p->name) ||
+  match(target_p->name, userinput) to just match(userinput,
+  target_p->name). No client name can contain * or ? now.
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/modules/m_trace.c (File Modified) 
+  +1 -2		trunk/src/s_serv.c (File Modified) 
+
+
+jilles      2007/02/01 00:49:07 UTC	(20070201-3181)
+  Log:
+  Do not try find_server() on a name find_client() has
+  returned NULL for, as this will always return NULL
+  since the removal of hostmasking.
+  
+
+  Changes:	Modified:
+  +1 -2		trunk/modules/m_pong.c (File Modified) 
+  +0 -4		trunk/src/s_serv.c (File Modified) 
+
+
+jilles      2007/02/01 00:34:33 UTC	(20070201-3179)
+  Log:
+  Remove server_exists() which checked whether the
+  server name existed taking hostmasking into account
+  and just check with find_server(); admittedly
+  this checks if the name is a SID but that's not
+  a real problem.
+  
+
+  Changes:	Modified:
+  +3 -27	trunk/modules/core/m_server.c (File Modified) 
+
+
+jilles      2007/02/01 00:19:14 UTC	(20070201-3177)
+  Log:
+  Remove hash_find_masked_server(), which made it possible
+  to specify the full (unmasked) name of a server behind
+  a hostmask. As a result find_any_client() (for prefixes)
+  becomes equal to find_client(), so remove that too.
+  
+
+  Changes:	Modified:
+  +0 -1		trunk/include/hash.h (File Modified) 
+  +1 -75	trunk/src/hash.c (File Modified) 
+  +1 -1		trunk/src/parse.c (File Modified) 
+
+
+jilles      2007/02/01 00:02:35 UTC	(20070201-3175)
+  Log:
+  Remove '*' from valid server name characters.
+  This makes it impossible to connect hostmasked servers.
+  (This support didn't work well anyway, was incompatible
+  with TS6 and we never masked ourselves.)
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/src/match.c (File Modified) 
+
+
+jilles      2007/01/31 23:57:18 UTC	(20070131-3173)
+  Log:
+  Change spambot, flooder and jupe joiner notices from host to orighost.
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/modules/core/m_join.c (File Modified) 
+  +2 -2		trunk/modules/core/m_message.c (File Modified) 
+  +2 -2		trunk/src/channel.c (File Modified) 
+
+
+jilles      2007/01/28 22:13:18 UTC	(20070128-3169)
+  Log:
+  Add documentation for SASL client protocol, same as atheme doc/SASL.
+  
+
+  Changes:	Modified:
+  + -		trunk/doc/sasl.txt (File Added) 
+
+
+jilles      2007/01/26 18:52:11 UTC	(20070126-3167)
+  Log:
+  Include real hostname in Closing Link message for unknown
+  connections that have sent USER. This is helpful for
+  k-lined users while not breaking server IP hiding.
+  
+
+  Changes:	Modified:
+  +3 -1		trunk/src/client.c (File Modified) 
+
+
+jilles      2007/01/26 16:52:29 UTC	(20070126-3165)
+  Log:
+  Rerun autoconf.
+  
+
+  Changes:	Modified:
+  +29 -29	trunk/configure (File Modified) 
+
+
+nenolod     2007/01/25 07:36:23 UTC	(20070125-3163)
+  Log:
+  - nick[user@host] -> nick!user@host in kill messages. based on jilles' change in 3.0
+  
+
+  Changes:	Modified:
+  +3 -3		trunk/modules/core/m_kill.c (File Modified) 
+
+
+nenolod     2007/01/25 07:23:01 UTC	(20070125-3161)
+  Log:
+  Backport from early 3.x: 
+  
+  --
+  nenolod     2006/09/27 16:39:14 UTC	(20060927-2178)
+    Log:
+    - remove "Processing connection to foobar.net" message
+    
+  
+    Changes:	Modified:
+    +0 -3		trunk/src/s_auth.c (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:34:26 UTC	(20060927-2176)
+    Log:
+    - missed the processing connection one (actually, we can probably nuke this one)
+    
+  
+    Changes:	Modified:
+    +1 -2		trunk/src/s_auth.c (File Modified) 
+  
+  
+  river       2006/09/27 16:33:05 UTC	(20060927-2174)
+    Log:
+    get_client_name = stupid
+    
+    
+  
+    Changes:	Modified:
+    +10 -7	trunk/modules/core/m_kill.c (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:32:37 UTC	(20060927-2172)
+    Log:
+    - remove excessive arguments
+    
+  
+    Changes:	Modified:
+    +1 -2		trunk/src/s_conf.c (File Modified) 
+    +1 -1		trunk/src/s_user.c (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:30:59 UTC	(20060927-2170)
+    Log:
+    - use sendto_one_notice() for on-connect notices too.
+    
+  
+    Changes:	Modified:
+    +10 -10	trunk/src/s_auth.c (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:27:01 UTC	(20060927-2168)
+    Log:
+    - use sendto_one_notice() in the core, too.
+    
+  
+    Changes:	Modified:
+    +2 -2		trunk/src/chmode.c (File Modified) 
+    +8 -15	trunk/src/modules.c (File Modified) 
+    +3 -5		trunk/src/s_conf.c (File Modified) 
+    +1 -2		trunk/src/s_newconf.c (File Modified) 
+    +20 -57	trunk/src/s_user.c (File Modified) 
+  
+  
+  river       2006/09/27 16:19:25 UTC	(20060927-2166)
+    Log:
+    the KILL command will use get_client_name(, SHOW_IP) instead of
+    target->name, and will show a more useful error for local opers
+    
+    
+  
+    Changes:	Modified:
+    +6 -4		trunk/modules/core/m_kill.c (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:09:48 UTC	(20060927-2164)
+    Log:
+    - fix bugs in sendto_one_notice()/sendto_one_numeric() where a client identifier won't be sent to unregistered clients
+    
+  
+    Changes:	Modified:
+    +4 -2		trunk/src/send.c (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:05:46 UTC	(20060927-2161)
+    Log:
+    - back out r2159
+    
+  
+    Changes:	Modified:
+    +1 -1		trunk/include/client.h (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:04:05 UTC	(20060927-2159)
+    Log:
+    - get_id(): fall back to "*" if client has no known name
+    
+  
+    Changes:	Modified:
+    +1 -1		trunk/include/client.h (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:01:29 UTC	(20060927-2157)
+    Log:
+    - convert to sendto_one_notice().
+    
+  
+    Changes:	Modified:
+    +2 -3		trunk/unsupported/m_clearchan.c (File Modified) 
+    +4 -6		trunk/unsupported/m_force.c (File Modified) 
+  
+  
+  nenolod     2006/09/27 15:57:11 UTC	(20060927-2155)
+    Log:
+    - use sendto_one_notice() in many places instead of 
+  sendto_one(source_p, ":%s NOTICE %s :", ...);
+    
+  
+    Changes:	Modified:
+    +10 -25	trunk/extensions/example_module.c (File Modified) 
+    +5 -14	trunk/extensions/hurt.c (File Modified) 
+    +1 -2		trunk/extensions/m_42.c (File Modified) 
+    +7 -12	trunk/extensions/m_mkpasswd.c (File Modified) 
+    +1 -2		trunk/extensions/m_ojoin.c (File Modified) 
+    +1 -2		trunk/extensions/m_opme.c (File Modified) 
+    +3 -3		trunk/extensions/spy_whois_notice.c (File Modified) 
+    +3 -3		trunk/extensions/spy_whois_notice_global.c (File Modified) 
+    +3 -7		trunk/modules/core/m_die.c (File Modified) 
+    +2 -4		trunk/modules/core/m_kill.c (File Modified) 
+    +2 -2		trunk/modules/core/m_squit.c (File Modified) 
+    +1 -2		trunk/modules/m_challenge.c (File Modified) 
+    +11 -15	trunk/modules/m_connect.c (File Modified) 
+    +20 -28	trunk/modules/m_dline.c (File Modified) 
+    +2 -2		trunk/modules/m_etrace.c (File Modified) 
+    +11 -21	trunk/modules/m_gline.c (File Modified) 
+    +2 -4		trunk/modules/m_kline.c (File Modified) 
+    +1 -2		trunk/modules/m_rehash.c (File Modified) 
+    +3 -7		trunk/modules/m_restart.c (File Modified) 
+    +31 -45	trunk/modules/m_set.c (File Modified) 
+    +2 -4		trunk/modules/m_testmask.c (File Modified) 
+    +5 -8		trunk/modules/m_unreject.c (File Modified) 
+    +2 -5		trunk/modules/m_xline.c (File Modified) 
+  --
+  
+
+  Changes:	Modified:
+  +2 -0		trunk/doc/sgml/oper-guide/commands.sgml (File Modified) 
+  +10 -25	trunk/extensions/example_module.c (File Modified) 
+  +5 -14	trunk/extensions/hurt.c (File Modified) 
+  +1 -2		trunk/extensions/m_42.c (File Modified) 
+  +7 -12	trunk/extensions/m_mkpasswd.c (File Modified) 
+  +1 -2		trunk/extensions/m_ojoin.c (File Modified) 
+  +1 -2		trunk/extensions/m_opme.c (File Modified) 
+  +3 -3		trunk/extensions/spy_whois_notice.c (File Modified) 
+  +3 -3		trunk/extensions/spy_whois_notice_global.c (File Modified) 
+  +3 -7		trunk/modules/core/m_die.c (File Modified) 
+  +14 -11	trunk/modules/core/m_kill.c (File Modified) 
+  +2 -2		trunk/modules/core/m_squit.c (File Modified) 
+  +1 -2		trunk/modules/m_challenge.c (File Modified) 
+  +11 -15	trunk/modules/m_connect.c (File Modified) 
+  +2 -4		trunk/modules/m_dline.c (File Modified) 
+  +2 -2		trunk/modules/m_etrace.c (File Modified) 
+  +11 -21	trunk/modules/m_gline.c (File Modified) 
+  +2 -4		trunk/modules/m_kline.c (File Modified) 
+  +1 -2		trunk/modules/m_rehash.c (File Modified) 
+  +3 -7		trunk/modules/m_restart.c (File Modified) 
+  +31 -45	trunk/modules/m_set.c (File Modified) 
+  +2 -4		trunk/modules/m_testmask.c (File Modified) 
+  +5 -8		trunk/modules/m_unreject.c (File Modified) 
+  +1 -3		trunk/modules/m_xline.c (File Modified) 
+  +2 -2		trunk/src/chmode.c (File Modified) 
+  +8 -15	trunk/src/modules.c (File Modified) 
+  +10 -14	trunk/src/s_auth.c (File Modified) 
+  +3 -6		trunk/src/s_conf.c (File Modified) 
+  +1 -2		trunk/src/s_newconf.c (File Modified) 
+  +20 -57	trunk/src/s_user.c (File Modified) 
+  +4 -2		trunk/src/send.c (File Modified) 
+  +2 -3		trunk/unsupported/m_clearchan.c (File Modified) 
+  +4 -6		trunk/unsupported/m_force.c (File Modified) 
+
+
+nenolod     2007/01/25 07:08:21 UTC	(20070125-3159)
+  Log:
+  - keyword-subst from charybdis 2.2.
+  
+
+  Changes:	Modified:
+  +12 -3	trunk/doc/example.conf (File Modified) 
+  +58 -3	trunk/doc/reference.conf (File Modified) 
+  + -		trunk/include/substitution.h (File Added) 
+  +1 -0		trunk/src/Makefile.in (File Modified) 
+  +2 -2		trunk/src/s_conf.c (File Modified) 
+  +164 -1	trunk/src/s_user.c (File Modified) 
+  + -		trunk/src/substitution.c (File Added) 
+
+
+nenolod     2007/01/25 07:00:49 UTC	(20070125-3157)
+  Log:
+  Removed merge tracking for "svnmerge" for 
+  http://svn.atheme.org/charybdis/branches/release-2.2
+  
+
+  Changes:	Modified:
+  + -		trunk/  (Property Modified)
+
+
+nenolod     2007/01/25 06:59:58 UTC	(20070125-3155)
+  Log:
+  Initialized merge tracking via "svnmerge" with revisions "1-1919" from 
+  http://svn.atheme.org/charybdis/branches/release-2.2
+  
+
+  Changes:	Modified:
+  + -		trunk/  (Property Modified)
+
+
+nenolod     2007/01/25 06:59:30 UTC	(20070125-3153)
+  Log:
+  Removed merge tracking for "svnmerge" for 
+  http://svn.atheme.org/charybdis/branches/release-2.2
+  
+
+  Changes:	Modified:
+  + -		trunk/  (Property Modified)
+
+
+nenolod     2007/01/25 06:58:41 UTC	(20070125-3151)
+  Log:
+  Initialized merge tracking via "svnmerge" with revisions "1-2190" from 
+  http://svn.atheme.org/charybdis/branches/release-2.2
+  
+
+  Changes:	Modified:
+  + -		trunk/  (Property Modified)
+
+
+nenolod     2007/01/25 06:57:47 UTC	(20070125-3149)
+  Log:
+  - bleah
+  
+
+  Changes:	Modified:
+  + -		trunk/  (Property Modified)
+
+
+nenolod     2007/01/25 06:50:46 UTC	(20070125-3147)
+  Log:
+  Initialized merge tracking via "svnmerge" with revisions "1-3146" from 
+  http://svn.atheme.org/charybdis/branches/release-2.2
+  
+
+  Changes:	Modified:
+  + -		trunk/  (Property Modified)
+
+
+nenolod     2007/01/25 06:45:04 UTC	(20070125-3145)
+  Log:
+  - version bump to 2.2.0
+  
+
+  Changes:	Modified:
+  +3 -1		trunk/NEWS (File Modified) 
+  +1 -1		trunk/configure.ac (File Modified) 
+
+
+nenolod     2007/01/25 06:40:21 UTC	(20070125-3143)
+  Log:
+  - the new plan:
+    + branches/release-2.1 -> 2.2 base
+    + 3.0 -> branches/cxxconversion
+    + backport some immediate 3.0 functionality for 2.2
+    + other stuff
+  
+
+  Changes:	Modified:
+  + -		trunk/ (File Added) 
+
+
+jilles      2007/01/23 23:48:50 UTC	(20070123-3139)
+  Log:
+  Merged revisions 3135,3137 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3135 | jilles | 2007-01-23 22:19:14 +0100 (Tue, 23 Jan 2007) | 3 lines
+    
+    - Expand TRACE description
+    - Mention expiry time in TESTLINE
+  ........
+    r3137 | jilles | 2007-01-23 22:20:30 +0100 (Tue, 23 Jan 2007) | 2 lines
+    
+    Update copyright year for sgml docs to 2007.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -1		branches/release-2.1/doc/sgml/oper-guide/charybdis-oper-guide.sgml (File Modified) 
+  +77 -3	branches/release-2.1/doc/sgml/oper-guide/commands.sgml (File Modified) 
+
+
+jilles      2007/01/21 15:38:16 UTC	(20070121-3133)
+  Log:
+  Merged revisions 1999 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  Add river to CREDITS
+  
+  ........
+    r1999 | river | 2006-09-02 05:15:18 +0200 (Sat, 02 Sep 2006) | 2 lines
+    
+    vanity
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -0		branches/release-2.1/CREDITS (File Modified) 
+
+
+jilles      2007/01/21 15:36:31 UTC	(20070121-3131)
+  Log:
+  Merged revisions 1995,1997,2019-2020,2023-2028,2031-2032,2055-2058,2061,2063 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r1995 | river | 2006-09-02 05:06:52 +0200 (Sat, 02 Sep 2006) | 3 lines
+    
+    add "use_forward" option from +malfunc, lets admins disable chanmode +QFf
+  ........
+    r1997 | river | 2006-09-02 05:09:57 +0200 (Sat, 02 Sep 2006) | 3 lines
+    
+    - add use_forward to /info
+  ........
+    r2061 | jilles | 2006-09-23 13:51:11 +0200 (Sat, 23 Sep 2006) | 5 lines
+    
+    Call channel_modes() with &me instead of source_p when
+    sending out a JOIN and SJOIN for a local user. This
+    saves checking whether they are on the channel they
+    have just joined.
+  ........
+    r2063 | jilles | 2006-09-23 14:17:00 +0200 (Sat, 23 Sep 2006) | 6 lines
+    
+    If use_forward is disabled:
+    - hide +fFQ in 005
+    - hide +f in /mode #channel (/mode #channel f still shows it)
+    - do not send any mode changes adding +f to local clients
+      (-f ones are still sent)
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +1 -0		branches/release-2.1/doc/example.conf (File Modified) 
+  +5 -0		branches/release-2.1/doc/reference.conf (File Modified) 
+  +1 -0		branches/release-2.1/include/s_conf.h (File Modified) 
+  +4 -3		branches/release-2.1/modules/core/m_join.c (File Modified) 
+  +1 -1		branches/release-2.1/modules/core/m_sjoin.c (File Modified) 
+  +6 -0		branches/release-2.1/modules/m_info.c (File Modified) 
+  +1 -1		branches/release-2.1/src/channel.c (File Modified) 
+  +11 -1	branches/release-2.1/src/chmode.c (File Modified) 
+  +1 -0		branches/release-2.1/src/newconf.c (File Modified) 
+  +1 -0		branches/release-2.1/src/s_conf.c (File Modified) 
+  +5 -0		branches/release-2.1/src/s_user.c (File Modified) 
+  +4 -2		branches/release-2.1/src/supported.c (File Modified) 
+
+
+jilles      2007/01/02 13:23:04 UTC	(20070102-3121)
+  Log:
+  OPME/OMODE/OJOIN: Use get_oper_name() in log message.
+  
+
+  Changes:	Modified:
+  +3 -2		branches/release-2.1/extensions/m_ojoin.c (File Modified) 
+  +2 -2		branches/release-2.1/extensions/m_omode.c (File Modified) 
+  +3 -2		branches/release-2.1/extensions/m_opme.c (File Modified) 
+
+
+jilles      2007/01/02 13:11:04 UTC	(20070102-3117)
+  Log:
+  Add accountability (wallops, log) to OKICK.
+  
+
+  Changes:	Modified:
+  +14 -0	branches/release-2.1/extensions/m_okick.c (File Modified) 
+
+
+jilles      2006/12/27 00:47:45 UTC	(20061227-3063)
+  Log:
+  Allow kline ipv6:address, unkline some.host and unkline ipv6:address without *@.
+  Similar to branches/release-2.2 r3061.
+  
+
+  Changes:	Modified:
+  +2 -2		branches/release-2.1/modules/m_kline.c (File Modified) 
+
+
+jilles      2006/12/27 00:36:54 UTC	(20061227-3059)
+  Log:
+  - Write xline to file after instead of before notifying opers and source
+  - Also notify source of failure to add xline
+  Similar to branches/release-2.2 r3057.
+  
+
+  Changes:	Modified:
+  +4 -2		branches/release-2.1/modules/m_xline.c (File Modified) 
+
+
+jilles      2006/12/27 00:25:50 UTC	(20061227-3055)
+  Log:
+  If a dline/kline/resv cannot be added to the file, send
+  the regular notices to local opers and source anyway,
+  and also warn the source (local opers were already warned).
+  Similar to branches/release-2.2 r3053.
+  
+
+  Changes:	Modified:
+  +44 -42	branches/release-2.1/src/s_conf.c (File Modified) 
+
+
+jilles      2006/12/27 00:02:32 UTC	(20061227-3051)
+  Log:
+  Port over fixes from unkline/unxline/unresv to undline.
+  Similar to branches/release-2.2 r3049.
+  
+
+  Changes:	Modified:
+  +7 -2		branches/release-2.1/modules/m_dline.c (File Modified) 
+
+
+jilles      2006/12/26 23:18:05 UTC	(20061226-3047)
+  Log:
+  Merged revisions 2915 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2915 | jilles | 2006-12-17 01:40:54 +0100 (Sun, 17 Dec 2006) | 3 lines
+    
+    In usage message, show kline.conf and xline.conf instead
+    of klines.conf and xlines.conf.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +2 -2		branches/release-2.1/src/ircd.c (File Modified) 
+
+
+jilles      2006/12/26 23:16:57 UTC	(20061226-3045)
+  Log:
+  Merged revisions 2831,2833,2853 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2831 | jilles | 2006-12-14 00:19:51 +0100 (Thu, 14 Dec 2006) | 5 lines
+    
+    unkline/unxline/unresv:
+    - if fclose on the output returns an error, treat this as a
+      write error too
+    - check if the rename from the temp file to the ban conf failed
+  ........
+    r2833 | jilles | 2006-12-14 00:39:25 +0100 (Thu, 14 Dec 2006) | 3 lines
+    
+    When adding a permanent dline/kline/xline/resv, check
+    the return value of fclose().
+  ........
+    r2853 | jilles | 2006-12-16 00:24:32 +0100 (Sat, 16 Dec 2006) | 3 lines
+    
+    Do not free xline aconf if it could not be written out.
+    It will be added to the list in memory anyway.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +7 -2		branches/release-2.1/modules/m_kline.c (File Modified) 
+  +7 -2		branches/release-2.1/modules/m_resv.c (File Modified) 
+  +12 -5	branches/release-2.1/modules/m_xline.c (File Modified) 
+  +5 -1		branches/release-2.1/src/s_conf.c (File Modified) 
+
+
+jilles      2006/12/05 13:24:19 UTC	(20061205-2813)
+  Log:
+  NEWS: Clarify effects of ip_cloaking changes a little.
+  
+
+  Changes:	Modified:
+  +2 -0		branches/release-2.1/NEWS (File Modified) 
+
+
+jilles      2006/12/05 13:18:39 UTC	(20061205-2811)
+  Log:
+  Rerun autoconf.
+  
+
+  Changes:	Modified:
+  +9 -9		branches/release-2.1/configure (File Modified) 
+
+
+jilles      2006/12/05 13:18:19 UTC	(20061205-2809)
+  Log:
+  Version bump on 2.1 branch to 2.1.2.
+  
+
+  Changes:	Modified:
+  +1 -1		branches/release-2.1/configure.ac (File Modified) 
+
+
+jilles      2006/12/05 12:47:23 UTC	(20061205-2807)
+  Log:
+  Mention r2801/r2805.
+  
+
+  Changes:	Modified:
+  +1 -0		branches/release-2.1/NEWS (File Modified) 
+
+
+jilles      2006/12/05 12:45:43 UTC	(20061205-2805)
+  Log:
+  Merged revisions 2801 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2801 | jilles | 2006-12-03 20:18:59 +0100 (Sun, 03 Dec 2006) | 3 lines
+    
+    ip_cloaking: try to avoid truncation by removing more
+    components of the hostname (except the TLD).
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +14 -2	branches/release-2.1/extensions/ip_cloaking.c (File Modified) 
+
+
+jilles      2006/12/02 20:40:54 UTC	(20061202-2793)
+  Log:
+  Update NEWS.
+  
+
+  Changes:	Modified:
+  +8 -1		branches/release-2.1/NEWS (File Modified) 
+
+
+jilles      2006/12/02 20:32:39 UTC	(20061202-2791)
+  Log:
+  Merged revisions 2781 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2781 | jilles | 2006-12-02 01:50:29 +0100 (Sat, 02 Dec 2006) | 5 lines
+    
+    Fix stupid bug: checked a hostmask against the found
+    ban instead of all exceptions, causing all host mangled
+    clients to be exempted if there was a single ban
+    exception in many cases.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +2 -2		branches/release-2.1/src/channel.c (File Modified) 
+
+
+jilles      2006/12/02 20:00:18 UTC	(20061202-2789)
+  Log:
+  Merged revisions 2773 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r2773 | jilles | 2006-11-24 20:45:29 +0100 (Fri, 24 Nov 2006) | 3 lines
+    
+    user@host must be *@* for a shared{} block with flags=locops
+    (server should not be *).
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.1/  (Property Modified)
+  +3 -1		branches/release-2.1/doc/sgml/oper-guide/config.sgml (File Modified) 
+
+
+jilles      2006/11/27 11:45:31 UTC	(20061127-2775)
+  Log:
+  Tweak \s code a little.
+  
+
+  Changes:	Modified:
+  +1 -1		branches/release-2.1/modules/m_etrace.c (File Modified) 
+  +1 -1		branches/release-2.1/modules/m_testmask.c (File Modified) 
+  +1 -1		branches/release-2.1/modules/m_xline.c (File Modified) 
+
+
 jilles      2006/11/12 14:21:16 UTC	(20061112-2765)
   Log:
   Merged revisions 2761 via svnmerge from 

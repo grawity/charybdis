@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: chmode.c 2727 2006-11-09 23:48:45Z jilles $
+ *  $Id: chmode.c 3213 2007-02-21 19:52:51Z jilles $
  */
 
 #include "stdinc.h"
@@ -410,6 +410,11 @@ chm_simple(struct Client *source_p, struct Channel *chptr,
 	/* setting + */
 	if((dir == MODE_ADD) && !(chptr->mode.mode & mode_type))
 	{
+		/* if +f is disabled, ignore an attempt to set +QF locally */
+		if(!ConfigChannel.use_forward && MyClient(source_p) &&
+		   (c == 'Q' || c == 'F'))
+			return;
+
 		chptr->mode.mode |= mode_type;
 
 		mode_changes[mode_count].letter = c;
@@ -576,7 +581,10 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 				   me.name, source_p->name, chptr->chname,
 				   banptr->banstr, banptr->who, banptr->when);
 		}
-		sendto_one(source_p, form_str(rpl_endlist), me.name, source_p->name, chptr->chname);
+		if (mode_type == CHFL_QUIET)
+			sendto_one(source_p, ":%s %d %s %s :End of Channel Quiet List", me.name, rpl_endlist, source_p->name, chptr->chname);
+		else
+			sendto_one(source_p, form_str(rpl_endlist), me.name, source_p->name, chptr->chname);
 		return;
 	}
 
@@ -949,14 +957,19 @@ chm_forward(struct Client *source_p, struct Channel *chptr,
 	struct membership *msptr;
 	const char *forward;
 
+	/* if +f is disabled, ignore local attempts to set it */
+	if(!ConfigChannel.use_forward && MyClient(source_p) &&
+	   (dir == MODE_ADD) && (parc > *parn))
+		return;
+
 	if(dir == MODE_QUERY || (dir == MODE_ADD && parc <= *parn))
 	{
 		if (!(*errors & SM_ERR_RPL_F))
 		{
 			if (*chptr->mode.forward == '\0')
-				sendto_one(source_p, ":%s NOTICE %s :%s has no forward channel", me.name, source_p->name, chptr->chname);
+				sendto_one_notice(source_p, ":%s has no forward channel", chptr->chname);
 			else
-				sendto_one(source_p, ":%s NOTICE %s :%s forward channel is %s", me.name, source_p->name, chptr->chname, chptr->mode.forward);
+				sendto_one_notice(source_p, ":%s forward channel is %s", chptr->chname, chptr->mode.forward);
 			*errors |= SM_ERR_RPL_F;
 		}
 		return;
@@ -1024,7 +1037,7 @@ chm_forward(struct Client *source_p, struct Channel *chptr,
 		mode_changes[mode_count].dir = MODE_ADD;
 		mode_changes[mode_count].caps = 0;
 		mode_changes[mode_count].nocaps = 0;
-		mode_changes[mode_count].mems = ALL_MEMBERS;
+		mode_changes[mode_count].mems = ConfigChannel.use_forward ? ALL_MEMBERS : ONLY_SERVERS;
 		mode_changes[mode_count].id = NULL;
 		mode_changes[mode_count++].arg = forward;
 	}

@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: kqueue.c 398 2005-12-12 18:12:46Z nenolod $
+ *  $Id: kqueue.c 3358 2007-04-03 09:34:38Z nenolod $
  */
 
 #include "stdinc.h"
@@ -30,7 +30,7 @@
 
 #include "libcharybdis.h"
 
-#define KE_LENGTH MAX_CLIENTS
+#define KE_LENGTH 128
 
 /* jlemon goofed up and didn't add EV_SET until fbsd 4.3 */
 
@@ -103,7 +103,7 @@ kq_update_events(fde_t * F, short filter, PF * handler)
 
 		EV_SET(kep, (uintptr_t) F->fd, filter, kep_flags, 0, 0, (void *) F);
 
-		if(kqoff == kqmax)
+		if(++kqoff == kqmax)
 		{
 			int ret;
 
@@ -115,10 +115,6 @@ kq_update_events(fde_t * F, short filter, PF * handler)
 				return;
 			}
 			kqoff = 0;
-		}
-		else
-		{
-			kqoff++;
 		}
 	}
 }
@@ -160,7 +156,7 @@ void
 comm_setselect(int fd, fdlist_t list, unsigned int type, PF * handler,
 	       void *client_data, time_t timeout)
 {
-	fde_t *F = &fd_table[fd];
+	fde_t *F = comm_locate_fd(fd);
 	s_assert(fd >= 0);
 	s_assert(F->flags.open);
 
@@ -243,13 +239,20 @@ comm_select(unsigned long delay)
 	{
 		int fd = (int) ke[i].ident;
 		PF *hdl = NULL;
-		fde_t *F = &fd_table[fd];
+		fde_t *F = comm_locate_fd(fd);
 
 		if(ke[i].flags & EV_ERROR)
 		{
 			errno = (int) ke[i].data;
 			/* XXX error == bad! -- adrian */
 			continue;	/* XXX! */
+		}
+		if (F == NULL)
+		{
+			/* XXX this is because of our "queueing" of
+			 * kqueue changes so we may get ones for fds
+			 * we have already closed? -- jilles */
+			continue;
 		}
 
 		switch (ke[i].filter)

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c 1903 2006-08-29 14:46:33Z jilles $
+ *  $Id: ircd.c 3380 2007-04-03 22:25:11Z jilles $
  */
 
 #include "stdinc.h"
@@ -79,38 +79,9 @@
  */
 int _charybdis_data_version = CHARYBDIS_DV;
 
-extern int ServerRunning, initialVMTop;
+extern int ServerRunning;
 extern struct LocalUser meLocalUser;
 extern char **myargv;
-
-/*
- * get_vm_top - get the operating systems notion of the resident set size
- */
-static unsigned long
-get_vm_top(void)
-{
-	/*
-	 * NOTE: sbrk is not part of the ANSI C library or the POSIX.1 standard
-	 * however it seems that everyone defines it. Calling sbrk with a 0
-	 * argument will return a pointer to the top of the process virtual
-	 * memory without changing the process size, so this call should be
-	 * reasonably safe (sbrk returns the new value for the top of memory).
-	 * This code relies on the notion that the address returned will be an 
-	 * offset from 0 (NULL), so the result of sbrk is cast to a size_t and 
-	 * returned. We really shouldn't be using it here but...
-	 */
-	void *vptr = sbrk(0);
-	return (unsigned long) vptr;
-}
-
-/*
- * get_maxrss - get the operating systems notion of the resident set size
- */
-unsigned long
-get_maxrss(void)
-{
-	return get_vm_top() - initialVMTop;
-}
 
 /*
  * print_startup - print startup information
@@ -168,29 +139,19 @@ ircd_die_cb(const char *str)
 static void
 init_sys(void)
 {
-#if defined(RLIMIT_FD_MAX) && defined(HAVE_SYS_RLIMIT_H)
+#if defined(RLIMIT_NOFILE) && defined(HAVE_SYS_RESOURCE_H)
 	struct rlimit limit;
 
-	if(!getrlimit(RLIMIT_FD_MAX, &limit))
+	if(!getrlimit(RLIMIT_NOFILE, &limit))
 	{
-
-		if(limit.rlim_max < MAXCONNECTIONS)
-		{
-			fprintf(stderr, "ircd fd table too big\n");
-			fprintf(stderr, "Hard Limit: %ld IRC max: %d\n",
-				(long) limit.rlim_max, MAXCONNECTIONS);
-			fprintf(stderr, "Fix MAXCONNECTIONS\n");
-			exit(-1);
-		}
-
 		limit.rlim_cur = limit.rlim_max;	/* make soft limit the max */
-		if(setrlimit(RLIMIT_FD_MAX, &limit) == -1)
+		if(setrlimit(RLIMIT_NOFILE, &limit) == -1)
 		{
 			fprintf(stderr, "error setting max fd's to %ld\n", (long) limit.rlim_cur);
 			exit(EXIT_FAILURE);
 		}
 	}
-#endif /* RLIMIT_FD_MAX */
+#endif /* RLIMIT_NOFILE */
 }
 
 static int
@@ -242,9 +203,9 @@ struct lgetopt myopts[] = {
 	{"configfile", &ConfigFileEntry.configfile,
 	 STRING, "File to use for ircd.conf"},
 	{"klinefile", &ConfigFileEntry.klinefile,
-	 STRING, "File to use for klines.conf"},
+	 STRING, "File to use for kline.conf"},
 	{"xlinefile", &ConfigFileEntry.xlinefile,
-	 STRING, "File to use for xlines.conf"},
+	 STRING, "File to use for xline.conf"},
 	{"resvfile", &ConfigFileEntry.resvfile,
 	 STRING, "File to use for resv.conf"},
 	{"logfile", &logFileName,
@@ -348,7 +309,7 @@ initialize_global_set_options(void)
 	memset(&GlobalSetOptions, 0, sizeof(GlobalSetOptions));
 	/* memset( &ConfigFileEntry, 0, sizeof(ConfigFileEntry)); */
 
-	GlobalSetOptions.maxclients = MAX_CLIENTS;
+	GlobalSetOptions.maxclients = ServerInfo.max_clients;
 	GlobalSetOptions.autoconn = 1;
 
 	GlobalSetOptions.spam_time = MIN_JOIN_LEAVE_TIME;
@@ -513,11 +474,6 @@ main(int argc, char *argv[])
 	 */
 	setup_corefile();
 
-	/*
-	 * set initialVMTop before we allocate any memory
-	 */
-	initialVMTop = get_vm_top();
-
 	ServerRunning = 0;
 	/* It ain't random, but it ought to be a little harder to guess */
 	srand(SystemTime.tv_sec ^ (SystemTime.tv_usec | (getpid() << 20)));
@@ -596,8 +552,8 @@ main(int argc, char *argv[])
 	}
 
 	/* Init the event subsystem */
-	libcharybdis_init(ircd_log_cb, restart, ircd_die_cb);
 	init_sys();
+	libcharybdis_init(ircd_log_cb, restart, ircd_die_cb);
 
 	fdlist_init();
 	if(!server_state_foreground)

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_auth.c 1683 2006-06-20 14:26:16Z jilles $ */
+ *  $Id: s_auth.c 3354 2007-04-03 09:21:31Z nenolod $ */
 
 /*
  * Changes:
@@ -62,15 +62,15 @@
 
 static const char *HeaderMessages[] =
 {
-	"NOTICE AUTH :*** Looking up your hostname...",
-	"NOTICE AUTH :*** Found your hostname",
-	"NOTICE AUTH :*** Couldn't look up your hostname",
-	"NOTICE AUTH :*** Checking Ident",
-	"NOTICE AUTH :*** Got Ident response",
-	"NOTICE AUTH :*** No Ident response",
-	"NOTICE AUTH :*** Your hostname is too long, ignoring hostname",
-	"NOTICE AUTH :*** Your forward and reverse DNS do not match, ignoring hostname",
-	"NOTICE AUTH :*** Cannot verify hostname validity, ignoring hostname",
+	":*** Looking up your hostname...",
+	":*** Found your hostname",
+	":*** Couldn't look up your hostname",
+	":*** Checking Ident",
+	":*** Got Ident response",
+	":*** No Ident response",
+	":*** Your hostname is too long, ignoring hostname",
+	":*** Your forward and reverse DNS do not match, ignoring hostname",
+	":*** Cannot verify hostname validity, ignoring hostname",
 };
 
 typedef enum
@@ -87,7 +87,7 @@ typedef enum
 }
 ReportType;
 
-#define sendheader(c, r) sendto_one(c, HeaderMessages[(r)]) 
+#define sendheader(c, r) sendto_one_notice(c, HeaderMessages[(r)]) 
 
 static dlink_list auth_poll_list;
 static BlockHeap *auth_heap;
@@ -286,7 +286,11 @@ start_auth_query(struct AuthRequest *auth)
 		++ServerStats->is_abad;
 		return 0;
 	}
-	if((MAXCONNECTIONS - 10) < fd)
+
+	/*
+	 * TBD: this is a pointless arbitrary limit .. we either have a socket or not. -nenolod
+	 */
+	if((comm_get_maxconnections() - 10) < fd)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Can't allocate fd for auth on %s",
@@ -399,10 +403,6 @@ start_auth(struct Client *client)
 	s_assert(0 != client);
 	if(client == NULL)
 		return;
-
-	/* to aid bopm which needs something unique to match against */
-	sendto_one(client, "NOTICE AUTH :*** Processing connection to %s",
-			me.name);
 
 	auth = make_auth_request(client);
 

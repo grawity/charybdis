@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: commio.h 1757 2006-07-25 23:34:45Z jilles $
+ *  $Id: commio.h 3354 2007-04-03 09:21:31Z nenolod $
  */
 
 #ifndef INCLUDED_commio_h
@@ -30,6 +30,7 @@
 #include "setup.h"
 #include "config.h"
 #include "ircd_defs.h"
+#include "tools.h"
 
 /* Callback for completed IO events */
 typedef void PF(int fd, void *);
@@ -128,10 +129,9 @@ struct _fde
 	}
 	connect;
 	int pflags;
+	dlink_node node;
 };
 
-
-extern fde_t *fd_table;
 
 void fdlist_init(void);
 
@@ -188,5 +188,8 @@ extern void mangle_mapped_sockaddr(struct sockaddr *in);
 #define mangle_mapped_sockaddr(x) 
 #endif
 
+extern int comm_get_maxconnections(void);
+
+extern fde_t *comm_locate_fd(int fd);
 
 #endif /* INCLUDED_commio_h */

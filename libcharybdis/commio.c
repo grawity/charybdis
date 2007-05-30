@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: commio.c 1779 2006-07-30 16:36:39Z jilles $
+ *  $Id: commio.c 3354 2007-04-03 09:21:31Z nenolod $
  */
 
 #include "libcharybdis.h"
@@ -43,7 +43,8 @@ static const char *comm_err_str[] = { "Comm OK", "Error during bind()",
 	"Comm Error"
 };
 
-fde_t *fd_table = NULL;
+#define FD_HASH_SIZE 128
+static dlink_list fd_table[FD_HASH_SIZE];
 
 static void fdlist_update_biggest(int fd, int opening);
 
@@ -55,10 +56,62 @@ static void comm_connect_callback(int fd, int status);
 static PF comm_connect_timeout;
 static void comm_connect_dns_callback(void *vptr, struct DNSReply *reply);
 static PF comm_connect_tryconnect;
+static int comm_max_connections = 0;
+
+inline fde_t *
+comm_locate_fd(int fd)
+{
+	int bucket = fd % FD_HASH_SIZE;
+	dlink_list *list = &fd_table[bucket];
+	dlink_node *n;
+
+	DLINK_FOREACH(n, list->head)
+	{
+		fde_t *F = (fde_t *) n->data;
+
+		if (F->fd == fd)
+			return F;
+	}
+
+	return NULL;
+}
+
+inline fde_t *
+comm_add_fd(int fd)
+{
+	fde_t *F = comm_locate_fd(fd);
+	dlink_list *list;
+
+	if (F != NULL)
+		return F;
+
+	F = calloc(sizeof(fde_t), 1);
+	F->fd = fd;
+	list = &fd_table[fd % FD_HASH_SIZE];
+	dlinkAdd(F, &F->node, list);
+
+	return F;
+}
+
+inline void
+comm_remove_fd(int fd)
+{
+	int bucket = fd % FD_HASH_SIZE;
+	fde_t *F;
+	dlink_list *list = &fd_table[bucket];
+
+	F = comm_locate_fd(fd);
+	if (F == NULL)
+		return;
+
+	dlinkDelete(&F->node, list);
+	MyFree(F);
+}
 
 /* 32bit solaris is kinda slow and stdio only supports fds < 256
  * so we got to do this crap below.
  * (BTW Fuck you Sun, I hate your guts and I hope you go bankrupt soon)
+ * XXX: this is no longer needed in Solaris 10. --nenolod
  */
 #if defined (__SVR4) && defined (__sun) 
 static void comm_fd_hack(int *fd)
@@ -88,12 +141,15 @@ comm_close_all(void)
 	int fd;
 #endif
 
-	/* XXX someone tell me why we care about 4 fd's ? */
-	/* XXX btw, fd 3 is used for profiler ! */
-
-	for (i = 4; i < MAXCONNECTIONS; ++i)
+	/*
+         * we start at 4 to avoid giving fds where malloc messages
+         * could be written --nenolod
+         */
+	for (i = 4; i < comm_max_connections; ++i)
 	{
-		if(fd_table[i].flags.open)
+		fde_t *F = comm_locate_fd(i);
+
+		if(F != NULL && F->flags.open)
 			comm_close(i);
 		else
 			close(i);
@@ -168,13 +224,16 @@ comm_set_nb(int fd)
 {
 	int nonb = 0;
 	int res;
+	fde_t *F = comm_locate_fd(fd);
 
 	nonb |= O_NONBLOCK;
 	res = fcntl(fd, F_GETFL, 0);
 	if(-1 == res || fcntl(fd, F_SETFL, res | nonb) == -1)
 		return 0;
 
-	fd_table[fd].flags.nonblocking = 1;
+	if (F != NULL)
+		F->flags.nonblocking = 1;
+
 	return 1;
 }
 
@@ -217,7 +276,7 @@ comm_settimeout(int fd, time_t timeout, PF * callback, void *cbdata)
 {
 	fde_t *F;
 	s_assert(fd >= 0);
-	F = &fd_table[fd];
+	F = comm_locate_fd(fd);
 	s_assert(F->flags.open);
 
 	F->timeout = CurrentTime + (timeout / 1000);
@@ -241,7 +300,7 @@ comm_setflush(int fd, time_t timeout, PF * callback, void *cbdata)
 {
 	fde_t *F;
 	s_assert(fd >= 0);
-	F = &fd_table[fd];
+	F = comm_locate_fd(fd);
 	s_assert(F->flags.open);
 
 	F->flush_timeout = CurrentTime + (timeout / 1000);
@@ -260,37 +319,51 @@ comm_setflush(int fd, time_t timeout, PF * callback, void *cbdata)
 void
 comm_checktimeouts(void *notused)
 {
-	int fd;
 	PF *hdl;
 	void *data;
 	fde_t *F;
-	for (fd = 0; fd <= highest_fd; fd++)
+	dlink_list *bucket;
+	int i;
+	dlink_node *n, *n2;
+
+	for (i = 0; i <= FD_HASH_SIZE; i++)
 	{
-		F = &fd_table[fd];
-		if(!F->flags.open)
-			continue;
-		if(F->flags.closing)
+		bucket = &fd_table[i];
+
+		if (dlink_list_length(bucket) <= 0)
 			continue;
 
-		/* check flush functions */
-		if(F->flush_handler &&
-		   F->flush_timeout > 0 && F->flush_timeout < CurrentTime)
+		DLINK_FOREACH_SAFE(n, n2, bucket->head)
 		{
-			hdl = F->flush_handler;
-			data = F->flush_data;
-			comm_setflush(F->fd, 0, NULL, NULL);
-			hdl(F->fd, data);
-		}
+			F = (fde_t *) n->data;
 
-		/* check timeouts */
-		if(F->timeout_handler &&
-		   F->timeout > 0 && F->timeout < CurrentTime)
-		{
-			/* Call timeout handler */
-			hdl = F->timeout_handler;
-			data = F->timeout_data;
-			comm_settimeout(F->fd, 0, NULL, NULL);
-			hdl(F->fd, data);
+			if(F == NULL)
+				continue;
+			if(!F->flags.open)
+				continue;
+			if(F->flags.closing)
+				continue;
+
+			/* check flush functions */
+			if(F->flush_handler &&
+			   F->flush_timeout > 0 && F->flush_timeout < CurrentTime)
+			{
+				hdl = F->flush_handler;
+				data = F->flush_data;
+				comm_setflush(F->fd, 0, NULL, NULL);
+				hdl(F->fd, data);
+			}
+
+			/* check timeouts */
+			if(F->timeout_handler &&
+			   F->timeout > 0 && F->timeout < CurrentTime)
+			{
+				/* Call timeout handler */
+				hdl = F->timeout_handler;
+				data = F->timeout_data;
+				comm_settimeout(F->fd, 0, NULL, NULL);
+				hdl(F->fd, data);
+			}
 		}
 	}
 }
@@ -316,7 +389,7 @@ comm_connect_tcp(int fd, const char *host, u_short port,
 	void *ipptr = NULL;
 	fde_t *F;
 	s_assert(fd >= 0);
-	F = &fd_table[fd];
+	F = comm_locate_fd(fd);
 	F->flags.called_connect = 1;
 	s_assert(callback);
 	F->connect.callback = callback;
@@ -388,10 +461,12 @@ static void
 comm_connect_callback(int fd, int status)
 {
 	CNCB *hdl;
-	fde_t *F = &fd_table[fd];
+	fde_t *F = comm_locate_fd(fd);
+
 	/* This check is gross..but probably necessary */
-	if(F->connect.callback == NULL)
+	if(F == NULL || F->connect.callback == NULL)
 		return;
+
 	/* Clear the connect flag + handler */
 	hdl = F->connect.callback;
 	F->connect.callback = NULL;
@@ -473,13 +548,13 @@ static void
 comm_connect_tryconnect(int fd, void *notused)
 {
 	int retval;
-	fde_t *F = &fd_table[fd];
+	fde_t *F = comm_locate_fd(fd);
 
 	if(F->connect.callback == NULL)
 		return;
 	/* Try the connect() */
-	retval = connect(fd, (struct sockaddr *) &fd_table[fd].connect.hostaddr, 
-			       GET_SS_LEN(fd_table[fd].connect.hostaddr));
+	retval = connect(fd, (struct sockaddr *) &F->connect.hostaddr, 
+			       GET_SS_LEN(F->connect.hostaddr));
 	/* Error? */
 	if(retval < 0)
 	{
@@ -527,7 +602,7 @@ comm_socket(int family, int sock_type, int proto, const char *note)
 {
 	int fd;
 	/* First, make sure we aren't going to run out of file descriptors */
-	if(number_fd >= MASTER_MAX)
+	if(number_fd >= comm_max_connections)
 	{
 		errno = ENFILE;
 		return -1;
@@ -585,7 +660,7 @@ int
 comm_accept(int fd, struct sockaddr *pn, socklen_t *addrlen)
 {
 	int newfd;
-	if(number_fd >= MASTER_MAX)
+	if(number_fd >= comm_max_connections)
 	{
 		errno = ENFILE;
 		return -1;
@@ -649,7 +724,7 @@ fdlist_update_biggest(int fd, int opening)
 {
 	if(fd < highest_fd)
 		return;
-	s_assert(fd < MAXCONNECTIONS);
+	s_assert(fd < comm_max_connections);
 
 	if(fd > highest_fd)
 	{
@@ -667,7 +742,7 @@ fdlist_update_biggest(int fd, int opening)
 	 * re-opening it
 	 */
 	s_assert(!opening);
-	while (highest_fd >= 0 && !fd_table[highest_fd].flags.open)
+	while (highest_fd >= 0 && comm_locate_fd(fd) != NULL)
 		highest_fd--;
 }
 
@@ -676,11 +751,16 @@ void
 fdlist_init(void)
 {
 	static int initialized = 0;
+	struct rlimit limit;
 
 	if(!initialized)
 	{
-		/* Since we're doing this once .. */
-		fd_table = MyMalloc((MAXCONNECTIONS + 1) * sizeof(fde_t));
+		memset(&fd_table, '\0', sizeof(dlink_list) * FD_HASH_SIZE);
+
+		/* set up comm_max_connections. */
+		if(!getrlimit(RLIMIT_NOFILE, &limit))
+			comm_max_connections = limit.rlim_cur;
+
 		initialized = 1;
 	}
 }
@@ -689,7 +769,7 @@ fdlist_init(void)
 void
 comm_open(int fd, unsigned int type, const char *desc)
 {
-	fde_t *F = &fd_table[fd];
+	fde_t *F = comm_add_fd(fd);
 	s_assert(fd >= 0);
 
 	if(F->flags.open)
@@ -718,7 +798,7 @@ comm_open(int fd, unsigned int type, const char *desc)
 void
 comm_close(int fd)
 {
-	fde_t *F = &fd_table[fd];
+	fde_t *F = comm_locate_fd(fd);
 	s_assert(F->flags.open);
 	/* All disk fd's MUST go through file_close() ! */
 	s_assert(F->type != FD_FILE);
@@ -729,6 +809,7 @@ comm_close(int fd)
 	}
 	comm_setselect(F->fd, FDLIST_NONE, COMM_SELECT_WRITE | COMM_SELECT_READ, NULL, NULL, 0);
 	comm_setflush(F->fd, 0, NULL, NULL);
+	F->timeout = 0;
 	
 	if (F->dns_query != NULL)
 	{
@@ -740,12 +821,11 @@ comm_close(int fd)
 	F->flags.open = 0;
 	fdlist_update_biggest(fd, 0);
 	number_fd--;
-	memset(F, '\0', sizeof(fde_t));
-	F->timeout = 0;
+	comm_remove_fd(fd);
+
 	/* Unlike squid, we're actually closing the FD here! -- adrian */
 	close(fd);
 }
-
 
 /*
  * comm_dump() - dump the list of active filedescriptors
@@ -755,14 +835,24 @@ comm_dump(struct Client *source_p)
 {
 	int i;
 
-	for (i = 0; i <= highest_fd; i++)
+	for (i = 0; i <= FD_HASH_SIZE; i++)
 	{
-		if(!fd_table[i].flags.open)
+		dlink_node *n;
+
+		if (dlink_list_length(&fd_table[i]) <= 0)
 			continue;
 
-		sendto_one_numeric(source_p, RPL_STATSDEBUG, 
-				   "F :fd %-3d desc '%s'",
-				   i, fd_table[i].desc);
+		DLINK_FOREACH(n, fd_table[i].head)
+		{
+			fde_t *F = (fde_t *) n->data;
+
+			if(F == NULL || !F->flags.open)
+				continue;
+
+			sendto_one_numeric(source_p, RPL_STATSDEBUG, 
+					   "F :fd %-3d bucket %-3d desc '%s'",
+					   F->fd, i, F->desc);
+		}
 	}
 }
 
@@ -776,15 +866,22 @@ void
 comm_note(int fd, const char *format, ...)
 {
 	va_list args;
+	fde_t *F = comm_add_fd(fd);	/* XXX: epoll, kqueue. */
 
 	if(format)
 	{
 		va_start(args, format);
-		ircvsnprintf(fd_table[fd].desc, FD_DESC_SZ, format, args);
+		ircvsnprintf(F->desc, FD_DESC_SZ, format, args);
 		va_end(args);
 	}
 	else
-		fd_table[fd].desc[0] = '\0';
+		F->desc[0] = '\0';
 }
 
+extern int
+comm_get_maxconnections(void)
+{
+	fdlist_init();
 
+	return comm_max_connections;
+}

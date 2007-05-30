@@ -8,6 +8,7 @@
  *  Copyright (C) 2002-2004 ircd-ratbox development team
  *  Copyright (C) 2005 Edward Brocklesby.
  *  Copyright (C) 2005 William Pitcock and Jilles Tjoelker
+ *  Copyright (C) 2007 River Tarnell
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,16 +25,30 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id$
+ *  $Id: ports.c 3366 2007-04-03 09:57:53Z nenolod $
  */
 
 #include "stdinc.h"
 #include <port.h>
 #include <time.h>
 
-#include "libcharybdis.h"
+#include "stdinc.h"
+#include "res.h"
+#include "numeric.h"
+#include "tools.h"                              
+#include "memory.h"
+#include "balloc.h"
+#include "linebuf.h"
+#include "sprintf_irc.h"
+#include "commio.h"
+#include "ircevent.h"
+#include "modules.h"
 
-#define PE_LENGTH	128
+static int comm_init(void);
+static void comm_deinit(void);
+
+static int comm_select_impl(unsigned long delay);
+static void comm_setselect_impl(int fd, unsigned int type, PF * handler, void *client_data, time_t timeout);
 
 static void pe_update_events(fde_t *, short, PF *);
 static int pe;
@@ -42,14 +57,7 @@ static struct timespec zero_timespec;
 static port_event_t *pelst;	/* port buffer */
 static int pemax;		/* max structs to buffer */
 
-int 
-ircd_setup_fd(int fd)
-{
-        return 0;
-}
-        
-
-void
+static void
 pe_update_events(fde_t * F, short filter, PF * handler)
 {
 	PF *cur_handler = NULL;
@@ -75,17 +83,19 @@ pe_update_events(fde_t * F, short filter, PF * handler)
  * This is a needed exported function which will be called to initialise
  * the network loop code.
  */
-void
+static int
 init_netio(void)
 {
 	if((pe = port_create()) < 0) {
-		libcharybdis_log("init_netio: Couldn't open port fd!\n");
+		ilog(L_MAIN, "init_netio: Couldn't open port fd!\n");
 		exit(115);	/* Whee! */
 	}
 	pemax = getdtablesize();
 	pelst = MyMalloc(sizeof(port_event_t) * pemax);
 	zero_timespec.tv_sec = 0;
 	zero_timespec.tv_nsec = 0;
+
+	return 0;
 }
 
 /*
@@ -95,22 +105,19 @@ init_netio(void)
  * and deregister interest in a pending IO state for a given FD.
  */
 void
-ircd_setselect(int fd, fdlist_t list, unsigned int type, PF * handler,
-	       void *client_data)
+comm_setselect(int fd, unsigned int type, PF * handler,
+	       void *client_data, time_t timeout)
 {
 	fde_t *F = &fd_table[fd];
 	s_assert(fd >= 0);
 	s_assert(F->flags.open);
 
-	/* Update the list, even though we're not using it .. */
-	F->list = list;
-
-	if(type & IRCD_SELECT_READ) {
+	if (type & COMM_SELECT_READ) {
 		pe_update_events(F, POLLRDNORM, handler);
 		F->read_handler = handler;
 		F->read_data = client_data;
 	}
-	if(type & IRCD_SELECT_WRITE) {
+	if (type & COMM_SELECT_WRITE) {
 		pe_update_events(F, POLLWRNORM, handler);
 		F->write_handler = handler;
 		F->write_data = client_data;
@@ -127,46 +134,45 @@ ircd_setselect(int fd, fdlist_t list, unsigned int type, PF * handler,
  */
 
 int
-ircd_select(unsigned long delay)
+comm_select(unsigned long delay)
 {
-	int	 	 i, fd;
-	uint	 	 nget = 1;
-	struct	timespec 	 poll_time;
-	struct	timer_data	*tdata;
+	int i, fd;
+	unsigned int nget = 1;
+	struct timespec poll_time;
 
 	poll_time.tv_sec = delay / 1000;
 	poll_time.tv_nsec = (delay % 1000) * 1000000;
 
 	i = port_getn(pe, pelst, pemax, &nget, &poll_time);
-	ircd_set_time();
+	set_time();
 
 	if (i == -1)
 		return COMM_ERROR;
 
-	for (i = 0; i < nget; i++) {
-		switch(pelst[i].portev_source) {
+	for (i = 0; i < nget; i++)
+	{
+		PF *hdl = NULL;
+		fde_t *F;
+
+		switch(pelst[i].portev_source)
+		{
 		case PORT_SOURCE_FD:
 			fd = pelst[i].portev_object;
-			PF *hdl = NULL;
-			fde_t *F = &fd_table[fd];
+			F = &fd_table[fd];
 
 			if ((pelst[i].portev_events & POLLRDNORM) && (hdl = F->read_handler)) {
 				F->read_handler = NULL;
 				hdl(fd, F->read_data);
 			}
+			if (F->flags.open == 0)
+				continue;
+
 			if ((pelst[i].portev_events & POLLWRNORM) && (hdl = F->write_handler)) {
 				F->write_handler = NULL;
 				hdl(fd, F->write_data);
 			}
 			break;
-
-		case PORT_SOURCE_TIMER:
-			tdata = pelst[i].portev_user;
-			tdata->td_cb(tdata->td_udata);
-
-			if (!tdata->td_repeat)
-				free(tdata);
-
+		default:
 			break;
 		}
 	}

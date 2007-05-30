@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c 2757 2006-11-10 22:58:15Z jilles $
+ *  $Id: s_conf.c 3446 2007-05-14 22:21:16Z jilles $
  */
 
 #include "stdinc.h"
@@ -188,10 +188,15 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 		break;
 
 	case TOO_MANY_LOCAL:
+		/* Note that these notices are sent to opers on other
+		 * servers also, so even if local opers are allowed to
+		 * see the IP, we still cannot send it.
+		 */
 		sendto_realops_snomask(SNO_FULL, L_NETWIDE,
 				"Too many local connections for %s!%s%s@%s",
 				source_p->name, IsGotId(source_p) ? "" : "~",
-				source_p->username, source_p->sockhost);
+				source_p->username,
+				show_ip(NULL, source_p) && !IsIPSpoof(source_p) ? source_p->sockhost : source_p->host);
 
 		ilog(L_FUSER, "Too many local connections from %s!%s%s@%s",
 			source_p->name, IsGotId(source_p) ? "" : "~",
@@ -205,7 +210,8 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 		sendto_realops_snomask(SNO_FULL, L_NETWIDE,
 				"Too many global connections for %s!%s%s@%s",
 				source_p->name, IsGotId(source_p) ? "" : "~",
-				source_p->username, source_p->sockhost);
+				source_p->username,
+				show_ip(NULL, source_p) && !IsIPSpoof(source_p) ? source_p->sockhost : source_p->host);
 		ilog(L_FUSER, "Too many global connections from %s!%s%s@%s",
 			source_p->name, IsGotId(source_p) ? "" : "~",
 			source_p->username, source_p->sockhost);
@@ -218,7 +224,8 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 		sendto_realops_snomask(SNO_FULL, L_NETWIDE,
 				"Too many user connections for %s!%s%s@%s",
 				source_p->name, IsGotId(source_p) ? "" : "~",
-				source_p->username, source_p->sockhost);
+				source_p->username,
+				show_ip(NULL, source_p) && !IsIPSpoof(source_p) ? source_p->sockhost : source_p->host);
 		ilog(L_FUSER, "Too many user connections from %s!%s%s@%s",
 			source_p->name, IsGotId(source_p) ? "" : "~",
 			source_p->username, source_p->sockhost);
@@ -232,7 +239,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 				"I-line is full for %s!%s%s@%s (%s).",
 				source_p->name, IsGotId(source_p) ? "" : "~",
 				source_p->username, source_p->host,
-				source_p->sockhost);
+				show_ip(NULL, source_p) && !IsIPSpoof(source_p) ? source_p->sockhost : "255.255.255.255");
 
 		ilog(L_FUSER, "Too many connections from %s!%s%s@%s.", 
 			source_p->name, IsGotId(source_p) ? "" : "~",
@@ -330,8 +337,7 @@ verify_access(struct Client *client_p, const char *username)
 	{
 		if(aconf->flags & CONF_FLAGS_REDIR)
 		{
-			sendto_one(client_p, form_str(RPL_REDIR),
-					me.name, client_p->name,
+			sendto_one_numeric(client_p, RPL_REDIR, form_str(RPL_REDIR),
 					aconf->name ? aconf->name : "", aconf->port);
 			return (NOT_AUTHORISED);
 		}
@@ -379,18 +385,18 @@ verify_access(struct Client *client_p, const char *username)
 		if(ConfigFileEntry.kline_with_reason)
 		{
 			sendto_one(client_p,
-					":%s NOTICE %s :*** Banned %s",
+					form_str(ERR_YOUREBANNEDCREEP),
 					me.name, client_p->name, aconf->passwd);
 		}
 		return (BANNED_CLIENT);
 	}
 	else if(aconf->status & CONF_GLINE)
 	{
-		sendto_one(client_p, ":%s NOTICE %s :*** G-lined", me.name, client_p->name);
+		sendto_one_notice(client_p, ":*** G-lined");
 
 		if(ConfigFileEntry.kline_with_reason)
 			sendto_one(client_p,
-					":%s NOTICE %s :*** Banned %s",
+					form_str(ERR_YOUREBANNEDCREEP),
 					me.name, client_p->name, aconf->passwd);
 
 		return (BANNED_CLIENT);
@@ -597,8 +603,7 @@ attach_conf(struct Client *client_p, struct ConfItem *aconf)
 		}
 		else
 		{
-			sendto_one(client_p, ":%s NOTICE %s :*** I: line is full, but you have an >I: line!", 
-			                      me.name, client_p->name);
+			sendto_one_notice(client_p, ":*** I: line is full, but you have an >I: line!");
 			SetExemptLimits(client_p);
 		}
 
@@ -817,13 +822,13 @@ set_default_conf(void)
 	ConfigChannel.use_except = YES;
 	ConfigChannel.use_invex = YES;
 	ConfigChannel.use_knock = YES;
+	ConfigChannel.use_forward = YES;
 	ConfigChannel.knock_delay = 300;
 	ConfigChannel.knock_delay_channel = 60;
 	ConfigChannel.max_chans_per_user = 15;
 	ConfigChannel.max_bans = 25;
 	ConfigChannel.max_bans_large = 500;
 	ConfigChannel.burst_topicwho = NO;
-	ConfigChannel.invite_ops_only = YES;
 	ConfigChannel.kick_on_split_riding = NO;
 
 	ConfigChannel.default_split_user_count = 15000;
@@ -845,7 +850,9 @@ set_default_conf(void)
         ConfigFileEntry.reject_after_count = 5;
 	ConfigFileEntry.reject_ban_time = 300;  
 	ConfigFileEntry.reject_duration = 120;
-                        
+	ConfigFileEntry.max_unknown_ip = 2;
+
+	ServerInfo.max_clients = comm_get_maxconnections() - MAX_BUFFER;
 }
 
 #undef YES
@@ -1308,44 +1315,6 @@ write_confitem(KlineType type, struct Client *source_p, char *user,
 
 	filename = get_conf_name(type);
 
-
-	if((out = fopen(filename, "a")) == NULL)
-	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "*** Problem opening %s ", filename);
-		return;
-	}
-
-	if(oper_reason == NULL)
-		oper_reason = "";
-
-	if(type == KLINE_TYPE)
-	{
-		ircsnprintf(buffer, sizeof(buffer),
-			   "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%ld\n",
-			   user, host, reason, oper_reason, current_date,
-			   get_oper_name(source_p), CurrentTime);
-	}
-	else if(type == DLINE_TYPE)
-	{
-		ircsnprintf(buffer, sizeof(buffer),
-			   "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%ld\n", host,
-			   reason, oper_reason, current_date, get_oper_name(source_p), CurrentTime);
-	}
-	else if(type == RESV_TYPE)
-	{
-		ircsnprintf(buffer, sizeof(buffer), "\"%s\",\"%s\",\"%s\",%ld\n",
-			   host, reason, get_oper_name(source_p), CurrentTime);
-	}
-
-	if(fputs(buffer, out) == -1)
-	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "*** Problem writing to %s", filename);
-		fclose(out);
-		return;
-	}
-
-	fclose(out);
-
 	if(type == KLINE_TYPE)
 	{
 		if(EmptyString(oper_reason))
@@ -1392,9 +1361,7 @@ write_confitem(KlineType type, struct Client *source_p, char *user,
 				reason, oper_reason);
 		}
 
-		sendto_one(source_p,
-			   ":%s NOTICE %s :Added D-Line [%s] to %s", me.name,
-			   source_p->name, host, filename);
+		sendto_one_notice(source_p, ":Added D-Line [%s] to %s", host, filename);
 
 	}
 	else if(type == RESV_TYPE)
@@ -1407,6 +1374,50 @@ write_confitem(KlineType type, struct Client *source_p, char *user,
 
 		sendto_one_notice(source_p, ":Added RESV for [%s] [%s]",
 				  host, reason);
+	}
+
+	if((out = fopen(filename, "a")) == NULL)
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "*** Problem opening %s ", filename);
+		sendto_one_notice(source_p, ":*** Problem opening file, added temporarily only");
+		return;
+	}
+
+	if(oper_reason == NULL)
+		oper_reason = "";
+
+	if(type == KLINE_TYPE)
+	{
+		ircsnprintf(buffer, sizeof(buffer),
+			   "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%ld\n",
+			   user, host, reason, oper_reason, current_date,
+			   get_oper_name(source_p), CurrentTime);
+	}
+	else if(type == DLINE_TYPE)
+	{
+		ircsnprintf(buffer, sizeof(buffer),
+			   "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%ld\n", host,
+			   reason, oper_reason, current_date, get_oper_name(source_p), CurrentTime);
+	}
+	else if(type == RESV_TYPE)
+	{
+		ircsnprintf(buffer, sizeof(buffer), "\"%s\",\"%s\",\"%s\",%ld\n",
+			   host, reason, get_oper_name(source_p), CurrentTime);
+	}
+
+	if(fputs(buffer, out) == -1)
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "*** Problem writing to %s", filename);
+		sendto_one_notice(source_p, ":*** Problem writing to file, added temporarily only");
+		fclose(out);
+		return;
+	}
+
+	if (fclose(out))
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "*** Problem writing to %s", filename);
+		sendto_one_notice(source_p, ":*** Problem writing to file, added temporarily only");
+		return;
 	}
 }
 

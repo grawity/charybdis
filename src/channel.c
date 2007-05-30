@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c 2182 2006-09-27 17:19:03Z jilles $
+ *  $Id: channel.c 3432 2007-04-26 23:01:16Z jilles $
  */
 
 #include "stdinc.h"
@@ -567,7 +567,7 @@ is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
 			   match(actualExcept->banstr, s2) ||
 			   match_cidr(actualExcept->banstr, s2) ||
 			   match_extban(actualExcept->banstr, who, chptr, CHFL_EXCEPTION) ||
-			   (s3 != NULL && match(actualBan->banstr, s3)))
+			   (s3 != NULL && match(actualExcept->banstr, s3)))
 			{
 				/* cache the fact theyre not banned */
 				if(msptr != NULL)
@@ -673,7 +673,7 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 			   match(actualExcept->banstr, s2) ||
 			   match_cidr(actualExcept->banstr, s2) ||
 			   match_extban(actualExcept->banstr, who, chptr, CHFL_EXCEPTION) ||
-			   (s3 != NULL && match(actualBan->banstr, s3)))
+			   (s3 != NULL && match(actualExcept->banstr, s3)))
 			{
 				/* cache the fact theyre not banned */
 				if(msptr != NULL)
@@ -716,13 +716,14 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 int
 can_join(struct Client *source_p, struct Channel *chptr, char *key)
 {
-	dlink_node *lp;
+	dlink_node *invite = NULL;
 	dlink_node *ptr;
 	struct Ban *invex = NULL;
 	char src_host[NICKLEN + USERLEN + HOSTLEN + 6];
 	char src_iphost[NICKLEN + USERLEN + HOSTLEN + 6];
 	char src_althost[NICKLEN + USERLEN + HOSTLEN + 6];
 	int use_althost = 0;
+	int i = 0;
 	hook_data_channel moduledata;
 
 	s_assert(source_p->localClient != NULL);
@@ -751,12 +752,12 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 
 	if(chptr->mode.mode & MODE_INVITEONLY)
 	{
-		DLINK_FOREACH(lp, source_p->user->invited.head)
+		DLINK_FOREACH(invite, source_p->user->invited.head)
 		{
-			if(lp->data == chptr)
+			if(invite->data == chptr)
 				break;
 		}
-		if(lp == NULL)
+		if(invite == NULL)
 		{
 			if(!ConfigChannel.use_invex)
 				return (ERR_INVITEONLYCHAN);
@@ -780,18 +781,28 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 
 	if(chptr->mode.limit &&
 	   dlink_list_length(&chptr->members) >= (unsigned long) chptr->mode.limit)
-		return (ERR_CHANNELISFULL);
-
+		i = ERR_CHANNELISFULL;
 	if(chptr->mode.mode & MODE_REGONLY && EmptyString(source_p->user->suser))
-		return ERR_NEEDREGGEDNICK;
-
+		i = ERR_NEEDREGGEDNICK;
 	/* join throttling stuff --nenolod */
-	if(chptr->mode.join_num > 0 && chptr->mode.join_time > 0)
+	else if(chptr->mode.join_num > 0 && chptr->mode.join_time > 0)
 	{
 		if ((CurrentTime - chptr->join_delta <= 
 			chptr->mode.join_time) && (chptr->join_count >=
 			chptr->mode.join_num))
-			return ERR_THROTTLE;
+			i = ERR_THROTTLE;
+	}
+
+	/* allow /invite to override +l/+r/+j also -- jilles */
+	if (i != 0 && invite == NULL)
+	{
+		DLINK_FOREACH(invite, source_p->user->invited.head)
+		{
+			if(invite->data == chptr)
+				break;
+		}
+		if (invite == NULL)
+			return i;
 	}
 
 	moduledata.client = source_p;
@@ -922,12 +933,12 @@ check_spambot_warning(struct Client *source_p, const char *name)
 				sendto_realops_snomask(SNO_BOTS, L_ALL,
 						     "User %s (%s@%s) trying to join %s is a possible spambot",
 						     source_p->name,
-						     source_p->username, source_p->host, name);
+						     source_p->username, source_p->orighost, name);
 			else
 				sendto_realops_snomask(SNO_BOTS, L_ALL,
 						     "User %s (%s@%s) is a possible spambot",
 						     source_p->name,
-						     source_p->username, source_p->host);
+						     source_p->username, source_p->orighost);
 			source_p->localClient->oper_warn_count_down = OPER_SPAM_COUNTDOWN;
 		}
 	}
@@ -1099,9 +1110,8 @@ static const struct mode_letter
  *
  * inputs       - pointer to channel
  *              - pointer to client
- * output       - NONE
- * side effects - write the "simple" list of channel modes for channel
- * chptr onto buffer mbuf with the parameters in pbuf.
+ * output       - string with simple modes
+ * side effects - result from previous calls overwritten
  *
  * Stolen from ShadowIRCd 4 --nenolod
  */
@@ -1126,38 +1136,39 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 	{
 		*mbuf++ = 'l';
 
-		if(IsMember(client_p, chptr) || IsServer(client_p) || IsMe(client_p))
-			pbuf += ircsprintf(pbuf, "%d ", chptr->mode.limit);
+		if(!IsClient(client_p) || IsMember(client_p, chptr))
+			pbuf += ircsprintf(pbuf, " %d", chptr->mode.limit);
 	}
 
 	if(*chptr->mode.key)
 	{
 		*mbuf++ = 'k';
 
-		if(*pbuf || IsMember(client_p, chptr) || IsServer(client_p) || IsMe(client_p))
-			pbuf += ircsprintf(pbuf, "%s ", chptr->mode.key);
+		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
+			pbuf += ircsprintf(pbuf, " %s", chptr->mode.key);
 	}
 
 	if(chptr->mode.join_num)
 	{
 		*mbuf++ = 'j';
 
-		if(*pbuf || IsMember(client_p, chptr) || IsServer(client_p) || IsMe(client_p))
-			pbuf += ircsprintf(pbuf, "%d:%d ", chptr->mode.join_num,
+		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
+			pbuf += ircsprintf(pbuf, " %d:%d", chptr->mode.join_num,
 					   chptr->mode.join_time);
 	}
 
-	if(*chptr->mode.forward)
+	if(*chptr->mode.forward && (ConfigChannel.use_forward || !IsClient(client_p)))
 	{
 		*mbuf++ = 'f';
 
-		if(*pbuf || IsMember(client_p, chptr) || IsServer(client_p) || IsMe(client_p))
-			pbuf += ircsprintf(pbuf, "%s ", chptr->mode.forward);
+		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
+			pbuf += ircsprintf(pbuf, " %s", chptr->mode.forward);
 	}
 
 	*mbuf = '\0';
 
-	ircsprintf(final, "%s %s", buf1, buf2);
+	strlcpy(final, buf1, sizeof final);
+	strlcat(final, buf2, sizeof final);
 	return final;
 }
 

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c 1861 2006-08-26 23:21:42Z jilles $
+ *  $Id: client.c 3446 2007-05-14 22:21:16Z jilles $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -58,6 +58,7 @@
 #include "msg.h"
 #include "monitor.h"
 #include "blacklist.h"
+#include "reject.h"
 
 #define DEBUG_EXITED_CLIENTS
 
@@ -1419,10 +1420,13 @@ exit_unknown_client(struct Client *client_p, struct Client *source_p, struct Cli
 {
 	delete_auth_queries(source_p);
 	client_flush_input(source_p);
+	del_unknown_ip(source_p);
 	dlinkDelete(&source_p->localClient->tnode, &unknown_list);
 
 	if(!IsIOError(source_p))
-		sendto_one(source_p, "ERROR :Closing Link: 127.0.0.1 (%s)", comment);
+		sendto_one(source_p, "ERROR :Closing Link: %s (%s)",
+			source_p->user != NULL ? source_p->host : "127.0.0.1",
+			comment);
 
 	close_connection(source_p);
 
@@ -1432,7 +1436,6 @@ exit_unknown_client(struct Client *client_p, struct Client *source_p, struct Cli
 	del_from_hostname_hash(source_p->host, source_p);
 	del_from_client_hash(source_p->name, source_p);
 	remove_client_from_list(source_p);
-	free_pre_client(source_p);
 	SetDead(source_p);
 	dlinkAddAlloc(source_p, &dead_list);
 
@@ -1552,12 +1555,6 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 			   source_p->name, comment);
 	}
 	
-	if(source_p->localClient->ctrlfd >= 0)
-	{
-		comm_close(source_p->localClient->ctrlfd);
-		source_p->localClient->ctrlfd = -1;
-	}
-
 	if(source_p->servptr && source_p->servptr->serv)
 		dlinkDelete(&source_p->lnode, &source_p->servptr->serv->servers);
 	else
@@ -2103,13 +2100,10 @@ close_connection(struct Client *client_p)
 		client_p->localClient->fd = -1;
 	}
 
-	if(HasServlink(client_p))
+	if(-1 < client_p->localClient->ctrlfd)
 	{
-		if(client_p->localClient->fd > -1)
-		{
-			comm_close(client_p->localClient->ctrlfd);
-			client_p->localClient->ctrlfd = -1;
-		}
+		comm_close(client_p->localClient->ctrlfd);
+		client_p->localClient->ctrlfd = -1;
 	}
 
 	linebuf_donebuf(&client_p->localClient->buf_sendq);

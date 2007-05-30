@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kline.c 555 2006-01-23 15:11:11Z nenolod $
+ *  $Id: m_kline.c 3466 2007-05-19 23:36:51Z jilles $
  */
 
 #include "stdinc.h"
@@ -65,7 +65,7 @@ struct Message unkline_msgtab = {
 };
 
 mapi_clist_av1 kline_clist[] = { &kline_msgtab, &unkline_msgtab, NULL };
-DECLARE_MODULE_AV1(kline, NULL, NULL, kline_clist, NULL, NULL, "$Revision: 555 $");
+DECLARE_MODULE_AV1(kline, NULL, NULL, kline_clist, NULL, NULL, "$Revision: 3466 $");
 
 /* Local function prototypes */
 static int find_user_host(struct Client *source_p, const char *userhost, char *user, char *host);
@@ -361,7 +361,7 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 		return 0;
 	}
 
-	if((host = strchr(h, '@')) || *h == '*')
+	if((host = strchr(h, '@')) || *h == '*' || strchr(h, '.') || strchr(h, ':'))
 	{
 		/* Explicit user@host mask given */
 
@@ -387,7 +387,7 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 	}
 	else
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Invalid parameters", me.name, source_p->name);
+		sendto_one_notice(source_p, ":Invalid parameters");
 		return 0;
 	}
 
@@ -413,9 +413,7 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 	if(remove_temp_kline(user, host))
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :Un-klined [%s@%s] from temporary k-lines",
-			   me.name, parv[0], user, host);
+		sendto_one_notice(source_p, ":Un-klined [%s@%s] from temporary k-lines", user, host);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s has removed the temporary K-Line for: [%s@%s]",
 				     get_oper_name(source_p), user, host);
@@ -574,7 +572,7 @@ find_user_host(struct Client *source_p, const char *userhost, char *luser, char 
 		/* no '@', no '.', so its not a user@host or host, therefore
 		 * its a nick, which support was removed for.
 		 */
-		if(strchr(userhost, '.') == NULL)
+		if(strchr(userhost, '.') == NULL && strchr(userhost, ':') == NULL)
 			return 0;
 
 		luser[0] = '*';	/* no @ found, assume its *@somehost */
@@ -616,6 +614,11 @@ valid_wild_card(struct Client *source_p, const char *luser, const char *lhost)
 	const char *p;
 	char tmpch;
 	int nonwild = 0;
+	int bitlen;
+
+	/* user has no wildcards, always accept -- jilles */
+	if (!strchr(luser, '?') && !strchr(luser, '*'))
+		return 1;
 
 	/* check there are enough non wildcard chars */
 	p = luser;
@@ -630,12 +633,23 @@ valid_wild_card(struct Client *source_p, const char *luser, const char *lhost)
 	}
 
 	/* try host, as user didnt contain enough */
-	p = lhost;
-	while ((tmpch = *p++))
+	/* special case for cidr masks -- jilles */
+	if ((p = strrchr(lhost, '/')) != NULL && IsDigit(p[1]))
 	{
-		if(!IsKWildChar(tmpch))
-			if(++nonwild >= ConfigFileEntry.min_nonwildcard)
-				return 1;
+		bitlen = atoi(p + 1);
+		/* much like non-cidr for ipv6, rather arbitrary for ipv4 */
+		if (bitlen > 0 && bitlen >= (strchr(lhost, ':') ? 4 * (ConfigFileEntry.min_nonwildcard - nonwild) : 6 - 2 * nonwild))
+			return 1;
+	}
+	else
+	{
+		p = lhost;
+		while ((tmpch = *p++))
+		{
+			if(!IsKWildChar(tmpch))
+				if(++nonwild >= ConfigFileEntry.min_nonwildcard)
+					return 1;
+		}
 	}
 
 	sendto_one_notice(source_p,
@@ -661,8 +675,8 @@ valid_comment(struct Client *source_p, char *comment)
 		return 0;
 	}
 
-	if(strlen(comment) > REASONLEN)
-		comment[REASONLEN] = '\0';
+	if(strlen(comment) > BANREASONLEN)
+		comment[BANREASONLEN] = '\0';
 
 	return 1;
 }
@@ -792,7 +806,8 @@ remove_permkline_match(struct Client *source_p, const char *host, const char *us
 	}
 
 	fclose(in);
-	fclose(out);
+	if (fclose(out))
+		error_on_write = YES;
 
 	/* The result of the rename should be checked too... oh well */
 	/* If there was an error on a write above, then its been reported
@@ -814,7 +829,11 @@ remove_permkline_match(struct Client *source_p, const char *host, const char *us
 		return;
 	}
 		
-	(void) rename(temppath, filename);
+	if (rename(temppath, filename))
+	{
+		sendto_one_notice(source_p, ":Couldn't rename temp file, aborted");
+		return;
+	}
 	rehash_bans(0);
 
 	sendto_one_notice(source_p, ":K-Line for [%s@%s] is removed",

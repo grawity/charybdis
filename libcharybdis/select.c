@@ -22,16 +22,13 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: select.c 390 2005-12-07 18:46:56Z nenolod $
+ *  $Id: select.c 3354 2007-04-03 09:21:31Z nenolod $
  */
 
 #include "config.h"
 
 #include "libcharybdis.h"
 
-#if HARD_FDLIMIT_ >= FD_SETSIZE
-#error HARD_FDLIMIT_ must be less than FD_SETSIZE(try using poll instead of select)
-#endif
 /*
  * Note that this is only a single list - multiple lists is kinda pointless
  * under select because the list size is a function of the highest FD :-)
@@ -105,7 +102,7 @@ void
 comm_setselect(int fd, fdlist_t list, unsigned int type, PF * handler,
 	       void *client_data, time_t timeout)
 {
-	fde_t *F = &fd_table[fd];
+	fde_t *F = comm_locate_fd(fd);
 	s_assert(fd >= 0);
 	s_assert(F->flags.open);
 
@@ -172,7 +169,7 @@ comm_select(unsigned long delay)
 	/* XXX we *could* optimise by falling out after doing num fds ... */
 	for (fd = 0; fd < highest_fd + 1; fd++)
 	{
-		F = &fd_table[fd];
+		F = comm_locate_fd(fd);
 
 		if(FD_ISSET(fd, &tmpreadfds))
 		{

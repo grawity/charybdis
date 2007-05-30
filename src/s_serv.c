@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c 2723 2006-11-09 23:35:48Z jilles $
+ *  $Id: s_serv.c 3446 2007-05-14 22:21:16Z jilles $
  */
 
 #include "stdinc.h"
@@ -57,6 +57,7 @@
 #include "channel.h"		/* chcap_usage_counts stuff... */
 #include "hook.h"
 #include "msg.h"
+#include "reject.h"
 
 extern char *crypt();
 
@@ -260,8 +261,7 @@ hunt_server(struct Client *client_p, struct Client *source_p,
 	 * Assume it's me, if no server
 	 */
 	if(parc <= server || EmptyString(parv[server]) ||
-	   match(me.name, parv[server]) || match(parv[server], me.name) ||
-	   (strcmp(parv[server], me.id) == 0))
+	   match(parv[server], me.name) || (strcmp(parv[server], me.id) == 0))
 		return (HUNTED_ISME);
 	
 	new = LOCAL_COPY(parv[server]);
@@ -277,10 +277,6 @@ hunt_server(struct Client *client_p, struct Client *source_p,
 		target_p = find_client(new);
 
 	if(target_p)
-		if(target_p->from == source_p->from && !MyConnect(target_p))
-			target_p = NULL;
-
-	if(target_p == NULL && (target_p = find_server(source_p, new)))
 		if(target_p->from == source_p->from && !MyConnect(target_p))
 			target_p = NULL;
 
@@ -1108,6 +1104,7 @@ server_estab(struct Client *client_p)
 	set_chcap_usage_counts(client_p);
 
 	dlinkAdd(client_p, &client_p->lnode, &me.serv->servers);
+	del_unknown_ip(client_p);
 	dlinkMoveNode(&client_p->localClient->tnode, &unknown_list, &serv_list);
 	dlinkAddTailAlloc(client_p, &global_serv_list);
 
@@ -1373,8 +1370,10 @@ fork_server(struct Client *server)
 		goto fork_error;
 	else if(ret == 0)
 	{
+		int maxconn = comm_get_maxconnections();
+
 		/* set our fds as non blocking and close everything else */
-		for (i = 0; i < HARD_FDLIMIT; i++)
+		for (i = 0; i < maxconn; i++)
 		{
 				
 
@@ -1636,6 +1635,7 @@ serv_connect_callback(int fd, int status, void *data)
 	struct Client *client_p = data;
 	struct server_conf *server_p;
 	char *errstr;
+	fde_t *F = comm_locate_fd(fd);
 
 	/* First, make sure its a real client! */
 	s_assert(client_p != NULL);
@@ -1654,9 +1654,9 @@ serv_connect_callback(int fd, int status, void *data)
 	}
 
 	/* Next, for backward purposes, record the ip of the server */
-	memcpy(&client_p->localClient->ip, &fd_table[fd].connect.hostaddr, sizeof client_p->localClient->ip);
+	memcpy(&client_p->localClient->ip, &F->connect.hostaddr, sizeof client_p->localClient->ip);
 	/* Set sockhost properly now -- jilles */
-	inetntop_sock((struct sockaddr *)&fd_table[fd].connect.hostaddr,
+	inetntop_sock((struct sockaddr *)&F->connect.hostaddr,
 			client_p->sockhost, sizeof client_p->sockhost);
 	
 	/* Check the status */

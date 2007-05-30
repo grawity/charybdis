@@ -39,9 +39,6 @@
 /* Define to 1 if you have the <crypt.h> header file. */
 #undef HAVE_CRYPT_H
 
-/* Define to 1 if you have the <devpoll.h> header file. */
-#undef HAVE_DEVPOLL_H
-
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
@@ -129,9 +126,6 @@
 /* Define to 1 if you have the `strndup' function. */
 #undef HAVE_STRNDUP
 
-/* Define to 1 if you have the <sys/devpoll.h> header file. */
-#undef HAVE_SYS_DEVPOLL_H
-
 /* Define to 1 if you have the <sys/epoll.h> header file. */
 #undef HAVE_SYS_EPOLL_H
 
@@ -189,9 +183,6 @@
 /* the system's memory page size */
 #undef MALLOC_PAGESIZE
 
-/* Maximum number of network connections */
-#undef MAX_CLIENTS
-
 /* Sizeof member heap. */
 #undef MEMBER_HEAP_SIZE
 
@@ -240,25 +231,22 @@
 /* Size of the pre-client heap. */
 #undef PCLIENT_HEAP_SIZE
 
-/* Define to 1 if you are using the assembly-based hashing routines. */
-#undef RICER_HASHING
-
 /* This is the type of IO loop we are using */
 #undef SELECT_TYPE
 
 /* Suffix for shared libraries on this platform. */
 #undef SHARED_SUFFIX
 
-/* The size of a `int', as computed by sizeof. */
+/* The size of `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
-/* The size of a `long', as computed by sizeof. */
+/* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
 
-/* The size of a `long long', as computed by sizeof. */
+/* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
 
-/* The size of a `short', as computed by sizeof. */
+/* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT
 
 /* Define to 1 if sockaddr has a 'sa_len' member. */
@@ -269,7 +257,7 @@
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
-   automatically deduced at run-time.
+   automatically deduced at runtime.
 	STACK_DIRECTION > 0 => grows toward higher addresses
 	STACK_DIRECTION < 0 => grows toward lower addresses
 	STACK_DIRECTION = 0 => direction of growth unknown */
@@ -334,7 +322,7 @@
 /* If system does not define sa_family_t, define it here. */
 #undef sa_family_t
 
-/* Define to `unsigned' if <sys/types.h> does not define. */
+/* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
 
 /* If we don't have a real socklen_t, unsigned int is good enough. */

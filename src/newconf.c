@@ -1,5 +1,5 @@
 /* This code is in the public domain.
- * $Id: newconf.c 1853 2006-08-24 18:30:52Z jilles $
+ * $Id: newconf.c 3446 2007-05-14 22:21:16Z jilles $
  */
 
 #include "stdinc.h"
@@ -1918,6 +1918,8 @@ static struct ConfEntry conf_serverinfo_table[] =
 	{ "vhost", 		CF_QSTRING, conf_set_serverinfo_vhost,	0, NULL },
 	{ "vhost6", 		CF_QSTRING, conf_set_serverinfo_vhost6,	0, NULL },
 
+	{ "max_clients",	CF_INT,	    NULL, 0, &ServerInfo.max_clients    },
+
 	{ "\0",	0, NULL, 0, NULL }
 };
 
@@ -2051,6 +2053,7 @@ static struct ConfEntry conf_general_table[] =
 	{ "max_nick_time",	CF_TIME,  NULL, 0, &ConfigFileEntry.max_nick_time	},
 	{ "max_nick_changes",	CF_INT,   NULL, 0, &ConfigFileEntry.max_nick_changes	},
 	{ "max_targets",	CF_INT,   NULL, 0, &ConfigFileEntry.max_targets		},
+	{ "max_unknown_ip",	CF_INT,   NULL, 0, &ConfigFileEntry.max_unknown_ip	},
 	{ "min_nonwildcard",	CF_INT,   NULL, 0, &ConfigFileEntry.min_nonwildcard	},
 	{ "nick_delay",		CF_TIME,  NULL, 0, &ConfigFileEntry.nick_delay		},
 	{ "no_oper_flood",	CF_YESNO, NULL, 0, &ConfigFileEntry.no_oper_flood	},
@@ -2083,7 +2086,6 @@ static struct ConfEntry conf_channel_table[] =
 	{ "default_split_user_count",	CF_INT,  NULL, 0, &ConfigChannel.default_split_user_count	 },
 	{ "default_split_server_count",	CF_INT,	 NULL, 0, &ConfigChannel.default_split_server_count },
 	{ "burst_topicwho",	CF_YESNO, NULL, 0, &ConfigChannel.burst_topicwho	},
-	{ "invite_ops_only",	CF_YESNO, NULL, 0, &ConfigChannel.invite_ops_only	},
 	{ "kick_on_split_riding", CF_YESNO, NULL, 0, &ConfigChannel.kick_on_split_riding },
 	{ "knock_delay",	CF_TIME,  NULL, 0, &ConfigChannel.knock_delay		},
 	{ "knock_delay_channel",CF_TIME,  NULL, 0, &ConfigChannel.knock_delay_channel	},
@@ -2095,6 +2097,7 @@ static struct ConfEntry conf_channel_table[] =
 	{ "use_except",		CF_YESNO, NULL, 0, &ConfigChannel.use_except		},
 	{ "use_invex",		CF_YESNO, NULL, 0, &ConfigChannel.use_invex		},
 	{ "use_knock",		CF_YESNO, NULL, 0, &ConfigChannel.use_knock		},
+	{ "use_forward",	CF_YESNO, NULL, 0, &ConfigChannel.use_forward		},
 	{ "\0", 		0, 	  NULL, 0, NULL }
 };
 

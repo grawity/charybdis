@@ -417,6 +417,8 @@
 	<para>
 	  Adds a D:line to <filename>dline.conf</filename>, which will deny any connections
 	  from the given IP address.
+	  The IP address can be given as a full address (192.168.0.1) or
+	  as a CIDR mask (192.168.0.0/24).
 	</para>
 	<para>
 	  If the optional parameter <replaceable>length</replaceable> is given, the D:line will
@@ -517,6 +519,10 @@
 	  If <replaceable>nick</replaceable> is given, also searches for
 	  nick resvs.
 	</para>
+	<para>
+	  For temporary items the number of minutes until the item expires
+	  is shown (as opposed to the hit count in STATS q/Q/x/X).
+	</para>
         <para>
 	  This command will not perform DNS lookups; for best
 	  results you must testline a host and its IP form.
@@ -525,6 +531,10 @@
 	  The given username should begin with a tilde (~) if identd is not
 	  in use. As of charybdis 2.1.1, no_tilde and username truncation will
 	  be taken into account like in the normal client access check.
+	</para>
+	<para>
+	  As of charybdis 2.2.0, a channel name can be specified and the
+	  RESV will be returned, if there is one.
 	</para>
       </sect2>
       <sect2>
@@ -579,12 +589,82 @@
 	    <arg><replaceable>server</replaceable></arg>
 	    <arg><replaceable>nick</replaceable></arg>
 	  </group>
+	  <arg><replaceable>location</replaceable></arg>
 	</cmdsynopsis>
 	<para>
-	  Shows client information about the given target, or about the current server if
-	  no target is specified.
-	  The path to the target will also be given.
+	  With no argument or one argument which is the current server,
+	  TRACE gives a list of all connections to the current server
+	  and a summary of connection classes.
 	</para>
+	<para>
+	  With one argument which is another server, TRACE displays the path 
+	  to the specified server, and all servers, opers and -i users
+	  on that server, along with a summary of connection classes.
+	</para>
+	<para>
+	  With one argument which is a client, TRACE displays the
+	  path to that client, and that client's information.
+	</para>
+	<para>
+	  If location is given, the command is executed on that server;
+	  no path is displayed.
+	</para>
+	<para>
+	  When listing connections, type, name and class is shown
+	  in addition to information depending on the type:
+	</para>
+	<variablelist>
+	  <title>TRACE types</title>
+	  <varlistentry>
+	    <term>Try.</term>
+	    <listitem><para>
+	      A server we are trying to make a TCP connection to.
+	    </para></listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>H.S.</term>
+	    <listitem><para>
+	      A server we have established a TCP connection to, but is not
+	      yet registered.
+	    </para></listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>????</term>
+	    <listitem><para>
+	      An incoming connection that has not yet registered as
+	      a user or a server (<quote>unknown</quote>).
+	      Shows the username, hostname, IP address
+	      and the time the connection has been open. It is possible
+	      that the ident or DNS lookups have not completed yet, and in
+	      any case no tildes are shown here.
+	      Unknown connections may not have a name yet.
+	    </para></listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>User</term>
+	    <listitem><para>
+	      A registered unopered user.
+	      Shows the username, hostname, IP address, the time the client
+	      has not sent anything (as in STATS l) and the time the user has
+	      been idle (from PRIVMSG only, as in WHOIS).
+	    </para></listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>Oper</term>
+	    <listitem><para>
+	      Like User, but opered.
+	    </para></listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>Serv</term>
+	    <listitem><para>
+	      A registered server.
+	      Shows the number of servers and users reached via this link,
+	      who made this connection and the time the server has not sent
+	      anything.
+	    </para></listitem>
+	  </varlistentry>
+	</variablelist>
       </sect2>
       <sect2>
 	<title>ETRACE</title>

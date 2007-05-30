@@ -1,4 +1,4 @@
-dnl $Id: configure.ac 2735 2006-11-10 00:15:54Z jilles $
+dnl $Id: configure.ac 3440 2007-05-07 02:53:54Z nenolod $
 dnl Process this file with autoconf to produce a configure script.
 
 dnl TODO: clean up all the OpenSSL and shared module checking stuff;
@@ -8,9 +8,9 @@ dnl said functions need to be just about as complex as they already are.
 AC_PREREQ(2.57)
 
 dnl Sneaky way to get an Id tag into the configure script
-AC_COPYRIGHT([$Id: configure.ac 2735 2006-11-10 00:15:54Z jilles $])
+AC_COPYRIGHT([$Id: configure.ac 3440 2007-05-07 02:53:54Z nenolod $])
 
-AC_INIT([charybdis],[2.1.1])
+AC_INIT([charybdis],[2.2.0])
 
 AC_CONFIG_HEADER(include/setup.h)
 
@@ -631,6 +631,14 @@ fi
 dnl IO Loop Selection
 dnl =================
 
+AC_ARG_ENABLE(ports, AC_HELP_STRING([--enable-ports],[Force solaris I/O ports subsystem usage.]),
+[ if test $enableval = yes; then 
+	SELECT_TYPE_EXPLICIT="ports"
+  else
+  	use_ports=no
+  fi
+],)
+
 AC_ARG_ENABLE(poll, AC_HELP_STRING([--enable-poll],[Force poll() usage.]),
 [ if test $enableval = yes; then 
 	SELECT_TYPE_EXPLICIT="poll"
@@ -655,19 +663,10 @@ AC_ARG_ENABLE(kqueue, AC_HELP_STRING([--enable-kqueue],[Force kqueue() usage.]),
   fi
 ],)
 
-AC_ARG_ENABLE(devpoll,AC_HELP_STRING([--enable-devpoll],[Force usage of /dev/poll.]),
-[ if test $enableval = yes; then 
-	SELECT_TYPE_EXPLICIT="devpoll" 
-	dnl These need to be defined or not defined
-	AC_CHECK_HEADERS([sys/devpoll.h devpoll.h])
-  else
-  	use_devpoll=no;
-  fi
-],)
-
 AC_ARG_ENABLE(epoll, AC_HELP_STRING([--enable-epoll],[Force sys_epoll usage (Linux only).]),
 [ if test $enableval = yes; then 
 	SELECT_TYPE_EXPLICIT="epoll"
+	AC_CHECK_FUNCS(epoll_ctl, [haveepoll=yes], [haveepoll=no])
   else
   	use_epoll=no
   fi
@@ -750,6 +749,13 @@ if test ! -z "$SELECT_TYPE_EXPLICIT"; then
 	echo "Forcing $SELECT_TYPE to be enabled"
 else
 
+if test ! "x$use_ports" = "xno"; then
+	AC_CHECK_FUNCS(port_getn, [haveports=yes], [haveports=no])
+	if test "x$haveports" = "xyes" ; then
+		SELECT_TYPE="ports"
+	fi
+fi
+
 if test ! "x$use_select" = "xno"; then
 	AC_CHECK_FUNCS(select, [haveselect=yes], [haveselect=no])
 	if test "x$haveselect" = "xyes" ; then
@@ -761,17 +767,6 @@ if test ! "x$use_poll" = "xno"; then
 	AC_CHECK_FUNCS(poll, [havepoll=yes], [havepoll=no])
 	if test "x$havepoll" = "xyes" ; then
 		SELECT_TYPE="poll"
-	fi
-fi
-
-if test ! "x$use_devpoll" = "xno"; then
-	AC_MSG_CHECKING(for /dev/poll)
-	if test -c "/dev/poll"; then
-	        AC_MSG_RESULT(yes)
-		AC_CHECK_HEADERS([devpoll.h sys/devpoll.h])
-	        SELECT_TYPE="devpoll"
-	else
-		AC_MSG_RESULT(no)	
 	fi
 fi
 
@@ -912,19 +907,6 @@ if test "$balloc" = no; then
 	AC_DEFINE([NOBALLOC], 1, [Define to 1 if you wish to disable the block allocator.])
 fi
 
-AC_ARG_ENABLE(ricer-hashing,
-AC_HELP_STRING([--enable-ricer-hashing],[Enable assembly-based hashing routines.]),
-[ricer_hashing=$enableval], [ricer_hashing=no])
-
-FNVHASH_S=""
-
-if test "$ricer_hashing" = "yes"; then
-	AC_DEFINE([RICER_HASHING], 1, [Define to 1 if you are using the assembly-based hashing routines.])
-	FNVHASH_S="fnvhash.s"
-fi
-
-AC_SUBST(FNVHASH_S)
-
 AC_ARG_ENABLE(small-net,
 AC_HELP_STRING([--enable-small-net],[Enable small network support.]),
 [small_net=$enableval], [small_net=no])
@@ -986,23 +968,8 @@ AC_HELP_STRING([--with-topiclen=NUMBER],[Set the max topic length to NUMBER (def
  fi
 ], [TOPICLEN=390])
 
-AC_ARG_WITH(maxclients,
-AC_HELP_STRING([--with-maxclients=NUMBER],[Maximum number of connections the ircd can handle]),
-        MAX_CLIENTS="$withval", MAX_CLIENTS=3000)
-
-
-if test "$MAX_CLIENTS" = yes; then
-	MAX_CLIENTS=3000
-fi
-
-if test $MAX_CLIENTS -gt 65536; then
-	MAX_CLIENTS=65536
-	AC_MSG_WARN([Max connections cannot be larger than 65536!])
-fi
-
 AC_DEFINE_UNQUOTED(TOPICLEN, ${TOPICLEN}, [Maximum topic length (<=390)])
 AC_DEFINE_UNQUOTED(NICKLEN, (${NICKLEN}+1), [Nickname length])
-AC_DEFINE_UNQUOTED(MAX_CLIENTS, ${MAX_CLIENTS}, [Maximum number of network connections])
 
 AC_ARG_ENABLE(shared-modules,
 AC_HELP_STRING([--disable-shared-modules],[ Disable shared modules.]),
@@ -1303,7 +1270,6 @@ Configuration:
 	Socket Engine      : $SELECT_TYPE
 	Small network      : $small_net
 	Block allocator    : $balloc
-	ASM hashing code   : $ricer_hashing
 
 	Nickname length    : $NICKLEN
 	Topic length       : $TOPICLEN
