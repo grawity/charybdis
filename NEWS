@@ -1,5 +1,17 @@
-This is charybdis 2.2.0, Copyright (c) 2005-2007 Charybdis team.
+This is charybdis 2.2.1, Copyright (c) 2005-2008 Charybdis team.
 See LICENSE for licensing details (GPL v2).
+
+-- charybdis-2.2.1
+
+- Only accept 127.0.0.x as a dnsbl listing.
+- Fix wrong line numbers in ircd.conf parser.
+- Fix some warnings with gcc 4.2.
+- Allow any string without wildcards in xline/resv.
+- Fix some problems with poll and epoll.
+- Some clarifications and additions to the documentation.
+- Fix a potential desync which can happen with oper override.
+- Backport new cloaking from charybdis 2.3, you will want to use
+  ip_cloaking_old if you used the old cloaking.
 
 -- charybdis-2.2.0
 

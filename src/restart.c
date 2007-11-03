@@ -55,7 +55,7 @@ void
 server_reboot(void)
 {
 	int i;
-	int maxconn = comm_get_maxconnections();
+	int maxconn = MAXCONNECTIONS;
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "Restarting server...");
 

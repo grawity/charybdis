@@ -10,7 +10,7 @@ AC_PREREQ(2.57)
 dnl Sneaky way to get an Id tag into the configure script
 AC_COPYRIGHT([$Id: configure.ac 3440 2007-05-07 02:53:54Z nenolod $])
 
-AC_INIT([charybdis],[2.2.0])
+AC_INIT([charybdis],[2.2.1])
 
 AC_CONFIG_HEADER(include/setup.h)
 
@@ -971,6 +971,23 @@ AC_HELP_STRING([--with-topiclen=NUMBER],[Set the max topic length to NUMBER (def
 AC_DEFINE_UNQUOTED(TOPICLEN, ${TOPICLEN}, [Maximum topic length (<=390)])
 AC_DEFINE_UNQUOTED(NICKLEN, (${NICKLEN}+1), [Nickname length])
 
+AC_ARG_WITH(maxclients,
+AC_HELP_STRING([--with-maxclients=NUMBER],[Maximum number of connections the ircd can handle (default: output of "ulimit -n" - 80)]),
+        MAX_CLIENTS="$withval", MAX_CLIENTS=yes)
+
+
+if test "$MAX_CLIENTS" = yes; then
+        MAX_FD=`ulimit -n`
+	MAX_CLIENTS=`expr $MAX_FD - 80`
+fi
+
+if test $MAX_CLIENTS -gt 65536; then
+        MAX_CLIENTS=65536
+        AC_MSG_WARN([Max connections cannot be larger than 65536!])
+fi
+
+AC_DEFINE_UNQUOTED(MAX_CLIENTS, ${MAX_CLIENTS}, [Max clients])
+
 AC_ARG_ENABLE(shared-modules,
 AC_HELP_STRING([--disable-shared-modules],[ Disable shared modules.]),
 [shared_modules=$enableval], [shared_modules="yes"])
@@ -1273,6 +1290,13 @@ Configuration:
 
 	Nickname length    : $NICKLEN
 	Topic length       : $TOPICLEN
+	Connection limit   : $MAX_CLIENTS
+
+The connection limit is normally computed based on the amount of available
+file descriptors minus 80 for buffering, DNS, etcetera. If you want more
+connections, change the user's limits that you are compiling this as, or
+specify a custom amount with --with-maxclients. Note that specifying an amount
+greater than available FDs minus 80 will result in the daemon failing to start.
 
 Use make to compile Charybdis, then make install to install it.
 "

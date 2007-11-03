@@ -1370,10 +1370,8 @@ fork_server(struct Client *server)
 		goto fork_error;
 	else if(ret == 0)
 	{
-		int maxconn = comm_get_maxconnections();
-
 		/* set our fds as non blocking and close everything else */
-		for (i = 0; i < maxconn; i++)
+		for (i = 0; i < MAXCONNECTIONS; i++)
 		{
 				
 
@@ -1635,7 +1633,7 @@ serv_connect_callback(int fd, int status, void *data)
 	struct Client *client_p = data;
 	struct server_conf *server_p;
 	char *errstr;
-	fde_t *F = comm_locate_fd(fd);
+	fde_t *F = &fd_table[fd];
 
 	/* First, make sure its a real client! */
 	s_assert(client_p != NULL);

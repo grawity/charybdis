@@ -290,7 +290,7 @@ start_auth_query(struct AuthRequest *auth)
 	/*
 	 * TBD: this is a pointless arbitrary limit .. we either have a socket or not. -nenolod
 	 */
-	if((comm_get_maxconnections() - 10) < fd)
+	if((MAXCONNECTIONS - 10) < fd)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Can't allocate fd for auth on %s",

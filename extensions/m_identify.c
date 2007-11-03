@@ -28,7 +28,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_identify.c 2729 2006-11-09 23:52:06Z jilles $
+ * $Id: m_identify.c 2440 2006-10-06 21:52:45Z jilles $
  */
 
 #include "stdinc.h"
@@ -62,7 +62,7 @@ mapi_clist_av1 identify_clist[] = {
 	NULL
 };
 
-DECLARE_MODULE_AV1(identify, NULL, NULL, identify_clist, NULL, NULL, "$Revision: 2729 $");
+DECLARE_MODULE_AV1(identify, NULL, NULL, identify_clist, NULL, NULL, "$Revision: 2440 $");
 
 char *reconstruct_parv(int parc, const char *parv[])
 {

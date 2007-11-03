@@ -38,6 +38,7 @@ SRCS =                          \
   extb_extgecos.c		\
   hurt.c			\
   ip_cloaking.c			\
+  ip_cloaking_old.c		\
   sno_farconnect.c		\
   sno_globalkline.c		\
   sno_globaloper.c		\

@@ -1,3 +1,68 @@
+jilles      2007/11/03 20:57:07 UTC	(20071103-3576)
+  Log:
+  Merged revisions 3574 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  
+  ........
+    r3574 | jilles | 2007-10-27 23:56:53 +0200 (Sat, 27 Oct 2007) | 2 lines
+    
+    Fix a memory leak.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.2/  (Property Modified)
+  +1 -0		branches/release-2.2/src/channel.c (File Modified) 
+
+
+jilles      2007/09/14 20:26:37 UTC	(20070914-3572)
+  Log:
+  Merged revisions 3556,3558,3560,3562,3564 via svnmerge from 
+  http://svn.atheme.org/charybdis/trunk
+  documentation improvements from trunk
+  
+  ........
+    r3556 | jilles | 2007-08-18 16:45:10 +0200 (Sat, 18 Aug 2007) | 11 lines
+    
+    callerid (+g) documentation:
+    - Mention 005 (isupport) token with possibility of different mode letter.
+    - Explicitly clarify that /accept can be used while -g, and setting -g
+      does not clear the accept list.
+    - Mention that some users may be able to bypass +g.
+    - Mention that /accept may allow more than just going through +g.
+    - Update to 716/717/718 numerics instead of notices.
+    - Clarify that the one-minute period applies to messages from all users,
+      not just one user.
+    - Add a numerics section with more exact syntax.
+  ........
+    r3558 | jilles | 2007-08-23 21:00:10 +0200 (Thu, 23 Aug 2007) | 2 lines
+    
+    Add what /invite actually does (bypass +ijlr).
+  ........
+    r3560 | jilles | 2007-08-23 23:02:31 +0200 (Thu, 23 Aug 2007) | 2 lines
+    
+    Add more information about invitations and invexes.
+  ........
+    r3562 | jilles | 2007-08-30 00:04:45 +0200 (Thu, 30 Aug 2007) | 2 lines
+    
+    Clarify format of IPv6 addresses in auth{} and connect{}.
+  ........
+    r3564 | jilles | 2007-08-30 00:18:31 +0200 (Thu, 30 Aug 2007) | 2 lines
+    
+    Clarify format of IPv6 addresses in SGML documentation.
+  ........
+  
+
+  Changes:	Modified:
+  + -		branches/release-2.2/  (Property Modified)
+  +7 -3		branches/release-2.2/doc/example.conf (File Modified) 
+  +88 -10	branches/release-2.2/doc/modeg.txt (File Modified) 
+  +9 -2		branches/release-2.2/doc/reference.conf (File Modified) 
+  +7 -1		branches/release-2.2/doc/sgml/oper-guide/cmodes.sgml (File Modified) 
+  +11 -1	branches/release-2.2/doc/sgml/oper-guide/config.sgml (File Modified) 
+  +2 -0		branches/release-2.2/help/opers/invite (File Modified) 
+
+
 nenolod     2007/05/30 10:36:51 UTC	(20070530-3506)
   Log:
   - svnmerge has broken, manually merge needed 2.2.0 changes

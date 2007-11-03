@@ -531,7 +531,7 @@ accept_connection(int pfd, void *data)
 	 * check for connection limit
 	 * TBD: this is stupid... either we have a socket or we don't. -nenolod
 	 */
-	if((comm_get_maxconnections() - 10) < fd)
+	if((MAXCONNECTIONS - 10) < fd)
 	{
 		++ServerStats->is_ref;
 		/*
