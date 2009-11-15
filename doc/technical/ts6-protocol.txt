@@ -256,6 +256,41 @@ parameters: space separated capability list
 
 Capability list of remote server.
 
+GLINE
+efnet TS6
+capab: GLN
+source: user
+parameters: user mask, host mask, reason
+propagation: broadcast
+
+Propagates a G:line vote. Once votes from three different opers (based on
+user@host mask) on three different servers have arrived, trigger the G:line.
+Pending G:lines expire after some time, usually ten minutes. Triggered G:lines
+expire after a configured time which may differ across servers.
+
+Requests from server connections must be propagated, unless they are found to
+be syntactically invalid (e.g. '!' in user mask). Therefore, disabling glines
+must not affect propagation, and too wide glines, double votes and glines that
+already exist locally must still be propagated.
+
+Of course, servers are free to reject gline requests from their own operators.
+
+GUNGLINE
+efnet TS6
+encap only
+encap target: *
+source: user
+parameters: user mask, host mask, reason
+propagation: broadcast
+
+Propagates a G:line removal vote. Once three votes have arrived (as with
+G:lines), remove the G:line. Pending G:lines removals expire after some time,
+usually ten minutes.
+
+Pending G:line removals do not interact with pending G:lines. Triggering a
+G:line does not affect a pending G:line removal. Triggering a G:line removal
+does not affect a pending G:line.
+
 INFO
 source: user
 parameters: hunted
@@ -507,7 +542,11 @@ The target can be:
   remotely)
 - a status character ('@'/'+') followed by a channel name, to send to users
   with that status or higher only.
+  capab: CHW
   propagation: all servers with -D users with appropriate status
+- '=' followed by a channel name, to send to chanops only, for cmode +z.
+  capab: CHW and EOPMOD
+  propagation: all servers with -D chanops
 - a user@server message, to send to users on a specific server. The exact
   meaning of the part before the '@' is not prescribed, except that "opers"
   allows IRC operators to send to all IRC operators on the server in an
@@ -756,9 +795,19 @@ broadcast, otherwise the changes will be stored, to be used when registration
 completes.
 
 TB
+capab: TB
 source: server
 propagation: broadcast
-parameters:
+parameters: channel, topicTS, opt. topic setter, topic
+
+Propagates a channel topic as part of a burst.
+
+If the channel had no topic yet or the topicTS in the message is older than
+the topicTS of the current topic on the channel and the topics differ, set
+the topic with topicTS and topic setter, and propagate the message. Otherwise
+ignore the message and do not propagate it.
+
+If the topic setter is not present, use a server name instead.
 
 TIME
 source: user
@@ -789,9 +838,14 @@ multiple TMODE messages should be sent.
 TOPIC
 source: user
 propagation: broadcast
+parameters: channel, topic
 
 Propagates a channel topic change. The server may verify that the source has
 ops in the channel.
+
+The topicTS shall be set to the current time and the topic setter shall be
+set indicating the source user. Note that this means that the topicTS of a
+topic set with TOPIC is not necessarily consistent across the network.
 
 TRACE
 source: user
