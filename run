@@ -1,0 +1,3 @@
+#!/bin/sh -ex
+./configure --prefix ~/lib/charybdis --enable-small-net
+make
