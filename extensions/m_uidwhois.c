@@ -7,7 +7,7 @@
 
 #define RPL_WHOISSPECIAL 320 /* Unreal3.2 */
 
-#define fmt_RPL_WHOISSPECIAL "%s :TS6 UID is %s"
+#define fmt_RPL_WHOISSPECIAL "%s :is known by TS6 UID as %s"
 
 static int m_uidwhois(struct Client *, struct Client *, int, const char **);
 static void h_uidwhois(hook_data_client *);
@@ -17,7 +17,7 @@ struct Message uidwhois_msgtab = {
 	{mg_ignore, {m_uidwhois, 0}, mg_ignore, mg_ignore, mg_ignore, {m_uidwhois, 0}}
 };
 
-mapi_clist_av1 uidwhois_clist[] = { &uidwhois_msgtab, NULL };
+mapi_clist_av1 uidwhois_clist[] = {&uidwhois_msgtab, NULL};
 
 mapi_hfn_list_av1 uidwhois_hfnlist[] = {
 	{"doing_whois",		(hookfn) h_uidwhois},
@@ -26,10 +26,11 @@ mapi_hfn_list_av1 uidwhois_hfnlist[] = {
 };
 
 DECLARE_MODULE_AV1(uidwhois, NULL, NULL, uidwhois_clist,
-		   NULL, uidwhois_hfnlist, "Revision 0.42");
+		   NULL, uidwhois_hfnlist, "Revision 0.43");
 
 static int
-m_uidwhois(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_uidwhois(struct Client *client_p, struct Client *source_p,
+	   int parc, const char *parv[])
 {
 	struct Client *target_p;
 	char *nick;
