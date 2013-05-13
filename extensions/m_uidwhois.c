@@ -7,7 +7,7 @@
 
 #define RPL_WHOISSPECIAL 320 /* Unreal3.2 */
 
-#define fmt_RPL_WHOISSPECIAL "%s :is known by TS6 UID as %s"
+#define fmt_RPL_WHOISSPECIAL "%s :is assigned unique id %s"
 
 static int m_uidwhois(struct Client *, struct Client *, int, const char **);
 static void h_uidwhois(hook_data_client *);
