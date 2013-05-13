@@ -4,6 +4,7 @@
 #include "ircd.h"
 #include "send.h"
 #include "numeric.h"
+#include "s_newconf.h"
 
 #define RPL_WHOISSPECIAL 320 /* Unreal3.2 */
 
@@ -26,7 +27,7 @@ mapi_hfn_list_av1 uidwhois_hfnlist[] = {
 };
 
 DECLARE_MODULE_AV1(uidwhois, NULL, NULL, uidwhois_clist,
-		   NULL, uidwhois_hfnlist, "Revision 0.43");
+		   NULL, uidwhois_hfnlist, "Revision 0.44");
 
 static int
 mo_uidwhois(struct Client *client_p, struct Client *source_p,
@@ -38,6 +39,12 @@ mo_uidwhois(struct Client *client_p, struct Client *source_p,
 
 	if (parc < 2)
 		return 0;
+
+	if (!IsOperAdmin(source_p)) {
+		sendto_one_numeric(source_p, ERR_NOPRIVILEGES,
+				   form_str(ERR_NOPRIVILEGES));
+		return 0;
+	}
 
 	while (parv[++i]) {
 		nick = LOCAL_COPY(parv[i]);
@@ -67,7 +74,7 @@ mo_uidwhois(struct Client *client_p, struct Client *source_p,
 static void
 h_uidwhois(hook_data_client *data)
 {
-	if (IsOper(data->client)) {
+	if (IsOperAdmin(data->client)) {
 		sendto_one_numeric(data->client, RPL_WHOISSPECIAL,
 				   fmt_RPL_WHOISSPECIAL,
 				   data->target->name, data->target->id);
