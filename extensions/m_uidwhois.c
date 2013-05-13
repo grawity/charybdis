@@ -60,6 +60,8 @@ m_uidwhois(struct Client *client_p, struct Client *source_p,
 			sendto_one_numeric(source_p, RPL_WHOISSPECIAL,
 					   fmt_RPL_WHOISSPECIAL,
 					   target_p->name, target_p->id);
+			sendto_one_numeric(source_p, RPL_ENDOFWHOIS,
+					   form_str(RPL_ENDOFWHOIS), nick);
 		} else
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 					   form_str(ERR_NOSUCHNICK), nick);
