@@ -9,12 +9,12 @@
 
 #define fmt_RPL_WHOISSPECIAL "%s :is assigned unique id %s"
 
-static int m_uidwhois(struct Client *, struct Client *, int, const char **);
+static int mo_uidwhois(struct Client *, struct Client *, int, const char **);
 static void h_uidwhois(hook_data_client *);
 
 struct Message uidwhois_msgtab = {
 	"UIDWHOIS", 0, 0, 0, MFLG_SLOW,
-	{mg_ignore, {m_uidwhois, 0}, mg_ignore, mg_ignore, mg_ignore, {m_uidwhois, 0}}
+	{mg_ignore, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_uidwhois, 0}}
 };
 
 mapi_clist_av1 uidwhois_clist[] = {&uidwhois_msgtab, NULL};
@@ -29,8 +29,8 @@ DECLARE_MODULE_AV1(uidwhois, NULL, NULL, uidwhois_clist,
 		   NULL, uidwhois_hfnlist, "Revision 0.43");
 
 static int
-m_uidwhois(struct Client *client_p, struct Client *source_p,
-	   int parc, const char *parv[])
+mo_uidwhois(struct Client *client_p, struct Client *source_p,
+	    int parc, const char *parv[])
 {
 	struct Client *target_p;
 	char *nick;
@@ -38,12 +38,6 @@ m_uidwhois(struct Client *client_p, struct Client *source_p,
 
 	if (parc < 2)
 		return 0;
-
-	if (!IsOper(source_p)) {
-		sendto_one_numeric(source_p, ERR_NOPRIVILEGES,
-				   form_str(ERR_NOPRIVILEGES));
-		return 0;
-	}
 
 	while (parv[++i]) {
 		nick = LOCAL_COPY(parv[i]);
