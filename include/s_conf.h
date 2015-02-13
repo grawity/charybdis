@@ -227,6 +227,7 @@ struct config_file_entry
 	int use_propagated_bans;
 	int max_ratelimit_tokens;
 	int away_interval;
+	int max_auth_attempts;
 
 	int client_flood_max_lines;
 	int client_flood_burst_rate;

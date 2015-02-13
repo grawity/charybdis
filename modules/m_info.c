@@ -525,6 +525,12 @@ static struct InfoStruct info_table[] = {
 		"The minimum time between aways",
 	},
 	{
+		"max_auth_attempts",
+		OUTPUT_DECIMAL,
+		&ConfigFileEntry.max_auth_attempts,
+		"Failed SASL authentication limit",
+	},
+	{
 		"default_split_server_count",
 		OUTPUT_DECIMAL,
 		&ConfigChannel.default_split_server_count,
