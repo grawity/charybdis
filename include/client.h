@@ -285,6 +285,8 @@ struct LocalUser
 	char sasl_agent[IDLEN];
 	unsigned char sasl_out;
 	unsigned char sasl_complete;
+	unsigned short sasl_messages;
+	unsigned short sasl_failures;
 };
 
 struct AuthClient
