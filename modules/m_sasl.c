@@ -35,6 +35,7 @@
 #include "msg.h"
 #include "modules.h"
 #include "numeric.h"
+#include "reject.h"
 #include "s_conf.h"
 #include "s_serv.h"
 #include "s_stats.h"
@@ -233,9 +234,15 @@ me_sasl(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		if(*parv[4] == 'F') {
 			sendto_one(target_p, form_str(ERR_SASLFAIL), me.name, EmptyString(target_p->name) ? "*" : target_p->name);
 			if (target_p->localClient->sasl_messages > 0)
+			{
 				target_p->localClient->sasl_failures++;
+			}
 			if (ConfigFileEntry.max_auth_attempts > 0 && target_p->localClient->sasl_failures >= ConfigFileEntry.max_auth_attempts)
+			{
+				throttle_add_immediate((struct sockaddr*)&target_p->localClient->ip);
 				exit_client(target_p, target_p, &me, "Too many failed authentication attempts");
+				return;
+			}
 		}
 		else if(*parv[4] == 'S') {
 			sendto_one(target_p, form_str(RPL_SASLSUCCESS), me.name, EmptyString(target_p->name) ? "*" : target_p->name);

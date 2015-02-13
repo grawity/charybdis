@@ -301,7 +301,7 @@ remove_reject_mask(const char *mask1, const char *mask2)
 }
 
 int
-throttle_add(struct sockaddr *addr)
+_throttle_add(struct sockaddr *addr, bool immediate)
 {
 	throttle_t *t;
 	rb_patricia_node_t *pnode;
@@ -317,7 +317,7 @@ throttle_add(struct sockaddr *addr)
 		}
 		/* Stop penalizing them after they've been throttled */
 		t->last = rb_current_time();
-		t->count++;
+		t->count = immediate ? INT_MAX : t->count+1;
 
 	} else {
 		int bitlen = 32;
@@ -327,12 +327,24 @@ throttle_add(struct sockaddr *addr)
 #endif
 		t = rb_malloc(sizeof(throttle_t));
 		t->last = rb_current_time();
-		t->count = 1;
+		t->count = immediate ? INT_MAX : 1;
 		pnode = make_and_lookup_ip(throttle_tree, addr, bitlen);
 		pnode->data = t;
 		rb_dlinkAdd(pnode, &t->node, &throttle_list);
 	}
 	return 0;
+}
+
+int
+throttle_add(struct sockaddr *addr)
+{
+	return _throttle_add(addr, false);
+}
+
+int
+throttle_add_immediate(struct sockaddr *addr)
+{
+	return _throttle_add(addr, true);
 }
 
 int
